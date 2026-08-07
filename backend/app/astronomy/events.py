@@ -28,6 +28,7 @@ from app.astronomy.timescales import (
     gregorian_from_jd,
     jd_from_gregorian,
     normalize_degrees,
+    normalize_degrees_signed,
     time_uncertainty,
     tt_to_ut,
 )
@@ -703,15 +704,19 @@ def _conjunction_event(first: str, second: str, jd: float, separation: float) ->
     p1, p2 = body_position(first, jd), body_position(second, jd)
     combined_accuracy = math.sqrt(p1.accuracy_degrees**2 + p2.accuracy_degrees**2)
 
-    # Position error converts into *timing* error at a rate set by how fast the two
-    # bodies separate. For a slow pair such as Jupiter and Saturn a few tenths of a
-    # degree of model error is several days of date uncertainty, which matters a great
-    # deal when a text is being matched to a specific day.
-    def sep_at(offset: float) -> float:
-        a, b = body_position(first, jd + offset), body_position(second, jd + offset)
-        return angular_separation(a.longitude, a.latitude, b.longitude, b.latitude)
+    # Position error converts into *timing* error at a rate set by the pair's relative
+    # angular velocity. For a slow pair such as Jupiter and Saturn a few tenths of a
+    # degree of model error is a couple of weeks of date uncertainty, which matters a
+    # great deal when a text is being matched to a specific day.
+    #
+    # This must be the relative *velocity*, not the change in separation: at the minimum
+    # the separation is stationary by definition, so differencing it would report zero.
+    def offsets(delta: float) -> tuple[float, float]:
+        a, b = body_position(first, jd + delta), body_position(second, jd + delta)
+        return normalize_degrees_signed(a.longitude - b.longitude), a.latitude - b.latitude
 
-    relative_speed = abs(sep_at(5.0) - sep_at(-5.0)) / 10.0  # degrees per day
+    (lon_before, lat_before), (lon_after, lat_after) = offsets(-5.0), offsets(5.0)
+    relative_speed = math.hypot(lon_after - lon_before, lat_after - lat_before) / 10.0
     timing_uncertainty_days = (
         min(combined_accuracy / relative_speed, 999.0) if relative_speed > 1e-6 else None
     )
