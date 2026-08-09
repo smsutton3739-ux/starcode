@@ -288,22 +288,29 @@ class TestRateLimiting:
             rate_limit.check("identity-a", "bucket", limit=3)
         assert rate_limit.check("identity-b", "bucket", limit=3).allowed
 
-    def test_anonymous_limit_is_lower_than_authenticated(self):
-        """Checked against the shipped defaults, not the env: conftest raises the limits
-        so tests are not throttled, which would mask the ordering."""
+    def test_shipped_defaults_favour_authenticated_users(self):
+        """Read the declared defaults, not a Settings instance: conftest raises the
+        limits via the environment so tests are not throttled, and a constructed
+        Settings would pick those up and mask the ordering."""
         from app.core.config import Settings
 
-        defaults = Settings(_env_file=None)
+        default = lambda name: Settings.model_fields[name].default  # noqa: E731
+
         assert (
-            defaults.RATE_LIMIT_ANONYMOUS_PER_HOUR
-            < defaults.RATE_LIMIT_USER_PER_HOUR
-            < defaults.RATE_LIMIT_ADMIN_PER_HOUR
+            default("RATE_LIMIT_ANONYMOUS_PER_HOUR")
+            < default("RATE_LIMIT_USER_PER_HOUR")
+            < default("RATE_LIMIT_ADMIN_PER_HOUR")
         )
 
-    def test_role_limits_are_applied_in_order(self):
+    def test_each_role_maps_to_its_configured_limit(self):
+        from app.core.config import settings
         from app.core.rate_limit import limit_for_role
 
-        assert limit_for_role(None) <= limit_for_role("user") <= limit_for_role("admin")
+        assert limit_for_role(None) == settings.RATE_LIMIT_ANONYMOUS_PER_HOUR
+        assert limit_for_role("user") == settings.RATE_LIMIT_USER_PER_HOUR
+        assert limit_for_role("researcher") == settings.RATE_LIMIT_USER_PER_HOUR
+        assert limit_for_role("admin") == settings.RATE_LIMIT_ADMIN_PER_HOUR
+        assert limit_for_role("moderator") == settings.RATE_LIMIT_ADMIN_PER_HOUR
 
     def test_headers_are_well_formed(self):
         from app.core import rate_limit
