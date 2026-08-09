@@ -323,7 +323,7 @@ class Orchestrator:
             )
 
     def _persist_report(self, analysis: Analysis, report: dict) -> None:
-        version = (analysis.version or 1)
+        version = analysis.version or 1
         existing = next((r for r in analysis.reports if r.version == version), None)
         target = existing or Report(analysis_id=analysis.id, version=version)
         target.executive_summary = report["executive_summary"]
@@ -334,6 +334,13 @@ class Orchestrator:
         target.reasoning_trace = report["reasoning_trace"]
         target.word_count = report["word_count"]
         if existing is None:
+            # Append through the relationship rather than db.add(): reading
+            # `analysis.reports` above loaded and cached the (empty) collection, and a
+            # bare add would leave the in-memory object disagreeing with the database
+            # until something re-queried it. Callers that hold the Analysis — the job
+            # runner, tests, anything not going through the API's re-query — would see
+            # no report at all.
+            analysis.reports.append(target)
             self.db.add(target)
 
 
