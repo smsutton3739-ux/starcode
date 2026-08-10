@@ -118,9 +118,30 @@ _MAGIC: list[tuple[bytes, str]] = [
 #: Extensions that must never be accepted whatever the content sniffs as.
 _DANGEROUS_EXTENSIONS = frozenset(
     {
-        ".exe", ".dll", ".so", ".dylib", ".bat", ".cmd", ".com", ".scr", ".msi",
-        ".sh", ".bash", ".zsh", ".ps1", ".vbs", ".js", ".jar", ".php", ".py",
-        ".rb", ".pl", ".html", ".htm", ".svg", ".xhtml",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".bat",
+        ".cmd",
+        ".com",
+        ".scr",
+        ".msi",
+        ".sh",
+        ".bash",
+        ".zsh",
+        ".ps1",
+        ".vbs",
+        ".js",
+        ".jar",
+        ".php",
+        ".py",
+        ".rb",
+        ".pl",
+        ".html",
+        ".htm",
+        ".svg",
+        ".xhtml",
     }
 )
 
@@ -134,9 +155,7 @@ def sniff_mime(data: bytes) -> str:
     if data[:4] == b"PK\x03\x04":
         # Both DOCX and generic ZIPs start this way; the marker distinguishes them.
         if b"word/document.xml" in data[:8192] or b"[Content_Types].xml" in data[:4096]:
-            return (
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         return "application/zip"
 
     if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
@@ -250,7 +269,10 @@ def extract_from_pdf(data: bytes, filename: str) -> ExtractionResult:
             for key, value in info.items()
             if value is not None and isinstance(key, str)
         }
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        # Metadata is a bonus, not the payload: a PDF with a malformed info dictionary
+        # still has readable text, so this must not fail the extraction.
+        logger.debug("ingest.pdf_metadata_unreadable", error=str(exc))
         warnings.append("Document metadata could not be read.")
 
     ocr_applied = False
@@ -359,8 +381,8 @@ def extract_from_docx(data: bytes, filename: str) -> ExtractionResult:
             "modified": str(core.modified) if core.modified else None,
         }
         metadata = {k: v for k, v in metadata.items() if v}
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("ingest.docx_metadata_unreadable", error=str(exc))
 
     return ExtractionResult(
         text=validate_text(text),
@@ -407,8 +429,8 @@ def extract_from_image(data: bytes, filename: str, mime_type: str) -> Extraction
                 "mode": image.mode,
                 "format": image.format,
             }
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("ingest.image_metadata_unreadable", error=str(exc))
 
     return ExtractionResult(
         text=validate_text(text),
@@ -442,9 +464,7 @@ def _ocr_image_bytes(data: bytes) -> tuple[str, float | None]:
             # manuscript photographs are well under that.
             if min(grey.size) < 1000:
                 factor = max(2, 1000 // max(1, min(grey.size)))
-                grey = grey.resize(
-                    (grey.width * factor, grey.height * factor), Image.LANCZOS
-                )
+                grey = grey.resize((grey.width * factor, grey.height * factor), Image.LANCZOS)
 
             grey = ImageOps.autocontrast(grey)
             grey = grey.filter(ImageFilter.MedianFilter(size=3))
@@ -460,7 +480,10 @@ def _ocr_image_bytes(data: bytes) -> tuple[str, float | None]:
 
     words: list[str] = []
     confidences: list[float] = []
-    for text, confidence in zip(data_frame.get("text", []), data_frame.get("conf", [])):
+    # Tesseract returns these as parallel arrays of equal length.
+    for text, confidence in zip(
+        data_frame.get("text", []), data_frame.get("conf", []), strict=False
+    ):
         if not text or not text.strip():
             continue
         words.append(text)

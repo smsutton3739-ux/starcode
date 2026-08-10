@@ -13,7 +13,7 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEV_SECRET_SENTINEL = "dev-only-insecure-change-me"
+DEV_SECRET_SENTINEL = "dev-only-insecure-change-me"  # noqa: S105 - a sentinel, checked for and rejected in production
 
 
 class Settings(BaseSettings):

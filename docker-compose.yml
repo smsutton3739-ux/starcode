@@ -1,0 +1,122 @@
+# Local development stack.
+#
+# `docker compose up` gives you the whole platform: Postgres with pgvector, Redis, the
+# API, a background worker and the web app. Migrations and seeding run automatically, so
+# a clone is usable without any manual setup step.
+#
+# No AI key is required. Without ANTHROPIC_API_KEY the platform runs its deterministic
+# engine: extraction, calendars and astronomy work fully, and the interpretive sections
+# report themselves as unavailable rather than being filled with plausible-looking text.
+
+name: starcode
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-starcode}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-starcode}
+      POSTGRES_DB: ${POSTGRES_DB:-starcode}
+      # Faster, deterministic collation for the text-heavy tables.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starcode} -d ${POSTGRES_DB:-starcode}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-starcode}:${POSTGRES_PASSWORD:-starcode}@db:5432/${POSTGRES_DB:-starcode}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-change-me}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_PROVIDER: ${AI_PROVIDER:-auto}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:3000}
+      OAUTH_REDIRECT_BASE: ${OAUTH_REDIRECT_BASE:-http://localhost:8000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      LOG_FORMAT: ${LOG_FORMAT:-console}
+      UPLOAD_DIR: /var/lib/starcode/uploads
+    volumes:
+      - uploads:/var/lib/starcode/uploads
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    entrypoint: ["/app/scripts/entrypoint.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-starcode}:${POSTGRES_PASSWORD:-starcode}@db:5432/${POSTGRES_DB:-starcode}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-change-me}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_PROVIDER: ${AI_PROVIDER:-auto}
+      LOG_FORMAT: ${LOG_FORMAT:-console}
+      UPLOAD_DIR: /var/lib/starcode/uploads
+    volumes:
+      - uploads:/var/lib/starcode/uploads
+    depends_on:
+      api:
+        # The API container owns migrations; the worker must not race it.
+        condition: service_started
+      db:
+        condition: service_healthy
+    command: ["python", "-m", "app.workers.runner"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  redis-data:
+  uploads:

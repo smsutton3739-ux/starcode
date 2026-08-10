@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.agents.contracts import CLAIM_TYPE_PRESENTATION
@@ -68,14 +68,21 @@ def create(
             extraction = fetch_as_extraction(payload.url)
             source_url = payload.url
             record_audit(
-                db, AuditAction.URL_FETCHED, actor=user, target_type="url",
-                target_id=payload.url[:64], request=request, detail={"url": payload.url},
+                db,
+                AuditAction.URL_FETCHED,
+                actor=user,
+                target_type="url",
+                target_id=payload.url[:64],
+                request=request,
+                detail={"url": payload.url},
             )
         elif payload.upload_id:
             upload = analysis_service.resolve_upload(db, payload.upload_id, user)
-            document = db.execute(
-                select(Document).where(Document.upload_id == upload.id)
-            ).scalars().first()
+            document = (
+                db.execute(select(Document).where(Document.upload_id == upload.id))
+                .scalars()
+                .first()
+            )
             if document is None:
                 raise IngestError(
                     "No text has been extracted from that upload yet. Upload it again."
@@ -106,8 +113,12 @@ def create(
     )
 
     record_audit(
-        db, AuditAction.ANALYSIS_CREATED, actor=user, target_type="analysis",
-        target_id=analysis.id, request=request,
+        db,
+        AuditAction.ANALYSIS_CREATED,
+        actor=user,
+        target_type="analysis",
+        target_id=analysis.id,
+        request=request,
         detail={"source_kind": document.source_kind.value, "chars": document.char_count},
     )
     db.commit()
@@ -176,8 +187,12 @@ def get_detail(
     ).scalar_one()
 
     record_audit(
-        db, AuditAction.ANALYSIS_VIEWED, actor=user, target_type="analysis",
-        target_id=analysis.id, request=request,
+        db,
+        AuditAction.ANALYSIS_VIEWED,
+        actor=user,
+        target_type="analysis",
+        target_id=analysis.id,
+        request=request,
     )
     db.commit()
 
@@ -196,9 +211,20 @@ def _serialize_detail(analysis: Analysis) -> AnalysisDetail:
             **{
                 key: getattr(claim, key)
                 for key in (
-                    "id", "section", "statement", "reasoning", "confidence",
-                    "confidence_basis", "produced_by", "engine", "algorithm_reference",
-                    "quoted_text", "text_span_start", "text_span_end", "ordering", "payload",
+                    "id",
+                    "section",
+                    "statement",
+                    "reasoning",
+                    "confidence",
+                    "confidence_basis",
+                    "produced_by",
+                    "engine",
+                    "algorithm_reference",
+                    "quoted_text",
+                    "text_span_start",
+                    "text_span_end",
+                    "ordering",
+                    "payload",
                 )
             },
             "claim_type": claim.claim_type.value,
@@ -239,10 +265,20 @@ def _serialize_detail(analysis: Analysis) -> AnalysisDetail:
                     **{
                         key: getattr(entity, key)
                         for key in (
-                            "id", "name", "canonical_name", "aliases", "description",
-                            "extraction_confidence", "identification_confidence",
-                            "mention_count", "mentions", "earliest_year", "latest_year",
-                            "latitude", "longitude", "attributes",
+                            "id",
+                            "name",
+                            "canonical_name",
+                            "aliases",
+                            "description",
+                            "extraction_confidence",
+                            "identification_confidence",
+                            "mention_count",
+                            "mentions",
+                            "earliest_year",
+                            "latest_year",
+                            "latitude",
+                            "longitude",
+                            "attributes",
                         )
                     },
                     "entity_type": entity.entity_type.value,
@@ -274,7 +310,9 @@ def list_analyses(
         try:
             stmt = stmt.where(Analysis.status == AnalysisStatus(status_filter))
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"Unknown status {status_filter!r}.") from exc
+            raise HTTPException(
+                status_code=400, detail=f"Unknown status {status_filter!r}."
+            ) from exc
     if favorites_only:
         stmt = stmt.where(Analysis.is_favorite.is_(True))
     if project_id:
@@ -284,27 +322,34 @@ def list_analyses(
     if q:
         stmt = stmt.where(Analysis.title.ilike(f"%{q}%"))
 
-    total = db.execute(
-        select(func.count()).select_from(stmt.subquery())
-    ).scalar_one()
+    total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
 
-    rows = db.execute(
-        stmt.options(selectinload(Analysis.tags))
-        .order_by(Analysis.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    ).scalars().all()
+    rows = (
+        db.execute(
+            stmt.options(selectinload(Analysis.tags))
+            .order_by(Analysis.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        .scalars()
+        .all()
+    )
 
     return Page[AnalysisSummary](
         items=[
             AnalysisSummary.model_validate(
                 {
-                    "id": a.id, "title": a.title, "status": a.status.value,
-                    "progress": a.progress, "current_stage": a.current_stage,
+                    "id": a.id,
+                    "title": a.title,
+                    "status": a.status.value,
+                    "progress": a.progress,
+                    "current_stage": a.current_stage,
                     "detected_language": a.detected_language,
                     "overall_confidence": a.overall_confidence,
-                    "is_favorite": a.is_favorite, "created_at": a.created_at,
-                    "completed_at": a.completed_at, "duration_ms": a.duration_ms,
+                    "is_favorite": a.is_favorite,
+                    "created_at": a.created_at,
+                    "completed_at": a.completed_at,
+                    "duration_ms": a.duration_ms,
                     "failed_stages": list(a.failed_stages or []),
                     "tags": [t.name for t in a.tags],
                 }
@@ -344,12 +389,17 @@ def update(
     db.refresh(analysis)
     return AnalysisSummary.model_validate(
         {
-            "id": analysis.id, "title": analysis.title, "status": analysis.status.value,
-            "progress": analysis.progress, "current_stage": analysis.current_stage,
+            "id": analysis.id,
+            "title": analysis.title,
+            "status": analysis.status.value,
+            "progress": analysis.progress,
+            "current_stage": analysis.current_stage,
             "detected_language": analysis.detected_language,
             "overall_confidence": analysis.overall_confidence,
-            "is_favorite": analysis.is_favorite, "created_at": analysis.created_at,
-            "completed_at": analysis.completed_at, "duration_ms": analysis.duration_ms,
+            "is_favorite": analysis.is_favorite,
+            "created_at": analysis.created_at,
+            "completed_at": analysis.completed_at,
+            "duration_ms": analysis.duration_ms,
             "failed_stages": list(analysis.failed_stages or []),
             "tags": [t.name for t in analysis.tags],
         }
@@ -368,16 +418,24 @@ def delete(
         raise HTTPException(status_code=404, detail="No such analysis.")
 
     record_audit(
-        db, AuditAction.ANALYSIS_DELETED, actor=user, target_type="analysis",
-        target_id=analysis_id, request=request, detail={"title": analysis.title},
+        db,
+        AuditAction.ANALYSIS_DELETED,
+        actor=user,
+        target_type="analysis",
+        target_id=analysis_id,
+        request=request,
+        detail={"title": analysis.title},
     )
     db.delete(analysis)
     db.commit()
     return Message(message="Analysis deleted.")
 
 
-@router.post("/{analysis_id}/rerun", response_model=AnalysisCreated,
-             dependencies=[Depends(rate_limiter("analyze"))])
+@router.post(
+    "/{analysis_id}/rerun",
+    response_model=AnalysisCreated,
+    dependencies=[Depends(rate_limiter("analyze"))],
+)
 def rerun(
     analysis_id: str,
     db: DbSession,

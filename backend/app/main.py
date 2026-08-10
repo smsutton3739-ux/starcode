@@ -45,7 +45,10 @@ TAGS_METADATA = [
     {"name": "uploads", "description": "PDF, DOCX, image and URL ingestion."},
     {"name": "exports", "description": "PDF, DOCX, CSV, Markdown and JSON exports."},
     {"name": "search", "description": "Semantic and keyword search."},
-    {"name": "astronomy", "description": "Eclipses, phases, conjunctions and positions. Usable on its own."},
+    {
+        "name": "astronomy",
+        "description": "Eclipses, phases, conjunctions and positions. Usable on its own.",
+    },
     {"name": "calendars", "description": "Conversion between twelve calendar systems."},
     {"name": "corpus", "description": "The curated reference corpus."},
     {"name": "library", "description": "Projects, collections, tags, shares, notifications."},

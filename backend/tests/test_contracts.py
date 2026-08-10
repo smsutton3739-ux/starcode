@@ -27,13 +27,13 @@ from app.core.config import settings
 
 
 def make_claim(**overrides) -> ClaimDraft:
-    defaults = dict(
-        section=Section.HISTORICAL_CONTEXT,
-        claim_type=ClaimType.AI_HYPOTHESIS,
-        statement="A statement.",
-        produced_by="test",
-        confidence=0.4,
-    )
+    defaults = {
+        "section": Section.HISTORICAL_CONTEXT,
+        "claim_type": ClaimType.AI_HYPOTHESIS,
+        "statement": "A statement.",
+        "produced_by": "test",
+        "confidence": 0.4,
+    }
     return ClaimDraft(**{**defaults, **overrides})
 
 
@@ -78,9 +78,7 @@ class TestConfidenceCap:
         assert claim.confidence == settings.AI_HYPOTHESIS_CONFIDENCE_CAP
 
     def test_evidence_types_may_be_fully_confident(self):
-        claim = make_claim(
-            claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="quoted"
-        )
+        claim = make_claim(claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="quoted")
         assert validate_claim(claim) == []
 
     def test_confidence_outside_unit_interval_rejected(self):
@@ -167,9 +165,9 @@ class TestConfidenceSummary:
         """A pile of low-confidence conjecture must not drag down a solid finding the way
         a plain average would. Weighting is what stops "we also thought of five other
         things" from making a calculation look uncertain."""
-        claims = [
-            make_claim(claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="x")
-        ] + [make_claim(claim_type=ClaimType.AI_HYPOTHESIS, confidence=0.1) for _ in range(5)]
+        claims = [make_claim(claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="x")] + [
+            make_claim(claim_type=ClaimType.AI_HYPOTHESIS, confidence=0.1) for _ in range(5)
+        ]
 
         weighted = summarize_confidence(claims)["overall"]
         naive_mean = sum(c.confidence for c in claims) / len(claims)
@@ -204,9 +202,9 @@ class TestConfidenceSummary:
         assert "no verifiable evidence" in summary["rationale"]
 
     def test_hypothesis_heavy_analysis_is_flagged(self):
-        claims = [
-            make_claim(claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="x")
-        ] + [make_claim(claim_type=ClaimType.AI_HYPOTHESIS) for _ in range(5)]
+        claims = [make_claim(claim_type=ClaimType.SOURCE_TEXT, confidence=1.0, quoted_text="x")] + [
+            make_claim(claim_type=ClaimType.AI_HYPOTHESIS) for _ in range(5)
+        ]
         assert "outweighs" in summarize_confidence(claims)["rationale"]
 
     def test_empty_claim_set(self):

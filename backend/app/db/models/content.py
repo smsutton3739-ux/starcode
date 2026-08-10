@@ -164,9 +164,7 @@ class Tag(UUIDPrimaryKey, Timestamped, Base):
     slug: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
     color: Mapped[str | None] = mapped_column(String(16))
 
-    analyses: Mapped[list[Analysis]] = relationship(
-        secondary=analysis_tags, back_populates="tags"
-    )
+    analyses: Mapped[list[Analysis]] = relationship(secondary=analysis_tags, back_populates="tags")
 
 
 class Collection(UUIDPrimaryKey, Timestamped, Base):

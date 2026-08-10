@@ -192,8 +192,9 @@ def catalogue_lookup(year: int, month: int | None = None, day: int | None = None
         "comets": catalogs.comets_near_year(year),
         "supernovae": catalogs.supernovae_near_year(year),
         "meteor_showers": (
-            catalogs.showers_active_on(month, day) if month and day else
-            [s.to_dict() for s in catalogs.METEOR_SHOWERS]
+            catalogs.showers_active_on(month, day)
+            if month and day
+            else [s.to_dict() for s in catalogs.METEOR_SHOWERS]
         ),
         "note": (
             "Comet and supernova entries distinguish computed returns from historical "
@@ -227,9 +228,7 @@ def correlate_date(year: int, month: int | None = None, day: int | None = None) 
         payload["eclipses_within_a_year"] = events.eclipses_near(jd, window_days=370)
         payload["nearest_new_moon"] = events.nearest_new_moon(jd).to_dict()
     else:
-        payload["eclipses_in_year"] = [
-            e.to_dict() for e in events.eclipses_in_range(year, year)
-        ]
+        payload["eclipses_in_year"] = [e.to_dict() for e in events.eclipses_in_range(year, year)]
         payload["note"] = (
             "Only a year was supplied, so day-specific results (positions, phase) are "
             "omitted rather than computed for an arbitrary 1 January."

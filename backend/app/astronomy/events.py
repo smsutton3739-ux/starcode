@@ -113,20 +113,8 @@ def _phase_fundamentals(k: float) -> tuple[float, float, float, float, float, fl
     )
     e = 1 - 0.002516 * t - 0.0000074 * t**2
     m = 2.5534 + 29.10535670 * k - 0.0000014 * t**2 - 0.00000011 * t**3
-    mp = (
-        201.5643
-        + 385.81693528 * k
-        + 0.0107582 * t**2
-        + 0.00001238 * t**3
-        - 0.000000058 * t**4
-    )
-    f = (
-        160.7108
-        + 390.67050284 * k
-        - 0.0016118 * t**2
-        - 0.00000227 * t**3
-        + 0.000000011 * t**4
-    )
+    mp = 201.5643 + 385.81693528 * k + 0.0107582 * t**2 + 0.00001238 * t**3 - 0.000000058 * t**4
+    f = 160.7108 + 390.67050284 * k - 0.0016118 * t**2 - 0.00000227 * t**3 + 0.000000011 * t**4
     omega = 124.7746 - 1.56375588 * k + 0.0020672 * t**2 + 0.00000215 * t**3
     return jde, t, e, m, mp, f, omega
 
@@ -150,10 +138,23 @@ def _planetary_arguments(k: float, t: float) -> float:
         331.55 + 3.592518 * k,
     ]
     coefficients = [
-        0.000325, 0.000165, 0.000164, 0.000126, 0.000110, 0.000062, 0.000060,
-        0.000056, 0.000047, 0.000042, 0.000040, 0.000037, 0.000035, 0.000023,
+        0.000325,
+        0.000165,
+        0.000164,
+        0.000126,
+        0.000110,
+        0.000062,
+        0.000060,
+        0.000056,
+        0.000047,
+        0.000042,
+        0.000040,
+        0.000037,
+        0.000035,
+        0.000023,
     ]
-    return sum(c * dsin(arg) for c, arg in zip(coefficients, a))
+    # The two tables are defined together and are the same length by construction.
+    return sum(c * dsin(arg) for c, arg in zip(coefficients, a, strict=True))
 
 
 def moon_phase_time(k: float) -> float:
@@ -313,6 +314,7 @@ def nearest_new_moon(jd_tt: float) -> CelestialEvent:
 # --------------------------------------------------------------------------------------
 # Eclipses — Meeus ch. 54
 # --------------------------------------------------------------------------------------
+
 
 def _eclipse_accuracy_note(year: int) -> str:
     """State the precision honestly, and differently for different epochs.
@@ -474,9 +476,7 @@ def _eclipse_at(k: float) -> dict | None:
     }
 
 
-def eclipses_in_range(
-    start_year: int, end_year: int, kind: str = "both"
-) -> list[CelestialEvent]:
+def eclipses_in_range(start_year: int, end_year: int, kind: str = "both") -> list[CelestialEvent]:
     """All solar and/or lunar eclipses between two years (inclusive)."""
     if end_year < start_year:
         raise ValueError("end_year must not precede start_year")
@@ -570,14 +570,30 @@ def eclipses_near(jd_tt: float, window_days: float = 400.0, kind: str = "both") 
 # --------------------------------------------------------------------------------------
 
 _SEASON_TERMS = [
-    (485, 324.96, 1934.136), (203, 337.23, 32964.467), (199, 342.08, 20.186),
-    (182, 27.85, 445267.112), (156, 73.14, 45036.886), (136, 171.52, 22518.443),
-    (77, 222.54, 65928.934), (74, 296.72, 3034.906), (70, 243.58, 9037.513),
-    (58, 119.81, 33718.147), (52, 297.17, 150.678), (50, 21.02, 2281.226),
-    (45, 247.54, 29929.562), (44, 325.15, 31555.956), (29, 60.93, 4443.417),
-    (18, 155.12, 67555.328), (17, 288.79, 4562.452), (16, 198.04, 62894.029),
-    (14, 199.76, 31436.921), (12, 95.39, 14577.848), (12, 287.11, 31931.756),
-    (12, 320.81, 34777.259), (9, 227.73, 1222.114), (8, 15.45, 16859.074),
+    (485, 324.96, 1934.136),
+    (203, 337.23, 32964.467),
+    (199, 342.08, 20.186),
+    (182, 27.85, 445267.112),
+    (156, 73.14, 45036.886),
+    (136, 171.52, 22518.443),
+    (77, 222.54, 65928.934),
+    (74, 296.72, 3034.906),
+    (70, 243.58, 9037.513),
+    (58, 119.81, 33718.147),
+    (52, 297.17, 150.678),
+    (50, 21.02, 2281.226),
+    (45, 247.54, 29929.562),
+    (44, 325.15, 31555.956),
+    (29, 60.93, 4443.417),
+    (18, 155.12, 67555.328),
+    (17, 288.79, 4562.452),
+    (16, 198.04, 62894.029),
+    (14, 199.76, 31436.921),
+    (12, 95.39, 14577.848),
+    (12, 287.11, 31931.756),
+    (12, 320.81, 34777.259),
+    (9, 227.73, 1222.114),
+    (8, 15.45, 16859.074),
 ]
 
 SEASON_NAMES = ["March equinox", "June solstice", "September equinox", "December solstice"]
@@ -618,7 +634,10 @@ def seasons_for_year(year: int) -> list[CelestialEvent]:
             f"{MEEUS}, ch. 27",
             "Accurate to under a minute for 1000–3000 CE and to a few minutes over the "
             "wider −1000 to +3000 range.",
-            {"season": SEASON_NAMES[index], "hemisphere_note": "Names use the northern hemisphere convention."},
+            {
+                "season": SEASON_NAMES[index],
+                "hemisphere_note": "Names use the northern hemisphere convention.",
+            },
         )
         for index in range(4)
     ]
@@ -699,7 +718,6 @@ def _refine_minimum(first: str, second: str, lo: float, hi: float) -> tuple[floa
 
 
 def _conjunction_event(first: str, second: str, jd: float, separation: float) -> CelestialEvent:
-    from app.astronomy.timescales import angular_separation
 
     p1, p2 = body_position(first, jd), body_position(second, jd)
     combined_accuracy = math.sqrt(p1.accuracy_degrees**2 + p2.accuracy_degrees**2)
@@ -722,7 +740,9 @@ def _conjunction_event(first: str, second: str, jd: float, separation: float) ->
     )
 
     if timing_uncertainty_days is None:
-        timing_phrase = "The pair moves too slowly relative to each other to date the exact minimum."
+        timing_phrase = (
+            "The pair moves too slowly relative to each other to date the exact minimum."
+        )
     elif timing_uncertainty_days >= 1:
         timing_phrase = (
             f"Because the two bodies separate at only {relative_speed:.3f}°/day, that position "

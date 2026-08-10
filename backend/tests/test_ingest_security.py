@@ -185,7 +185,9 @@ class TestUploadSafety:
             check_upload_safety("archive.zip", "application/zip", b"PK\x03\x04" + b"\x00" * 100)
 
     def test_valid_text_accepted(self):
-        assert check_upload_safety("t.txt", "text/plain", b"The moon became as blood.") == "text/plain"
+        assert (
+            check_upload_safety("t.txt", "text/plain", b"The moon became as blood.") == "text/plain"
+        )
 
 
 class TestDocumentExtraction:
@@ -212,7 +214,7 @@ class TestDocumentExtraction:
         assert "Fall of Jerusalem" in result.text
 
     def test_pdf_round_trip(self):
-        reportlab = pytest.importorskip("reportlab")
+        pytest.importorskip("reportlab")
         from reportlab.pdfgen import canvas
 
         buffer = io.BytesIO()

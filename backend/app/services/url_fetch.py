@@ -79,11 +79,13 @@ def validate_url(url: str) -> str:
         raise FetchError("That address cannot be fetched.")
 
     try:
-        resolved = socket.getaddrinfo(hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
+        resolved = socket.getaddrinfo(
+            hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
+        )
     except socket.gaierror as exc:
         raise FetchError(f"The hostname {hostname} could not be resolved.") from exc
 
-    for family, _type, _proto, _canonname, sockaddr in resolved:
+    for _family, _type, _proto, _canonname, sockaddr in resolved:
         address = sockaddr[0]
         if _is_blocked_address(address):
             logger.warning("url_fetch.blocked", url=url, resolved=address)
@@ -98,9 +100,7 @@ def fetch_url(url: str) -> FetchedPage:
     validate_url(url)
 
     headers = {
-        "User-Agent": (
-            "Starcode/1.0 (ancient text analysis; +https://github.com/starcode)"
-        ),
+        "User-Agent": ("Starcode/1.0 (ancient text analysis; +https://github.com/starcode)"),
         "Accept": "text/html,application/xhtml+xml,text/plain,application/pdf;q=0.9",
         "Accept-Language": "en,*;q=0.5",
     }
@@ -206,8 +206,18 @@ def extract_readable_text(html: str) -> tuple[str | None, str]:
             title = node.text(strip=True)
 
     for selector in (
-        "script", "style", "noscript", "nav", "header", "footer", "aside",
-        "form", "iframe", "svg", "button", "[aria-hidden='true']",
+        "script",
+        "style",
+        "noscript",
+        "nav",
+        "header",
+        "footer",
+        "aside",
+        "form",
+        "iframe",
+        "svg",
+        "button",
+        "[aria-hidden='true']",
     ):
         for node in tree.css(selector):
             node.decompose()
@@ -266,5 +276,11 @@ def fetch_as_extraction(url: str) -> ExtractionResult:
     )
 
 
-__all__ = ["FetchError", "FetchedPage", "validate_url", "fetch_url", "fetch_as_extraction",
-           "extract_readable_text"]
+__all__ = [
+    "FetchError",
+    "FetchedPage",
+    "validate_url",
+    "fetch_url",
+    "fetch_as_extraction",
+    "extract_readable_text",
+]

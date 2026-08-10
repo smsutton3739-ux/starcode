@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, Request, status
@@ -92,7 +92,7 @@ def as_utc(value: datetime) -> datetime:
     expiry comparison into a 500. Values from this application are always written as UTC,
     so attaching the offset back is correct rather than a guess.
     """
-    return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
 
 
 def client_ip(request: Request) -> str:
@@ -156,7 +156,7 @@ def record_audit(
     try:
         db.add(
             AuditLog(
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 action=action,
                 actor_id=actor.id if actor else None,
                 actor_email=actor.email if actor else None,
@@ -223,10 +223,8 @@ def get_owned_or_shared_analysis(
     if anonymous_token:
         from app.db.models.content import Share
 
-        shares = db.execute(
-            select(Share).where(Share.analysis_id == analysis_id)
-        ).scalars().all()
-        now = datetime.now(timezone.utc)
+        shares = db.execute(select(Share).where(Share.analysis_id == analysis_id)).scalars().all()
+        now = datetime.now(UTC)
         for share in shares:
             if share.revoked_at is not None:
                 continue

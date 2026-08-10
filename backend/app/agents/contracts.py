@@ -313,15 +313,11 @@ def coerce_claim(claim: ClaimDraft) -> ClaimDraft:
     downgrades: list[str] = []
 
     if claim.claim_type in REQUIRES_CITATION and not claim.citations:
-        downgrades.append(
-            f"{claim.claim_type.value} → ai_hypothesis (no citation supplied)"
-        )
+        downgrades.append(f"{claim.claim_type.value} → ai_hypothesis (no citation supplied)")
         claim.claim_type = ClaimType.AI_HYPOTHESIS
 
     if claim.claim_type in REQUIRES_ENGINE and not claim.engine:
-        downgrades.append(
-            f"{claim.claim_type.value} → ai_hypothesis (no computation engine named)"
-        )
+        downgrades.append(f"{claim.claim_type.value} → ai_hypothesis (no computation engine named)")
         claim.claim_type = ClaimType.AI_HYPOTHESIS
 
     if claim.claim_type == ClaimType.SOURCE_TEXT and not claim.quoted_text:
@@ -371,7 +367,11 @@ def summarize_confidence(claims: list[ClaimDraft]) -> dict:
     for claim in claims:
         entry = by_type.setdefault(
             claim.claim_type.value,
-            {"count": 0, "mean_confidence": 0.0, "label": CLAIM_TYPE_PRESENTATION[claim.claim_type]["label"]},
+            {
+                "count": 0,
+                "mean_confidence": 0.0,
+                "label": CLAIM_TYPE_PRESENTATION[claim.claim_type]["label"],
+            },
         )
         entry["count"] += 1
         entry["mean_confidence"] += claim.confidence

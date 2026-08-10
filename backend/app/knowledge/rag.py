@@ -286,9 +286,7 @@ def corpus_stats(db: Session) -> dict:
 
     total = db.execute(select(func.count()).select_from(KnowledgeChunk)).scalar_one()
     by_kind = dict(
-        db.execute(
-            select(KnowledgeChunk.kind, func.count()).group_by(KnowledgeChunk.kind)
-        ).all()
+        db.execute(select(KnowledgeChunk.kind, func.count()).group_by(KnowledgeChunk.kind)).all()
     )
     by_tradition = dict(
         db.execute(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import func, select
@@ -47,12 +47,16 @@ def dashboard(db: DbSession, user: CurrentUser) -> dict:
         ).all()
     )
 
-    recent = db.execute(
-        select(Analysis)
-        .where(Analysis.owner_id == user.id)
-        .order_by(Analysis.created_at.desc())
-        .limit(5)
-    ).scalars().all()
+    recent = (
+        db.execute(
+            select(Analysis)
+            .where(Analysis.owner_id == user.id)
+            .order_by(Analysis.created_at.desc())
+            .limit(5)
+        )
+        .scalars()
+        .all()
+    )
 
     favorites = db.execute(
         select(func.count())
@@ -108,9 +112,13 @@ def dashboard(db: DbSession, user: CurrentUser) -> dict:
 
 @router.get("/projects", response_model=list[ProjectOut])
 def list_projects(db: DbSession, user: CurrentUser) -> list[ProjectOut]:
-    rows = db.execute(
-        select(Project).where(Project.owner_id == user.id).order_by(Project.created_at.desc())
-    ).scalars().all()
+    rows = (
+        db.execute(
+            select(Project).where(Project.owner_id == user.id).order_by(Project.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
     return [ProjectOut.model_validate(p) for p in rows]
 
 
@@ -138,11 +146,15 @@ def delete_project(project_id: str, db: DbSession, user: CurrentUser) -> Message
 
 @router.get("/collections", response_model=list[CollectionOut])
 def list_collections(db: DbSession, user: CurrentUser) -> list[CollectionOut]:
-    rows = db.execute(
-        select(Collection)
-        .where(Collection.owner_id == user.id)
-        .order_by(Collection.created_at.desc())
-    ).scalars().all()
+    rows = (
+        db.execute(
+            select(Collection)
+            .where(Collection.owner_id == user.id)
+            .order_by(Collection.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
     return [
         CollectionOut.model_validate({**c.__dict__, "analysis_count": len(c.analyses)})
         for c in rows
@@ -150,9 +162,7 @@ def list_collections(db: DbSession, user: CurrentUser) -> list[CollectionOut]:
 
 
 @router.post("/collections", response_model=CollectionOut, status_code=201)
-def create_collection(
-    payload: CollectionCreate, db: DbSession, user: CurrentUser
-) -> CollectionOut:
+def create_collection(payload: CollectionCreate, db: DbSession, user: CurrentUser) -> CollectionOut:
     collection = Collection(
         owner_id=user.id,
         name=payload.name,
@@ -260,7 +270,7 @@ def create_share(
 
     token = new_opaque_token()
     expires_at = (
-        datetime.now(timezone.utc) + timedelta(days=payload.expires_in_days)
+        datetime.now(UTC) + timedelta(days=payload.expires_in_days)
         if payload.expires_in_days
         else None
     )
@@ -274,8 +284,12 @@ def create_share(
     )
     db.add(share)
     record_audit(
-        db, AuditAction.ANALYSIS_SHARED, actor=user, target_type="analysis",
-        target_id=analysis.id, request=request,
+        db,
+        AuditAction.ANALYSIS_SHARED,
+        actor=user,
+        target_type="analysis",
+        target_id=analysis.id,
+        request=request,
         detail={"expires_in_days": payload.expires_in_days, "allow_export": payload.allow_export},
     )
     db.commit()
@@ -315,7 +329,7 @@ def revoke_share(share_id: str, db: DbSession, user: CurrentUser) -> Message:
     share = db.get(Share, share_id)
     if share is None or share.created_by_id != user.id:
         raise HTTPException(status_code=404, detail="No such share link.")
-    share.revoked_at = datetime.now(timezone.utc)
+    share.revoked_at = datetime.now(UTC)
     db.commit()
     return Message(message="Share link revoked. It stops working immediately.")
 
@@ -333,9 +347,7 @@ def list_notifications(
     stmt = select(Notification).where(Notification.user_id == user.id)
     if unread_only:
         stmt = stmt.where(Notification.read_at.is_(None))
-    rows = db.execute(
-        stmt.order_by(Notification.created_at.desc()).limit(limit)
-    ).scalars().all()
+    rows = db.execute(stmt.order_by(Notification.created_at.desc()).limit(limit)).scalars().all()
     return [NotificationOut.model_validate(n) for n in rows]
 
 
@@ -344,7 +356,7 @@ def mark_read(notification_id: str, db: DbSession, user: CurrentUser) -> Message
     notification = db.get(Notification, notification_id)
     if notification is None or notification.user_id != user.id:
         raise HTTPException(status_code=404, detail="No such notification.")
-    notification.read_at = datetime.now(timezone.utc)
+    notification.read_at = datetime.now(UTC)
     db.commit()
     return Message(message="Marked as read.")
 
@@ -354,7 +366,7 @@ def mark_all_read(db: DbSession, user: CurrentUser) -> Message:
     count = (
         db.query(Notification)
         .filter(Notification.user_id == user.id, Notification.read_at.is_(None))
-        .update({"read_at": datetime.now(timezone.utc)})
+        .update({"read_at": datetime.now(UTC)})
     )
     db.commit()
     return Message(message=f"Marked {count} notifications as read.")

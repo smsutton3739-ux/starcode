@@ -44,8 +44,13 @@ def export(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     record_audit(
-        db, AuditAction.ANALYSIS_EXPORTED, actor=user, target_type="analysis",
-        target_id=analysis_id, request=request, detail={"format": fmt},
+        db,
+        AuditAction.ANALYSIS_EXPORTED,
+        actor=user,
+        target_type="analysis",
+        target_id=analysis_id,
+        request=request,
+        detail={"format": fmt},
     )
     db.commit()
 

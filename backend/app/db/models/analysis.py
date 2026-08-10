@@ -26,8 +26,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, Timestamped, UUIDPrimaryKey
-from app.db.types import JSONBType
 from app.db.models.content import analysis_tags, collection_analyses
+from app.db.types import JSONBType
 
 if TYPE_CHECKING:
     from app.db.models.content import Collection, Document, Project, Share, Tag

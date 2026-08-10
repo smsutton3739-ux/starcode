@@ -61,10 +61,10 @@ class TestHebrew:
     @pytest.mark.parametrize(
         "hebrew,gregorian",
         [
-            ((5785, 7, 1), (2024, 10, 3)),   # Rosh Hashanah 5785
-            ((5784, 7, 1), (2023, 9, 16)),   # Rosh Hashanah 5784
+            ((5785, 7, 1), (2024, 10, 3)),  # Rosh Hashanah 5785
+            ((5784, 7, 1), (2023, 9, 16)),  # Rosh Hashanah 5784
             ((5784, 1, 15), (2024, 4, 23)),  # Passover 5784
-            ((5784, 5, 9), (2024, 8, 13)),   # Tisha B'Av 5784
+            ((5784, 5, 9), (2024, 8, 13)),  # Tisha B'Av 5784
         ],
     )
     def test_known_festival_dates(self, hebrew, gregorian):

@@ -57,7 +57,15 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "S", "C4"]
-ignore = ["E501", "B008", "S101"]
+ignore = [
+    "E501",   # line length is handled by the formatter
+    "B008",   # FastAPI's Depends() in defaults is the documented idiom
+    "S101",   # assert is how tests assert
+    # Enums deliberately inherit from `str` rather than using StrEnum: SQLAlchemy's
+    # Enum(native_enum=False) and Pydantic both rely on the member being a real str,
+    # and StrEnum changes __str__ in a way that would alter existing log output.
+    "UP042",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S", "B"]

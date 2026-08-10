@@ -46,16 +46,16 @@ def health(response: Response, db: DbSession) -> HealthResponse:
             "note": (
                 None
                 if isinstance(backend, _RedisBackend)
-                else "Redis is unavailable, so limits are enforced per worker rather than "
-                "globally."
+                else "Redis is unavailable, so limits are enforced per worker rather than globally."
             ),
         }
     except Exception as exc:  # noqa: BLE001
         checks["rate_limit"] = {"status": "error", "error": str(exc)[:200]}
 
     try:
-        from app.db.models.knowledge import KnowledgeChunk
         from sqlalchemy import func
+
+        from app.db.models.knowledge import KnowledgeChunk
 
         count = db.execute(select(func.count()).select_from(KnowledgeChunk)).scalar_one()
         checks["corpus"] = {

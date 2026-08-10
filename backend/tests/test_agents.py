@@ -135,8 +135,12 @@ class TestOfflineEngine:
         """A rule engine inventing 'traditional interpretations' is the exact failure the
         platform exists to prevent."""
         for task in (
-            "traditional_interpretation", "scholarly_views", "alternative_interpretations",
-            "historical_context", "symbolism", "translate",
+            "traditional_interpretation",
+            "scholarly_views",
+            "alternative_interpretations",
+            "historical_context",
+            "symbolism",
+            "translate",
         ):
             result = offline_engine.handle(task, "<text>anything</text>")
             assert result["offline_unavailable"] is True
@@ -228,12 +232,16 @@ class TestOrchestrator:
     def test_pipeline_has_eight_agents_in_dependency_order(self):
         agents = pipeline_description()
         assert [a["name"] for a in agents] == [
-            "language", "source_identification", "entities", "calendar",
-            "astronomy", "historical_context", "interpretation", "evidence",
+            "language",
+            "source_identification",
+            "entities",
+            "calendar",
+            "astronomy",
+            "historical_context",
+            "interpretation",
+            "evidence",
         ]
-        assert [a["progress_after"] for a in agents] == sorted(
-            a["progress_after"] for a in agents
-        )
+        assert [a["progress_after"] for a in agents] == sorted(a["progress_after"] for a in agents)
 
     def test_calendar_and_astronomy_are_deterministic(self):
         """These must not consult a model: their output is arithmetic."""
@@ -263,9 +271,7 @@ class TestOrchestrator:
 
         cited = {c.claim_id for c in analysis.references if c.claim_id}
         for claim in analysis.claims:
-            if claim.claim_type in (
-                ClaimType.VERIFIED_HISTORY, ClaimType.SCHOLARLY_INTERPRETATION
-            ):
+            if claim.claim_type in (ClaimType.VERIFIED_HISTORY, ClaimType.SCHOLARLY_INTERPRETATION):
                 assert claim.id in cited, f"uncited: {claim.statement[:60]}"
             if claim.claim_type == ClaimType.ASTRONOMICAL_CALCULATION:
                 assert claim.engine
@@ -281,9 +287,7 @@ class TestOrchestrator:
         assert {"historical_context", "interpretation"} <= skipped
 
         report = analysis.reports[0]
-        interpretive = next(
-            s for s in report.sections if s["key"] == "traditional_interpretations"
-        )
+        interpretive = next(s for s in report.sections if s["key"] == "traditional_interpretations")
         assert interpretive["is_empty"]
         assert "language model" in interpretive["empty_reason"]
 
@@ -292,18 +296,29 @@ class TestOrchestrator:
         run_analysis(db, analysis)
         keys = {s["key"] for s in analysis.reports[0].sections}
         assert {
-            "executive_summary", "original_text", "detected_language", "translation",
-            "source_identification", "historical_context", "astronomical_references",
-            "calendar_conversion", "timeline", "key_entities", "symbolism",
-            "traditional_interpretations", "scholarly_views", "alternative_interpretations",
-            "evidence", "confidence_ratings", "references", "further_reading",
+            "executive_summary",
+            "original_text",
+            "detected_language",
+            "translation",
+            "source_identification",
+            "historical_context",
+            "astronomical_references",
+            "calendar_conversion",
+            "timeline",
+            "key_entities",
+            "symbolism",
+            "traditional_interpretations",
+            "scholarly_views",
+            "alternative_interpretations",
+            "evidence",
+            "confidence_ratings",
+            "references",
+            "further_reading",
         } <= keys
 
     def test_astronomy_declines_to_correlate_without_a_date(self, db, analysis_factory):
         """Matching eclipse imagery to an arbitrary year manufactures a coincidence."""
-        analysis = analysis_factory(
-            "And the sun became black as sackcloth and the moon as blood."
-        )
+        analysis = analysis_factory("And the sun became black as sackcloth and the moon as blood.")
         run_analysis(db, analysis)
         statements = " ".join(c.statement for c in analysis.claims)
         assert "supplies no date" in statements

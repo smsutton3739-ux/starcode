@@ -57,9 +57,7 @@ class _InProcessBackend:
             # Opportunistic sweep so a long-running process does not accumulate keys
             # for every IP it has ever seen.
             if len(self._counts) > 10_000:
-                self._counts = {
-                    k: v for k, v in self._counts.items() if v[1] > now
-                }
+                self._counts = {k: v for k, v in self._counts.items() if v[1] > now}
             return count, existing_reset
 
 

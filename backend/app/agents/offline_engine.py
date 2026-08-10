@@ -99,8 +99,23 @@ _LATIN_PROFILES: dict[str, tuple[str, set[str]]] = {
 #: Early Modern English markers. Distinguishing KJV-register English from modern English
 #: matters: it is a strong signal about which translation, and therefore which source.
 _ARCHAIC_MARKERS = {
-    "thee", "thou", "thy", "thine", "ye", "hath", "doth", "saith", "unto", "shalt",
-    "wilt", "cometh", "behold", "verily", "whosoever", "thereof", "wherefore",
+    "thee",
+    "thou",
+    "thy",
+    "thine",
+    "ye",
+    "hath",
+    "doth",
+    "saith",
+    "unto",
+    "shalt",
+    "wilt",
+    "cometh",
+    "behold",
+    "verily",
+    "whosoever",
+    "thereof",
+    "wherefore",
 }
 
 
@@ -216,9 +231,7 @@ def extract_entities(text: str, _prompt: str = "") -> dict[str, Any]:
                 "attributes": dict(match.entry.attributes or {}),
             },
         )
-        entry["mentions"].append(
-            {"surface": match.surface, "start": match.start, "end": match.end}
-        )
+        entry["mentions"].append({"surface": match.surface, "start": match.start, "end": match.end})
 
     entities = []
     for entry in grouped.values():
@@ -323,13 +336,17 @@ def extract_dates(text: str, _prompt: str = "") -> dict[str, Any]:
             )
         elif item["kind"] == "hijri_year" and item["groups"]:
             entry.update(
-                resolvable=True, calendar="islamic",
-                calendar_year=int(item["groups"][0]), precision="year",
+                resolvable=True,
+                calendar="islamic",
+                calendar_year=int(item["groups"][0]),
+                precision="year",
             )
         elif item["kind"] == "anno_mundi" and item["groups"]:
             entry.update(
-                resolvable=True, calendar="hebrew",
-                calendar_year=int(item["groups"][0]), precision="year",
+                resolvable=True,
+                calendar="hebrew",
+                calendar_year=int(item["groups"][0]),
+                precision="year",
             )
         elif item["kind"] == "maya_long_count" and len(item["groups"]) == 5:
             entry.update(
@@ -343,7 +360,9 @@ def extract_dates(text: str, _prompt: str = "") -> dict[str, Any]:
             year_number = (
                 lexicon.ORDINAL_WORDS.get(str(ordinal).lower())
                 if item["kind"] == "regnal_year_spelled"
-                else int(ordinal) if ordinal and str(ordinal).isdigit() else None
+                else int(ordinal)
+                if ordinal and str(ordinal).isdigit()
+                else None
             )
             entry.update(
                 resolvable=False,
@@ -379,7 +398,9 @@ def extract_dates(text: str, _prompt: str = "") -> dict[str, Any]:
                 day=(
                     lexicon.ORDINAL_WORDS.get(str(item["groups"][0]).lower())
                     if item["kind"] == "spelled_day_month"
-                    else int(item["groups"][0]) if item["groups"][0].isdigit() else None
+                    else int(item["groups"][0])
+                    if item["groups"][0].isdigit()
+                    else None
                 ),
                 month_name=item["groups"][1] if len(item["groups"]) > 1 else None,
                 blocker="A day and month with no year cannot be placed on an absolute timeline.",
@@ -408,8 +429,15 @@ def extract_dates(text: str, _prompt: str = "") -> dict[str, Any]:
 def detect_astronomical(text: str, _prompt: str = "") -> dict[str, Any]:
     matches = lexicon.find_entities(text)
     astro_types = {
-        "astronomical_object", "planet", "star", "constellation", "comet",
-        "eclipse", "meteor_shower", "moon_phase", "zodiac_sign",
+        "astronomical_object",
+        "planet",
+        "star",
+        "constellation",
+        "comet",
+        "eclipse",
+        "meteor_shower",
+        "moon_phase",
+        "zodiac_sign",
     }
 
     references: list[dict] = []
@@ -452,9 +480,7 @@ def identify_source(text: str, prompt: str) -> dict[str, Any]:
     """Source identification runs on retrieval, which the orchestrator has already done;
     the candidates arrive in the prompt. The offline engine's job is to grade them."""
     candidates: list[dict] = []
-    for block in re.finditer(
-        r"<candidate>\s*(.*?)\s*</candidate>", prompt, re.DOTALL
-    ):
+    for block in re.finditer(r"<candidate>\s*(.*?)\s*</candidate>", prompt, re.DOTALL):
         body = block.group(1)
         title = re.search(r"title:\s*(.+)", body)
         score = re.search(r"score:\s*([\d.]+)", body)
@@ -543,5 +569,11 @@ def normalize_for_comparison(text: str) -> str:
     return unicodedata.normalize("NFKC", text).lower().strip()
 
 
-__all__ = ["handle", "detect_language", "extract_entities", "extract_dates",
-           "detect_astronomical", "identify_source"]
+__all__ = [
+    "handle",
+    "detect_language",
+    "extract_entities",
+    "extract_dates",
+    "detect_astronomical",
+    "identify_source",
+]

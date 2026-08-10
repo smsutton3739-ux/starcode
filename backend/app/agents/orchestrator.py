@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -88,7 +88,7 @@ class Orchestrator:
         provider = get_provider()
 
         analysis.status = AnalysisStatus.RUNNING
-        analysis.started_at = datetime.now(timezone.utc)
+        analysis.started_at = datetime.now(UTC)
         analysis.progress = 0.02
         analysis.current_stage = "starting"
         self.db.commit()
@@ -170,7 +170,7 @@ class Orchestrator:
 
         analysis.progress = 1.0
         analysis.current_stage = "complete"
-        analysis.completed_at = datetime.now(timezone.utc)
+        analysis.completed_at = datetime.now(UTC)
         analysis.duration_ms = int((time.perf_counter() - started) * 1000)
         analysis.token_usage = {
             "input_tokens": sum(r.input_tokens or 0 for r in results),
@@ -237,7 +237,7 @@ class Orchestrator:
                 input_tokens=result.input_tokens,
                 output_tokens=result.output_tokens,
                 duration_ms=result.duration_ms,
-                finished_at=datetime.now(timezone.utc),
+                finished_at=datetime.now(UTC),
             )
         )
 
@@ -314,9 +314,16 @@ class Orchestrator:
                         for k, v in entity.items()
                         if k
                         not in {
-                            "name", "entity_type", "aliases", "description", "mentions",
-                            "extraction_confidence", "identification_confidence",
-                            "mention_count", "earliest_year", "latest_year",
+                            "name",
+                            "entity_type",
+                            "aliases",
+                            "description",
+                            "mentions",
+                            "extraction_confidence",
+                            "identification_confidence",
+                            "mention_count",
+                            "earliest_year",
+                            "latest_year",
                         }
                     },
                 )

@@ -8,7 +8,6 @@ routing it through a model would only add a way for it to be wrong.
 from __future__ import annotations
 
 import json
-from typing import Any
 
 from app.agents.base import SHARED_SYSTEM_RULES, AgentResult, AnalysisContext, BaseAgent
 from app.agents.contracts import CitationDraft, ClaimType, Section
@@ -60,15 +59,19 @@ Identify the language and script of the text below.
 </text>
 
 Reply with JSON:
-{_json_shape({
-    "language_code": "ISO 639 code, or 'und'",
-    "language_name": "including period, e.g. 'Koine Greek'",
-    "script": "script name",
-    "confidence": 0.0,
-    "needs_translation": True,
-    "register": "register or dialect notes, or null",
-    "reasoning": "what features led to this identification",
-})}""",
+{
+                _json_shape(
+                    {
+                        "language_code": "ISO 639 code, or 'und'",
+                        "language_name": "including period, e.g. 'Koine Greek'",
+                        "script": "script name",
+                        "confidence": 0.0,
+                        "needs_translation": True,
+                        "register": "register or dialect notes, or null",
+                        "reasoning": "what features led to this identification",
+                    }
+                )
+            }""",
         )
 
         if self.unavailable(detection):
@@ -127,12 +130,18 @@ Translate the following {language_name} text into clear modern English.
 </text>
 
 Reply with JSON:
-{_json_shape({
-    "translated_text": "the English translation",
-    "translation_notes": ["places where the source is ambiguous and you had to choose"],
-    "confidence": 0.0,
-    "reasoning": "approach taken and any difficulties",
-})}""",
+{
+                    _json_shape(
+                        {
+                            "translated_text": "the English translation",
+                            "translation_notes": [
+                                "places where the source is ambiguous and you had to choose"
+                            ],
+                            "confidence": 0.0,
+                            "reasoning": "approach taken and any difficulties",
+                        }
+                    )
+                }""",
             )
 
             if self.unavailable(translation):
@@ -268,13 +277,20 @@ Grade these candidate sources against the submitted text.
 {candidate_blocks}
 
 Reply with JSON:
-{_json_shape({
-    "identified": False,
-    "best_match": {"title": "", "relationship": "quotation | allusion | same work | unrelated"},
-    "confidence": 0.0,
-    "reasoning": "why this candidate does or does not fit",
-    "alternative_candidates": ["other plausible sources, if any"],
-})}""",
+{
+                _json_shape(
+                    {
+                        "identified": False,
+                        "best_match": {
+                            "title": "",
+                            "relationship": "quotation | allusion | same work | unrelated",
+                        },
+                        "confidence": 0.0,
+                        "reasoning": "why this candidate does or does not fit",
+                        "alternative_candidates": ["other plausible sources, if any"],
+                    }
+                )
+            }""",
         )
 
         best = hits[0]
@@ -433,24 +449,30 @@ Extract every entity from the text.
 </text>
 
 Reply with JSON:
-{_json_shape({
-    "entities": [{
-        "name": "canonical name",
-        "entity_type": "person | place | empire | nation | religion | culture | deity | "
-                       "date | calendar | astronomical_object | constellation | planet | "
-                       "star | comet | eclipse | meteor_shower | moon_phase | zodiac_sign | "
-                       "sacred_number | symbol | prophecy | prediction | historical_event | "
-                       "artifact | text_work | other",
-        "description": "one or two sentences",
-        "aliases": [],
-        "extraction_confidence": 0.0,
-        "identification_confidence": 0.0,
-        "earliest_year": None,
-        "latest_year": None,
-        "ambiguity": "what else this could refer to, or null",
-    }],
-    "reasoning": "how you identified these",
-})}""",
+{
+                _json_shape(
+                    {
+                        "entities": [
+                            {
+                                "name": "canonical name",
+                                "entity_type": "person | place | empire | nation | religion | culture | deity | "
+                                "date | calendar | astronomical_object | constellation | planet | "
+                                "star | comet | eclipse | meteor_shower | moon_phase | zodiac_sign | "
+                                "sacred_number | symbol | prophecy | prediction | historical_event | "
+                                "artifact | text_work | other",
+                                "description": "one or two sentences",
+                                "aliases": [],
+                                "extraction_confidence": 0.0,
+                                "identification_confidence": 0.0,
+                                "earliest_year": None,
+                                "latest_year": None,
+                                "ambiguity": "what else this could refer to, or null",
+                            }
+                        ],
+                        "reasoning": "how you identified these",
+                    }
+                )
+            }""",
         )
         result.provider, result.model = response.provider, response.model
 
@@ -573,7 +595,9 @@ class CalendarAgent(BaseAgent):
         """
         from app.agents import offline_engine
 
-        result = AgentResult(agent_name=self.name, provider="deterministic", model="starcode-calendars/1.0")
+        result = AgentResult(
+            agent_name=self.name, provider="deterministic", model="starcode-calendars/1.0"
+        )
         found = offline_engine.extract_dates(ctx.working_text)
         expressions = found["date_expressions"]
         ctx.dates = found
@@ -585,9 +609,7 @@ class CalendarAgent(BaseAgent):
                     self.make_claim(
                         section=Section.CALENDAR_CONVERSION,
                         claim_type=ClaimType.UNCERTAIN,
-                        statement=(
-                            f"“{item['surface']}” cannot be converted to a Gregorian date."
-                        ),
+                        statement=(f"“{item['surface']}” cannot be converted to a Gregorian date."),
                         reasoning=item.get("blocker"),
                         confidence=0.9,
                         confidence_basis=(
@@ -604,7 +626,9 @@ class CalendarAgent(BaseAgent):
             try:
                 payload = self._convert(item)
             except Exception as exc:  # noqa: BLE001
-                logger.warning("calendar.conversion_failed", surface=item["surface"], error=str(exc))
+                logger.warning(
+                    "calendar.conversion_failed", surface=item["surface"], error=str(exc)
+                )
                 continue
             if payload is None:
                 continue
@@ -620,7 +644,8 @@ class CalendarAgent(BaseAgent):
                     statement=f"“{item['surface']}” converts to {gregorian}.",
                     reasoning=payload.get("reasoning"),
                     confidence=payload["confidence"],
-                    confidence_basis=caveat or "Exact arithmetic conversion via Rata Die day count.",
+                    confidence_basis=caveat
+                    or "Exact arithmetic conversion via Rata Die day count.",
                     engine="starcode-calendars/1.0",
                     algorithm_reference=(
                         "Dershowitz & Reingold, Calendrical Calculations (4th ed., CUP, 2018)"
@@ -677,9 +702,7 @@ class CalendarAgent(BaseAgent):
                 "input": item["surface"],
                 "source_calendar": "julian",
                 "gregorian_label": (
-                    f"{span['gregorian_start']} – {span['gregorian_end']}"
-                    if span
-                    else str(year)
+                    f"{span['gregorian_start']} – {span['gregorian_end']}" if span else str(year)
                 ),
                 "astronomical_year": year,
                 "all_systems": payload["conversions"],
@@ -772,8 +795,7 @@ class AstronomyAgent(BaseAgent):
                     section=Section.ASTRONOMICAL_REFERENCES,
                     claim_type=ClaimType.SOURCE_TEXT,
                     statement=(
-                        f"The text refers to {reference['term']} "
-                        f"(as “{reference['surface']}”)."
+                        f"The text refers to {reference['term']} (as “{reference['surface']}”)."
                     ),
                     reasoning=reference.get("description") or None,
                     quoted_text=reference["surface"],
@@ -839,7 +861,9 @@ class AstronomyAgent(BaseAgent):
                         ),
                         confidence=0.75,
                         confidence_basis=f"Evidence type: {comet['evidence']}.",
-                        engine=astro.ENGINE_NAME if comet["evidence"] != "historical_record" else None,
+                        engine=astro.ENGINE_NAME
+                        if comet["evidence"] != "historical_record"
+                        else None,
                         algorithm_reference=comet["source"],
                         citations=[
                             CitationDraft(
@@ -901,17 +925,14 @@ class AstronomyAgent(BaseAgent):
         result.data["references"] = references
         ctx.astronomy["computed"] = computed
 
-        result.reasoning_summary = (
-            f"Detected {len(references)} astronomical references. "
-            + (
-                f"Computed the sky for {len(computed)} candidate year(s) derived from dates "
-                "in the text, and listed eclipses and comets in those windows as "
-                "calculations, keeping any correlation with the text explicitly separate."
-                if computed
-                else "No datable year was recoverable from the text, so no ephemeris "
-                "correlation was attempted — matching imagery to an arbitrary date would "
-                "produce a coincidence, not a finding."
-            )
+        result.reasoning_summary = f"Detected {len(references)} astronomical references. " + (
+            f"Computed the sky for {len(computed)} candidate year(s) derived from dates "
+            "in the text, and listed eclipses and comets in those windows as "
+            "calculations, keeping any correlation with the text explicitly separate."
+            if computed
+            else "No datable year was recoverable from the text, so no ephemeris "
+            "correlation was attempted — matching imagery to an arbitrary date would "
+            "produce a coincidence, not a finding."
         )
         return result
 
@@ -960,9 +981,7 @@ X, though Y is argued on the grounds of Z" to a flat assertion.
             f"- {hit['title']}: {hit['content'][:300]} [{hit['citation'] or 'no citation'}]"
             for hit in ctx.retrieved[:5]
         )
-        entity_summary = ", ".join(
-            f"{e['name']} ({e['entity_type']})" for e in ctx.entities[:25]
-        )
+        entity_summary = ", ".join(f"{e['name']} ({e['entity_type']})" for e in ctx.entities[:25])
 
         data, response = self.ask(
             self.SYSTEM,
@@ -979,28 +998,44 @@ Reference corpus material that may be relevant:
 {corpus_context or "none retrieved"}
 
 Reply with JSON:
-{_json_shape({
-    "period": "the historical period, with a date range",
-    "setting": "political and religious situation",
-    "audience": "who this was written for",
-    "context_claims": [{
-        "statement": "",
-        "claim_type": "verified_history | scholarly_interpretation | ai_hypothesis | uncertain",
-        "confidence": 0.0,
-        "reasoning": "",
-        "citation": "a real, checkable citation, or null if you have none",
-    }],
-    "disputes": [{"question": "", "positions": [{"view": "", "held_by": "", "basis": ""}]}],
-    "timeline": [{"year": 0, "era": "BCE | CE", "event": "", "certainty": "attested | approximate | disputed"}],
-    "reasoning": "how you reached this",
-})}""",
+{
+                _json_shape(
+                    {
+                        "period": "the historical period, with a date range",
+                        "setting": "political and religious situation",
+                        "audience": "who this was written for",
+                        "context_claims": [
+                            {
+                                "statement": "",
+                                "claim_type": "verified_history | scholarly_interpretation | ai_hypothesis | uncertain",
+                                "confidence": 0.0,
+                                "reasoning": "",
+                                "citation": "a real, checkable citation, or null if you have none",
+                            }
+                        ],
+                        "disputes": [
+                            {
+                                "question": "",
+                                "positions": [{"view": "", "held_by": "", "basis": ""}],
+                            }
+                        ],
+                        "timeline": [
+                            {
+                                "year": 0,
+                                "era": "BCE | CE",
+                                "event": "",
+                                "certainty": "attested | approximate | disputed",
+                            }
+                        ],
+                        "reasoning": "how you reached this",
+                    }
+                )
+            }""",
         )
         result.provider, result.model = response.provider, response.model
 
         if self.unavailable(data):
-            return self.offline_result(
-                data, "Historical context could not be produced."
-            )
+            return self.offline_result(data, "Historical context could not be produced.")
 
         for item in data.get("context_claims", [])[:15]:
             citation = item.get("citation")
@@ -1114,23 +1149,43 @@ Analyse how this text has been and can be interpreted.
 {ctx.excerpt(8000)}
 </text>
 
-Identified source: {ctx.source_identification.get('title', 'not identified')}
-Historical period: {ctx.history.get('period', 'not established')}
+Identified source: {ctx.source_identification.get("title", "not identified")}
+Historical period: {ctx.history.get("period", "not established")}
 
 Reply with JSON:
-{_json_shape({
-    "traditional": [{"tradition": "", "interpretation": "", "period": "", "confidence": 0.0}],
-    "scholarly": [{"position": "", "argued_by": "", "basis": "", "citation": "", "confidence": 0.0}],
-    "alternative": [{"reading": "", "supporting": "", "against": "", "confidence": 0.0}],
-    "symbolism": [{"symbol": "", "meanings": [{"meaning": "", "tradition": ""}]}],
-    "predictive_claims": [{
-        "claim": "how this text is said to predict something",
-        "held_by": "who reads it this way",
-        "requires": "what must be true for this reading to work",
-        "assessment": "whether those conditions hold, stated neutrally",
-    }],
-    "reasoning": "",
-})}""",
+{
+                _json_shape(
+                    {
+                        "traditional": [
+                            {"tradition": "", "interpretation": "", "period": "", "confidence": 0.0}
+                        ],
+                        "scholarly": [
+                            {
+                                "position": "",
+                                "argued_by": "",
+                                "basis": "",
+                                "citation": "",
+                                "confidence": 0.0,
+                            }
+                        ],
+                        "alternative": [
+                            {"reading": "", "supporting": "", "against": "", "confidence": 0.0}
+                        ],
+                        "symbolism": [
+                            {"symbol": "", "meanings": [{"meaning": "", "tradition": ""}]}
+                        ],
+                        "predictive_claims": [
+                            {
+                                "claim": "how this text is said to predict something",
+                                "held_by": "who reads it this way",
+                                "requires": "what must be true for this reading to work",
+                                "assessment": "whether those conditions hold, stated neutrally",
+                            }
+                        ],
+                        "reasoning": "",
+                    }
+                )
+            }""",
         )
         result.provider, result.model = response.provider, response.model
 
@@ -1171,9 +1226,7 @@ Reply with JSON:
                     confidence=float(item.get("confidence") or 0.5),
                     confidence_basis="Scholarly position as reported by the interpretation agent.",
                     citations=(
-                        [CitationDraft(citation_text=citation, verified=False)]
-                        if citation
-                        else []
+                        [CitationDraft(citation_text=citation, verified=False)] if citation else []
                     ),
                 )
             )
@@ -1287,14 +1340,28 @@ Claims:
 {chr(10).join(summary_lines) or "none"}
 
 Reply with JSON:
-{_json_shape({
-    "assessment": "overall, in two or three sentences",
-    "strongest_evidence": [{"claim": "", "why": ""}],
-    "weakest_points": [{"claim": "", "why": "", "suggested_type": "the claim_type it should have"}],
-    "what_would_change_this": ["evidence that would materially alter the conclusions"],
-    "overconfidence_flags": ["claims stated more firmly than their support warrants"],
-    "reasoning": "",
-})}""",
+{
+                _json_shape(
+                    {
+                        "assessment": "overall, in two or three sentences",
+                        "strongest_evidence": [{"claim": "", "why": ""}],
+                        "weakest_points": [
+                            {
+                                "claim": "",
+                                "why": "",
+                                "suggested_type": "the claim_type it should have",
+                            }
+                        ],
+                        "what_would_change_this": [
+                            "evidence that would materially alter the conclusions"
+                        ],
+                        "overconfidence_flags": [
+                            "claims stated more firmly than their support warrants"
+                        ],
+                        "reasoning": "",
+                    }
+                )
+            }""",
         )
         result.provider, result.model = response.provider, response.model
 

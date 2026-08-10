@@ -43,9 +43,7 @@ def search(payload: SearchRequest, db: DbSession, user: OptionalUser) -> SearchR
                 by_id = {
                     a.id: a
                     for a in db.execute(
-                        select(Analysis).where(
-                            Analysis.id.in_([sid for sid, _ in scored])
-                        )
+                        select(Analysis).where(Analysis.id.in_([sid for sid, _ in scored]))
                     ).scalars()
                 }
                 for analysis_id, score in scored:
@@ -65,18 +63,22 @@ def search(payload: SearchRequest, db: DbSession, user: OptionalUser) -> SearchR
 
             if payload.mode in ("keyword", "hybrid"):
                 pattern = f"%{payload.query}%"
-                rows = db.execute(
-                    select(Analysis)
-                    .where(
-                        Analysis.owner_id == user.id,
-                        or_(
-                            Analysis.title.ilike(pattern),
-                            Analysis.confidence_rationale.ilike(pattern),
-                        ),
+                rows = (
+                    db.execute(
+                        select(Analysis)
+                        .where(
+                            Analysis.owner_id == user.id,
+                            or_(
+                                Analysis.title.ilike(pattern),
+                                Analysis.confidence_rationale.ilike(pattern),
+                            ),
+                        )
+                        .order_by(Analysis.created_at.desc())
+                        .limit(payload.limit)
                     )
-                    .order_by(Analysis.created_at.desc())
-                    .limit(payload.limit)
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
                 seen = {h.id for h in hits}
                 for analysis in rows:
                     if analysis.id in seen:
@@ -129,12 +131,16 @@ def search(payload: SearchRequest, db: DbSession, user: OptionalUser) -> SearchR
 
 @router.get("/history")
 def history(db: DbSession, user: CurrentUser, limit: int = Query(20, ge=1, le=100)) -> dict:
-    rows = db.execute(
-        select(SearchHistory)
-        .where(SearchHistory.user_id == user.id)
-        .order_by(SearchHistory.created_at.desc())
-        .limit(limit)
-    ).scalars().all()
+    rows = (
+        db.execute(
+            select(SearchHistory)
+            .where(SearchHistory.user_id == user.id)
+            .order_by(SearchHistory.created_at.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -151,9 +157,7 @@ def history(db: DbSession, user: CurrentUser, limit: int = Query(20, ge=1, le=10
 
 @router.delete("/history")
 def clear_history(db: DbSession, user: CurrentUser) -> dict:
-    deleted = (
-        db.query(SearchHistory).filter(SearchHistory.user_id == user.id).delete()
-    )
+    deleted = db.query(SearchHistory).filter(SearchHistory.user_id == user.id).delete()
     db.commit()
     return {"message": f"Cleared {deleted} search history entries."}
 

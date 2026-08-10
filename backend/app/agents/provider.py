@@ -174,9 +174,7 @@ class AnthropicProvider:
                 system=system,
                 messages=messages,
                 max_tokens=max_tokens or settings.AI_MAX_TOKENS,
-                temperature=(
-                    temperature if temperature is not None else settings.AI_TEMPERATURE
-                ),
+                temperature=(temperature if temperature is not None else settings.AI_TEMPERATURE),
             )
         except self._anthropic.APIStatusError as exc:
             # 4xx other than 429 are our fault and will not fix themselves on retry.

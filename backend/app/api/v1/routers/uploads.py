@@ -44,13 +44,17 @@ def upload_file(
 
     # Same file from the same owner: reuse rather than re-OCR. OCR is the expensive step
     # and re-running it would produce the same result at real cost.
-    existing = db.execute(
-        select(Upload).where(
-            Upload.sha256 == sha256,
-            Upload.owner_id == (user.id if user else None),
-            Upload.status == UploadStatus.READY,
+    existing = (
+        db.execute(
+            select(Upload).where(
+                Upload.sha256 == sha256,
+                Upload.owner_id == (user.id if user else None),
+                Upload.status == UploadStatus.READY,
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
 
     if existing is not None:
         document = existing.documents[0] if existing.documents else None
@@ -85,8 +89,13 @@ def upload_file(
         upload.status = UploadStatus.REJECTED
         upload.rejection_reason = str(exc)[:500]
         record_audit(
-            db, AuditAction.UPLOAD_REJECTED, actor=user, target_type="upload",
-            target_id=upload.id, outcome="rejected", request=request,
+            db,
+            AuditAction.UPLOAD_REJECTED,
+            actor=user,
+            target_type="upload",
+            target_id=upload.id,
+            outcome="rejected",
+            request=request,
             detail={"filename": filename, "reason": str(exc)[:300]},
         )
         db.commit()
@@ -98,13 +107,15 @@ def upload_file(
     upload.file_metadata = extraction.metadata
     upload.status = UploadStatus.READY
 
-    document = analysis_service.create_document(
-        db, extraction, owner=user, upload_id=upload.id
-    )
+    document = analysis_service.create_document(db, extraction, owner=user, upload_id=upload.id)
 
     record_audit(
-        db, AuditAction.UPLOAD_RECEIVED, actor=user, target_type="upload",
-        target_id=upload.id, request=request,
+        db,
+        AuditAction.UPLOAD_RECEIVED,
+        actor=user,
+        target_type="upload",
+        target_id=upload.id,
+        request=request,
         detail={
             "filename": filename,
             "mime": extraction.mime_type,
@@ -144,12 +155,15 @@ def ingest_url(
     except IngestError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    document = analysis_service.create_document(
-        db, extraction, owner=user, source_url=payload.url
-    )
+    document = analysis_service.create_document(db, extraction, owner=user, source_url=payload.url)
     record_audit(
-        db, AuditAction.URL_FETCHED, actor=user, target_type="document",
-        target_id=document.id, request=request, detail={"url": payload.url},
+        db,
+        AuditAction.URL_FETCHED,
+        actor=user,
+        target_type="document",
+        target_id=document.id,
+        request=request,
+        detail={"url": payload.url},
     )
     db.commit()
 
@@ -175,7 +189,15 @@ def limits() -> dict:
         "max_text_characters": settings.MAX_TEXT_CHARS,
         "accepted_mime_types": sorted(settings.allowed_upload_mime),
         "accepted_extensions": [
-            ".txt", ".md", ".pdf", ".docx", ".png", ".jpg", ".jpeg", ".tiff", ".webp",
+            ".txt",
+            ".md",
+            ".pdf",
+            ".docx",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".tiff",
+            ".webp",
         ],
         "ocr_languages": settings.OCR_LANGUAGES,
         "notes": [

@@ -157,8 +157,19 @@ def rd_to_julian(rd: int) -> tuple[int, int, int]:
 HEBREW_EPOCH = julian_to_rd(-3760, 10, 7)
 
 HEBREW_MONTH_NAMES = [
-    "Nisan", "Iyyar", "Sivan", "Tammuz", "Av", "Elul", "Tishri",
-    "Marheshvan", "Kislev", "Tevet", "Shevat", "Adar", "Adar II",
+    "Nisan",
+    "Iyyar",
+    "Sivan",
+    "Tammuz",
+    "Av",
+    "Elul",
+    "Tishri",
+    "Marheshvan",
+    "Kislev",
+    "Tevet",
+    "Shevat",
+    "Adar",
+    "Adar II",
 ]
 
 
@@ -268,9 +279,18 @@ def hebrew_month_name(year: int, month: int) -> str:
 ISLAMIC_EPOCH = julian_to_rd(622, 7, 16)
 
 ISLAMIC_MONTH_NAMES = [
-    "Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani", "Jumada al-awwal",
-    "Jumada al-thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal",
-    "Dhu al-Qi'dah", "Dhu al-Hijjah",
+    "Muharram",
+    "Safar",
+    "Rabi' al-awwal",
+    "Rabi' al-thani",
+    "Jumada al-awwal",
+    "Jumada al-thani",
+    "Rajab",
+    "Sha'ban",
+    "Ramadan",
+    "Shawwal",
+    "Dhu al-Qi'dah",
+    "Dhu al-Hijjah",
 ]
 
 
@@ -302,8 +322,19 @@ def rd_to_islamic(rd: int) -> tuple[int, int, int]:
 EGYPTIAN_EPOCH = rd_from_jdn(1448638)  # 26 February 747 BCE (Julian)
 
 EGYPTIAN_MONTH_NAMES = [
-    "Thoth", "Phaophi", "Athyr", "Choiak", "Tybi", "Mechir", "Phamenoth",
-    "Pharmuthi", "Pachon", "Payni", "Epiphi", "Mesore", "Epagomenae",
+    "Thoth",
+    "Phaophi",
+    "Athyr",
+    "Choiak",
+    "Tybi",
+    "Mechir",
+    "Phamenoth",
+    "Pharmuthi",
+    "Pachon",
+    "Payni",
+    "Epiphi",
+    "Mesore",
+    "Epagomenae",
 ]
 
 
@@ -329,13 +360,48 @@ MAYAN_EPOCH = rd_from_jdn(584283)
 MAYAN_EPOCH_ALT_584285 = rd_from_jdn(584285)
 
 MAYAN_HAAB_MONTHS = [
-    "Pop", "Uo", "Zip", "Zotz", "Tzec", "Xul", "Yaxkin", "Mol", "Chen", "Yax",
-    "Zac", "Ceh", "Mac", "Kankin", "Muan", "Pax", "Kayab", "Cumku", "Uayeb",
+    "Pop",
+    "Uo",
+    "Zip",
+    "Zotz",
+    "Tzec",
+    "Xul",
+    "Yaxkin",
+    "Mol",
+    "Chen",
+    "Yax",
+    "Zac",
+    "Ceh",
+    "Mac",
+    "Kankin",
+    "Muan",
+    "Pax",
+    "Kayab",
+    "Cumku",
+    "Uayeb",
 ]
 
 MAYAN_TZOLKIN_NAMES = [
-    "Imix", "Ik", "Akbal", "Kan", "Chicchan", "Cimi", "Manik", "Lamat", "Muluc",
-    "Oc", "Chuen", "Eb", "Ben", "Ix", "Men", "Cib", "Caban", "Etznab", "Cauac", "Ahau",
+    "Imix",
+    "Ik",
+    "Akbal",
+    "Kan",
+    "Chicchan",
+    "Cimi",
+    "Manik",
+    "Lamat",
+    "Muluc",
+    "Oc",
+    "Chuen",
+    "Eb",
+    "Ben",
+    "Ix",
+    "Men",
+    "Cib",
+    "Caban",
+    "Etznab",
+    "Cauac",
+    "Ahau",
 ]
 
 # 0.0.0.0.0 fell on 8 Cumku (day 348 of the haab) and 4 Ahau (day 159 of the tzolkin).
@@ -377,12 +443,34 @@ COPTIC_EPOCH = julian_to_rd(284, 8, 29)
 ETHIOPIC_EPOCH = julian_to_rd(8, 8, 29)
 
 COPTIC_MONTH_NAMES = [
-    "Thoout", "Paope", "Athor", "Koiak", "Tobe", "Meshir", "Paremotep",
-    "Parmoute", "Pashons", "Paone", "Epep", "Mesore", "Epagomenae",
+    "Thoout",
+    "Paope",
+    "Athor",
+    "Koiak",
+    "Tobe",
+    "Meshir",
+    "Paremotep",
+    "Parmoute",
+    "Pashons",
+    "Paone",
+    "Epep",
+    "Mesore",
+    "Epagomenae",
 ]
 ETHIOPIC_MONTH_NAMES = [
-    "Maskaram", "Teqemt", "Hedar", "Takhsas", "Ter", "Yakatit", "Magabit",
-    "Miyazya", "Genbot", "Sane", "Hamle", "Nahase", "Paguemen",
+    "Maskaram",
+    "Teqemt",
+    "Hedar",
+    "Takhsas",
+    "Ter",
+    "Yakatit",
+    "Magabit",
+    "Miyazya",
+    "Genbot",
+    "Sane",
+    "Hamle",
+    "Nahase",
+    "Paguemen",
 ]
 
 
@@ -420,8 +508,18 @@ def rd_to_ethiopic(rd: int) -> tuple[int, int, int]:
 PERSIAN_EPOCH = julian_to_rd(622, 3, 19)
 
 PERSIAN_MONTH_NAMES = [
-    "Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar",
-    "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand",
+    "Farvardin",
+    "Ordibehesht",
+    "Khordad",
+    "Tir",
+    "Mordad",
+    "Shahrivar",
+    "Mehr",
+    "Aban",
+    "Azar",
+    "Dey",
+    "Bahman",
+    "Esfand",
 ]
 
 
@@ -469,11 +567,32 @@ def _persian_year_from_rd(rd: int) -> int:
 
 HEAVENLY_STEMS = ["Jia", "Yi", "Bing", "Ding", "Wu", "Ji", "Geng", "Xin", "Ren", "Gui"]
 EARTHLY_BRANCHES = [
-    "Zi", "Chou", "Yin", "Mao", "Chen", "Si", "Wu", "Wei", "Shen", "You", "Xu", "Hai",
+    "Zi",
+    "Chou",
+    "Yin",
+    "Mao",
+    "Chen",
+    "Si",
+    "Wu",
+    "Wei",
+    "Shen",
+    "You",
+    "Xu",
+    "Hai",
 ]
 CHINESE_ZODIAC = [
-    "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat",
-    "Monkey", "Rooster", "Dog", "Pig",
+    "Rat",
+    "Ox",
+    "Tiger",
+    "Rabbit",
+    "Dragon",
+    "Snake",
+    "Horse",
+    "Goat",
+    "Monkey",
+    "Rooster",
+    "Dog",
+    "Pig",
 ]
 
 
@@ -516,7 +635,9 @@ def era_conversions(astronomical_year: int) -> dict[str, str]:
 
     seleucid = astronomical_year - 311  # autumn 312 BCE Babylonian / 311 Macedonian
     if seleucid > 0:
-        out["seleucid"] = f"AG {seleucid} (Seleucid era; Babylonian and Macedonian reckonings differ by ~6 months)"
+        out["seleucid"] = (
+            f"AG {seleucid} (Seleucid era; Babylonian and Macedonian reckonings differ by ~6 months)"
+        )
 
     diocletian = astronomical_year - 283
     if diocletian > 0:
@@ -577,8 +698,18 @@ def format_gregorian(year: int, month: int, day: int) -> str:
 
 
 _MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

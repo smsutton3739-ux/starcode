@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -48,12 +48,16 @@ def create_document(
 
     # Re-analysing an identical text is a legitimate action (models and corpora change),
     # so documents are deduplicated but analyses are not.
-    existing = db.execute(
-        select(Document).where(
-            Document.content_hash == content_hash,
-            Document.owner_id == (owner.id if owner else None),
+    existing = (
+        db.execute(
+            select(Document).where(
+                Document.content_hash == content_hash,
+                Document.owner_id == (owner.id if owner else None),
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     if existing is not None:
         return existing
 
@@ -158,7 +162,7 @@ def execute_job(job_id: str) -> None:
             return
         job.status = JobStatus.RUNNING
         job.attempts += 1
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         db.commit()
 
         analysis_id = job.payload.get("analysis_id")
@@ -166,7 +170,7 @@ def execute_job(job_id: str) -> None:
         if analysis is None:
             job.status = JobStatus.FAILED
             job.last_error = f"Analysis {analysis_id} no longer exists."
-            job.finished_at = datetime.now(timezone.utc)
+            job.finished_at = datetime.now(UTC)
             return
 
         try:
@@ -189,9 +193,9 @@ def execute_job(job_id: str) -> None:
                     "The analysis could not be completed. The error has been logged; "
                     "resubmitting sometimes succeeds if the cause was transient."
                 )
-                analysis.completed_at = datetime.now(timezone.utc)
+                analysis.completed_at = datetime.now(UTC)
         finally:
-            job.finished_at = datetime.now(timezone.utc)
+            job.finished_at = datetime.now(UTC)
 
 
 def run_in_background(job_id: str) -> None:
@@ -202,7 +206,9 @@ def run_in_background(job_id: str) -> None:
     several): jobs live in the database, so the two approaches interoperate and nothing
     is lost if the web process restarts mid-analysis — the job is picked up again.
     """
-    thread = threading.Thread(target=execute_job, args=(job_id,), daemon=True, name=f"job-{job_id[:8]}")
+    thread = threading.Thread(
+        target=execute_job, args=(job_id,), daemon=True, name=f"job-{job_id[:8]}"
+    )
     thread.start()
 
 

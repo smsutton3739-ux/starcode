@@ -7,8 +7,8 @@ without its caveats is the most common way ancient chronology gets misrepresente
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from app.calendars import core
 from app.calendars.core import CalendarDate, format_gregorian, weekday_from_rd

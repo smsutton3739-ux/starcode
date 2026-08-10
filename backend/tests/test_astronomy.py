@@ -36,7 +36,7 @@ class TestTimescales:
     @pytest.mark.parametrize(
         "year,expected,tolerance",
         [
-            (2000, 63.87, 0.5),   # Espenak & Meeus
+            (2000, 63.87, 0.5),  # Espenak & Meeus
             (1900, -2.8, 0.5),
             (1800, 13.7, 1.0),
             (-500, 17190, 100),
@@ -72,8 +72,13 @@ class TestEphemeris:
     def test_planet_positions_at_j2000(self):
         """Cross-checked against published ephemerides for 2000 January 1."""
         expected = {
-            "Mercury": 271.9, "Venus": 241.6, "Mars": 328.0,
-            "Jupiter": 25.4, "Saturn": 40.0, "Uranus": 314.9, "Neptune": 303.2,
+            "Mercury": 271.9,
+            "Venus": 241.6,
+            "Mars": 328.0,
+            "Jupiter": 25.4,
+            "Saturn": 40.0,
+            "Uranus": 314.9,
+            "Neptune": 303.2,
         }
         for body, longitude in expected.items():
             assert planet_position(body, 2451545.0).longitude == pytest.approx(
@@ -187,9 +192,7 @@ class TestConjunctions:
         assert len(in_7bce) == 3
         for conjunction in in_7bce:
             assert conjunction.details["separation_degrees"] < 1.5
-            assert catalogs.ecliptic_constellation(
-                conjunction.details["longitude"]
-            ) == "Pisces"
+            assert catalogs.ecliptic_constellation(conjunction.details["longitude"]) == "Pisces"
 
     def test_2020_great_conjunction(self):
         found = events.find_conjunctions(2020, 2020, ["Jupiter", "Saturn"], max_separation=1.0)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import bcrypt
@@ -79,8 +79,15 @@ def validate_password_strength(password: str) -> list[str]:
 
 _COMMON_PASSWORDS = frozenset(
     {
-        "password", "password123", "123456789012", "qwertyuiop12", "letmein12345",
-        "administrator", "starcode1234", "changeme1234", "welcome12345",
+        "password",
+        "password123",
+        "123456789012",
+        "qwertyuiop12",
+        "letmein12345",
+        "administrator",
+        "starcode1234",
+        "changeme1234",
+        "welcome12345",
     }
 )
 
@@ -96,7 +103,7 @@ def create_token(
     extra: dict[str, Any] | None = None,
     expires_delta: timedelta | None = None,
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if expires_delta is None:
         expires_delta = (
             timedelta(minutes=settings.ACCESS_TOKEN_TTL_MINUTES)

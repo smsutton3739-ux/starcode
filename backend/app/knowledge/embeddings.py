@@ -86,7 +86,8 @@ class LexicalHashEmbedder:
         for token in tokens:
             counts[f"w:{token}"] = counts.get(f"w:{token}", 0.0) + 1.0
 
-        for first, second in zip(tokens, tokens[1:]):
+        # Deliberately ragged: the tail token has no successor to pair with.
+        for first, second in zip(tokens, tokens[1:], strict=False):
             key = f"b:{first}_{second}"
             counts[key] = counts.get(key, 0.0) + 1.0
 
@@ -142,7 +143,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
     if a caller supplies a raw vector."""
     if not a or not b or len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))
     if na == 0 or nb == 0:

@@ -52,9 +52,7 @@ def set_tags(db: Session, analysis: Analysis, user: User, names: list[str]) -> l
 
 def list_tags(db: Session, user: User) -> list[Tag]:
     return list(
-        db.execute(
-            select(Tag).where(Tag.owner_id == user.id).order_by(Tag.name)
-        ).scalars().all()
+        db.execute(select(Tag).where(Tag.owner_id == user.id).order_by(Tag.name)).scalars().all()
     )
 
 

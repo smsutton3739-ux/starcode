@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.agents.contracts import CLAIM_TYPE_PRESENTATION
@@ -66,12 +66,17 @@ def _sorted_claims(analysis: Analysis) -> list:
 def export_analysis(analysis: Analysis, fmt: str) -> tuple[bytes, str, str]:
     """Returns (content, mime_type, filename)."""
     if fmt not in EXPORT_FORMATS:
-        raise ExportError(f"Unsupported format {fmt!r}. Choose one of: {', '.join(EXPORT_FORMATS)}.")
+        raise ExportError(
+            f"Unsupported format {fmt!r}. Choose one of: {', '.join(EXPORT_FORMATS)}."
+        )
 
-    safe_title = "".join(
-        c if c.isalnum() or c in " -_" else "_" for c in (analysis.title or "analysis")
-    ).strip()[:60] or "analysis"
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+    safe_title = (
+        "".join(
+            c if c.isalnum() or c in " -_" else "_" for c in (analysis.title or "analysis")
+        ).strip()[:60]
+        or "analysis"
+    )
+    stamp = datetime.now(UTC).strftime("%Y%m%d")
     filename = f"{safe_title}-{stamp}.{'md' if fmt == 'markdown' else fmt}"
 
     builder = {
@@ -95,7 +100,7 @@ def _build_markdown(analysis: Analysis) -> bytes:
     out: list[str] = []
 
     out.append(f"# {analysis.title}\n")
-    out.append(f"*Generated {datetime.now(timezone.utc):%d %B %Y} by Starcode*\n")
+    out.append(f"*Generated {datetime.now(UTC):%d %B %Y} by Starcode*\n")
     out.append(f"> {DISCLAIMER}\n")
 
     confidence = report.confidence_summary or {}
@@ -261,9 +266,19 @@ def _build_csv(analysis: Analysis) -> bytes:
     writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
     writer.writerow(
         [
-            "section", "claim_type", "claim_type_label", "is_evidence", "statement",
-            "reasoning", "confidence", "confidence_basis", "produced_by", "engine",
-            "algorithm_reference", "quoted_text", "citations",
+            "section",
+            "claim_type",
+            "claim_type_label",
+            "is_evidence",
+            "statement",
+            "reasoning",
+            "confidence",
+            "confidence_basis",
+            "produced_by",
+            "engine",
+            "algorithm_reference",
+            "quoted_text",
+            "citations",
         ]
     )
 
@@ -339,27 +354,40 @@ def _build_pdf(analysis: Analysis) -> bytes:
     )
 
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("Body", parent=styles["BodyText"], fontSize=9.5, leading=13,
-                          alignment=TA_JUSTIFY, spaceAfter=4)
+    body = ParagraphStyle(
+        "Body",
+        parent=styles["BodyText"],
+        fontSize=9.5,
+        leading=13,
+        alignment=TA_JUSTIFY,
+        spaceAfter=4,
+    )
     small = ParagraphStyle("Small", parent=body, fontSize=8, textColor=colors.HexColor("#555555"))
-    quote = ParagraphStyle("Quote", parent=body, leftIndent=10 * mm, fontName="Times-Italic",
-                           textColor=colors.HexColor("#333333"))
+    quote = ParagraphStyle(
+        "Quote",
+        parent=body,
+        leftIndent=10 * mm,
+        fontName="Times-Italic",
+        textColor=colors.HexColor("#333333"),
+    )
     h1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=18, spaceAfter=6)
     h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=13, spaceBefore=10, spaceAfter=4)
 
     # Each claim type gets a colour, matching the web UI so a printed report reads the
     # same way as the screen.
     tone_colors = {
-        "source_text": "#475569", "verified_history": "#15803d",
-        "astronomical_calculation": "#1d4ed8", "textual_analysis": "#0f766e",
-        "traditional_interpretation": "#a16207", "scholarly_interpretation": "#7c3aed",
-        "ai_hypothesis": "#c2410c", "uncertain": "#64748b",
+        "source_text": "#475569",
+        "verified_history": "#15803d",
+        "astronomical_calculation": "#1d4ed8",
+        "textual_analysis": "#0f766e",
+        "traditional_interpretation": "#a16207",
+        "scholarly_interpretation": "#7c3aed",
+        "ai_hypothesis": "#c2410c",
+        "uncertain": "#64748b",
     }
 
     story: list = [Paragraph(escape(analysis.title), h1)]
-    story.append(
-        Paragraph(f"Generated {datetime.now(timezone.utc):%d %B %Y} by Starcode", small)
-    )
+    story.append(Paragraph(f"Generated {datetime.now(UTC):%d %B %Y} by Starcode", small))
     story.append(Spacer(1, 4 * mm))
     story.append(
         Table(
@@ -528,9 +556,7 @@ def _build_docx(analysis: Analysis) -> bytes:
     document.core_properties.comments = SHORT_DISCLAIMER
 
     document.add_heading(analysis.title, level=0)
-    subtitle = document.add_paragraph(
-        f"Generated {datetime.now(timezone.utc):%d %B %Y} by Starcode"
-    )
+    subtitle = document.add_paragraph(f"Generated {datetime.now(UTC):%d %B %Y} by Starcode")
     subtitle.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
     warning = document.add_paragraph()
@@ -579,9 +605,11 @@ def _build_docx(analysis: Analysis) -> bytes:
 
             if claim.get("quoted_text") and claim["claim_type"] == "source_text":
                 quoted = document.add_paragraph(claim["quoted_text"][:1500])
-                quoted.style = document.styles["Quote"] if "Quote" in [
-                    s.name for s in document.styles
-                ] else quoted.style
+                quoted.style = (
+                    document.styles["Quote"]
+                    if "Quote" in [s.name for s in document.styles]
+                    else quoted.style
+                )
 
             if claim.get("reasoning"):
                 note = document.add_paragraph()
@@ -618,9 +646,7 @@ def _build_docx(analysis: Analysis) -> bytes:
         if section["key"] == "references" and data.get("references"):
             for reference in data["references"]:
                 mark = "" if reference.get("verified") else " (unverified — check before citing)"
-                document.add_paragraph(
-                    f"{reference['citation_text']}{mark}", style="List Bullet"
-                )
+                document.add_paragraph(f"{reference['citation_text']}{mark}", style="List Bullet")
 
         if section["key"] == "further_reading" and data.get("items"):
             for item in data["items"]:

@@ -290,9 +290,11 @@ def source_detail(slug: str, db: DbSession) -> dict:
     if source is None:
         raise HTTPException(status_code=404, detail="No such source in the corpus.")
 
-    passages = db.execute(
-        select(SourcePassage).where(SourcePassage.source_id == source.id)
-    ).scalars().all()
+    passages = (
+        db.execute(select(SourcePassage).where(SourcePassage.source_id == source.id))
+        .scalars()
+        .all()
+    )
 
     return {
         "source": {

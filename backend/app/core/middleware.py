@@ -129,8 +129,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         else:
             return _forbidden(
                 request,
-                "A state-changing request with cookies must include an Origin or Referer "
-                "header.",
+                "A state-changing request with cookies must include an Origin or Referer header.",
             )
 
         return await call_next(request)

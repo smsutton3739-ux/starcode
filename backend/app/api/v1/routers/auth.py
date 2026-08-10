@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlencode
 
 import httpx
@@ -51,15 +51,23 @@ def _issue_tokens(user: User) -> TokenPair:
     )
 
 
-@router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(rate_limiter("auth"))])
+@router.post(
+    "/register",
+    response_model=TokenPair,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limiter("auth"))],
+)
 def register(payload: RegisterRequest, request: Request, db: DbSession) -> TokenPair:
     email = payload.email.lower().strip()
     existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if existing is not None:
         record_audit(
-            db, AuditAction.REGISTER, outcome="duplicate", request=request,
-            target_type="email", detail={"reason": "email already registered"},
+            db,
+            AuditAction.REGISTER,
+            outcome="duplicate",
+            request=request,
+            target_type="email",
+            detail={"reason": "email already registered"},
         )
         db.commit()
         # Same message and status as success would give for a new address, so this
@@ -95,7 +103,11 @@ def login(payload: LoginRequest, request: Request, db: DbSession) -> TokenPair:
     # password take the same time.
     if not verify_password(payload.password, user.hashed_password if user else None):
         record_audit(
-            db, AuditAction.LOGIN_FAILED, actor=user, outcome="failure", request=request,
+            db,
+            AuditAction.LOGIN_FAILED,
+            actor=user,
+            outcome="failure",
+            request=request,
             detail={"email_attempted": email[:120]},
         )
         db.commit()
@@ -108,9 +120,11 @@ def login(payload: LoginRequest, request: Request, db: DbSession) -> TokenPair:
     if not user.is_active:
         record_audit(db, AuditAction.LOGIN_FAILED, actor=user, outcome="inactive", request=request)
         db.commit()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account is disabled.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="This account is disabled."
+        )
 
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     record_audit(db, AuditAction.LOGIN, actor=user, request=request)
     db.commit()
 
@@ -204,7 +218,7 @@ def _provider_credentials(provider: str) -> tuple[str, str]:
 
 
 def _prune_states() -> None:
-    now = datetime.now(timezone.utc).timestamp()
+    now = datetime.now(UTC).timestamp()
     for key, created in list(_oauth_states.items()):
         if now - created > _STATE_TTL_SECONDS:
             _oauth_states.pop(key, None)
@@ -224,7 +238,7 @@ def oauth_authorize(provider: str) -> RedirectResponse:
 
     _prune_states()
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = datetime.now(timezone.utc).timestamp()
+    _oauth_states[state] = datetime.now(UTC).timestamp()
 
     config = PROVIDERS[provider]
     params = {
@@ -275,7 +289,9 @@ def oauth_callback(
             token_response.raise_for_status()
             access_token = token_response.json().get("access_token")
             if not access_token:
-                raise HTTPException(status_code=502, detail="The provider returned no access token.")
+                raise HTTPException(
+                    status_code=502, detail="The provider returned no access token."
+                )
 
             profile_response = client.get(
                 config["userinfo_url"],
@@ -293,9 +309,7 @@ def oauth_callback(
                     "https://api.github.com/user/emails",
                     headers={"Authorization": f"Bearer {access_token}"},
                 ).json()
-                primary = next(
-                    (e for e in emails if e.get("primary") and e.get("verified")), None
-                )
+                primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
                 email = primary["email"] if primary else None
     except httpx.HTTPError as exc:
         logger.warning("auth.oauth_exchange_failed", provider=provider, error=str(exc))
@@ -343,7 +357,8 @@ def oauth_callback(
                 # Only the fields actually used are kept; storing the raw profile would
                 # accumulate provider data nobody asked for.
                 raw_profile={
-                    k: profile.get(k) for k in ("name", "login", "picture", "avatar_url")
+                    k: profile.get(k)
+                    for k in ("name", "login", "picture", "avatar_url")
                     if profile.get(k)
                 },
             )
@@ -352,7 +367,7 @@ def oauth_callback(
     if not user.is_active:
         raise HTTPException(status_code=403, detail="This account is disabled.")
 
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     record_audit(db, AuditAction.LOGIN, actor=user, request=request, detail={"provider": provider})
     db.commit()
 

@@ -62,9 +62,7 @@ class AnalyzeRequest(BaseModel):
                 "Provide something to analyse: text, a url, an upload_id, or a document_id."
             )
         if len(supplied) > 1:
-            raise ValueError(
-                f"Provide exactly one source; received {', '.join(supplied)}."
-            )
+            raise ValueError(f"Provide exactly one source; received {', '.join(supplied)}.")
         if self.text is not None and not self.text.strip():
             raise ValueError("The text is empty.")
         return self

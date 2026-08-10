@@ -12,7 +12,6 @@ from typing import Any
 
 from app.agents.base import AgentResult, AnalysisContext
 from app.agents.contracts import (
-    CLAIM_TYPE_PRESENTATION,
     SECTION_ORDER,
     SECTION_TITLES,
     ClaimDraft,
@@ -287,9 +286,14 @@ def _further_reading(context: AnalysisContext, claims: list[ClaimDraft]) -> list
         ):
             if citation not in seen:
                 seen.add(citation)
-                reading.append({"title": title, "citation": citation, "why": why, "source": "engine reference"})
+                reading.append(
+                    {"title": title, "citation": citation, "why": why, "source": "engine reference"}
+                )
 
-    if any(c.claim_type == ClaimType.ASTRONOMICAL_CALCULATION and c.engine and "calendar" in c.engine for c in claims):
+    if any(
+        c.claim_type == ClaimType.ASTRONOMICAL_CALCULATION and c.engine and "calendar" in c.engine
+        for c in claims
+    ):
         citation = (
             "Dershowitz, N. & Reingold, E. M., Calendrical Calculations: The Ultimate "
             "Edition, 4th ed. (Cambridge University Press, 2018)"

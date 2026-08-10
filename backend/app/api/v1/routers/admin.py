@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import func, select
@@ -45,9 +45,11 @@ def list_users(
         stmt = stmt.where(User.is_active.is_(True))
 
     total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
-    rows = db.execute(
-        stmt.order_by(User.created_at.desc()).limit(limit).offset(offset)
-    ).scalars().all()
+    rows = (
+        db.execute(stmt.order_by(User.created_at.desc()).limit(limit).offset(offset))
+        .scalars()
+        .all()
+    )
 
     return Page[UserOut](
         items=[UserOut.model_validate({**u.__dict__, "role": u.role.value}) for u in rows],
@@ -75,8 +77,13 @@ def change_role(
     previous = target.role.value
     target.role = Role(payload.role)
     record_audit(
-        db, AuditAction.ROLE_CHANGED, actor=admin, target_type="user", target_id=user_id,
-        request=request, detail={"from": previous, "to": payload.role},
+        db,
+        AuditAction.ROLE_CHANGED,
+        actor=admin,
+        target_type="user",
+        target_id=user_id,
+        request=request,
+        detail={"from": previous, "to": payload.role},
     )
     db.commit()
     db.refresh(target)
@@ -97,7 +104,10 @@ def set_active(
     record_audit(
         db,
         AuditAction.USER_DEACTIVATED if not active else AuditAction.ADMIN_ACTION,
-        actor=admin, target_type="user", target_id=user_id, request=request,
+        actor=admin,
+        target_type="user",
+        target_id=user_id,
+        request=request,
         detail={"active": active},
     )
     db.commit()
@@ -114,10 +124,8 @@ def system_status(db: DbSession, admin: AdminUser) -> dict:
     from app.core.rate_limit import get_backend
     from app.knowledge.rag import corpus_stats
 
-    now = datetime.now(timezone.utc)
-    jobs = dict(
-        db.execute(select(Job.status, func.count()).group_by(Job.status)).all()
-    )
+    now = datetime.now(UTC)
+    jobs = dict(db.execute(select(Job.status, func.count()).group_by(Job.status)).all())
     stuck = db.execute(
         select(func.count())
         .select_from(Analysis)
@@ -154,7 +162,7 @@ def usage(
     admin: AdminUser,
     days: int = Query(30, ge=1, le=365),
 ) -> dict:
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since = datetime.now(UTC) - timedelta(days=days)
 
     total_analyses = db.execute(
         select(func.count()).select_from(Analysis).where(Analysis.created_at >= since)
@@ -218,19 +226,15 @@ def usage(
         "average_duration_ms": round(average_duration) if average_duration else None,
         "ocr_documents": ocr_count,
         "by_status": {
-            (s.value if isinstance(s, AnalysisStatus) else str(s)): c
-            for s, c in by_status.items()
+            (s.value if isinstance(s, AnalysisStatus) else str(s)): c for s, c in by_status.items()
         },
         "by_source_kind": {
             (s.value if hasattr(s, "value") else str(s)): c for s, c in by_source.items()
         },
         "by_claim_type": {
-            (t.value if isinstance(t, ClaimType) else str(t)): c
-            for t, c in by_claim_type.items()
+            (t.value if isinstance(t, ClaimType) else str(t)): c for t, c in by_claim_type.items()
         },
-        "evidence_ratio": (
-            round(evidence_claims / total_claims, 3) if total_claims else None
-        ),
+        "evidence_ratio": (round(evidence_claims / total_claims, 3) if total_claims else None),
         "evidence_ratio_note": (
             "The share of claims that are evidence-grade rather than interpretation. A "
             "falling ratio suggests the platform is producing more conjecture relative to "
@@ -249,9 +253,13 @@ def usage(
 def list_prompts(db: DbSession, admin: AdminUser) -> dict:
     from app.agents.orchestrator import pipeline_description
 
-    stored = db.execute(
-        select(PromptTemplate).order_by(PromptTemplate.agent_name, PromptTemplate.version)
-    ).scalars().all()
+    stored = (
+        db.execute(
+            select(PromptTemplate).order_by(PromptTemplate.agent_name, PromptTemplate.version)
+        )
+        .scalars()
+        .all()
+    )
 
     return {
         "agents": pipeline_description(),
@@ -298,9 +306,9 @@ def create_prompt(
         )
 
     if activate:
-        db.query(PromptTemplate).filter(
-            PromptTemplate.agent_name == agent_name
-        ).update({"is_active": False})
+        db.query(PromptTemplate).filter(PromptTemplate.agent_name == agent_name).update(
+            {"is_active": False}
+        )
 
     template = PromptTemplate(
         agent_name=agent_name,
@@ -313,8 +321,12 @@ def create_prompt(
     )
     db.add(template)
     record_audit(
-        db, AuditAction.PROMPT_UPDATED, actor=admin, target_type="prompt",
-        target_id=agent_name, request=request,
+        db,
+        AuditAction.PROMPT_UPDATED,
+        actor=admin,
+        target_type="prompt",
+        target_id=agent_name,
+        request=request,
         detail={"version": version, "activated": activate},
     )
     db.commit()
@@ -354,8 +366,13 @@ def reseed(request: Request, db: DbSession, admin: AdminUser) -> Message:
 
     summary = seed_all(db)
     record_audit(
-        db, AuditAction.DATASET_UPDATED, actor=admin, target_type="dataset",
-        target_id="starcode-seed", request=request, detail=summary,
+        db,
+        AuditAction.DATASET_UPDATED,
+        actor=admin,
+        target_type="dataset",
+        target_id="starcode-seed",
+        request=request,
+        detail=summary,
     )
     db.commit()
     return Message(message="Corpus reseeded.", detail=str(summary))
@@ -370,8 +387,13 @@ def toggle_dataset(
         raise HTTPException(status_code=404, detail="No such dataset.")
     dataset.is_enabled = enabled
     record_audit(
-        db, AuditAction.DATASET_UPDATED, actor=admin, target_type="dataset",
-        target_id=dataset_id, request=request, detail={"enabled": enabled},
+        db,
+        AuditAction.DATASET_UPDATED,
+        actor=admin,
+        target_type="dataset",
+        target_id=dataset_id,
+        request=request,
+        detail={"enabled": enabled},
     )
     db.commit()
     return Message(message=f"{dataset.name} {'enabled' if enabled else 'disabled'}.")
@@ -402,14 +424,14 @@ def audit_log(
         stmt = stmt.where(AuditLog.outcome == outcome)
 
     total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
-    rows = db.execute(
-        stmt.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
-    ).scalars().all()
+    rows = (
+        db.execute(stmt.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset))
+        .scalars()
+        .all()
+    )
 
     return Page[AuditLogOut](
-        items=[
-            AuditLogOut.model_validate({**r.__dict__, "action": r.action.value}) for r in rows
-        ],
+        items=[AuditLogOut.model_validate({**r.__dict__, "action": r.action.value}) for r in rows],
         total=total,
         limit=limit,
         offset=offset,
@@ -428,7 +450,7 @@ def list_jobs(
         try:
             stmt = stmt.where(Job.status == JobStatus(status_filter))
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"Unknown status.") from exc
+            raise HTTPException(status_code=400, detail="Unknown status.") from exc
 
     rows = db.execute(stmt.limit(limit)).scalars().all()
     return {

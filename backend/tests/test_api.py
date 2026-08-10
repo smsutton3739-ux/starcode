@@ -92,7 +92,9 @@ class TestAnonymousAnalysis:
             headers={"X-Analysis-Token": created["anonymous_token"]},
         ).json()
 
-        valid = {ct["value"] for ct in client.get("/api/v1/corpus/claim-types").json()["claim_types"]}
+        valid = {
+            ct["value"] for ct in client.get("/api/v1/corpus/claim-types").json()["claim_types"]
+        }
         for claim in detail["claims"]:
             assert claim["claim_type"] in valid
             assert claim["presentation"]["label"]
@@ -250,7 +252,8 @@ class TestAuthenticatedFlow:
         headers, _ = auth_headers(Role.USER)
 
         created = client.post(
-            "/api/v1/analyses", json={"text": sample_text, "title": "My analysis"},
+            "/api/v1/analyses",
+            json={"text": sample_text, "title": "My analysis"},
             headers=headers,
         ).json()
         assert created["anonymous_token"] is None
@@ -267,14 +270,12 @@ class TestAuthenticatedFlow:
         assert updated["is_favorite"] is True
         assert set(updated["tags"]) == {"prophecy", "Revelation"}
 
-        favorites = client.get(
-            "/api/v1/analyses?favorites_only=true", headers=headers
-        ).json()
+        favorites = client.get("/api/v1/analyses?favorites_only=true", headers=headers).json()
         assert favorites["total"] >= 1
 
-        assert client.delete(
-            f"/api/v1/analyses/{created['id']}", headers=headers
-        ).status_code == 200
+        assert (
+            client.delete(f"/api/v1/analyses/{created['id']}", headers=headers).status_code == 200
+        )
 
     def test_dashboard(self, client, auth_headers):
         headers, _ = auth_headers(Role.USER)
@@ -291,25 +292,33 @@ class TestAuthenticatedFlow:
 
         share = client.post(
             f"/api/v1/analyses/{created['id']}/share",
-            json={"expires_in_days": 7}, headers=headers,
+            json={"expires_in_days": 7},
+            headers=headers,
         ).json()
         assert share["token"]
 
         # A different user reaches it only with the token.
         other_headers, _ = auth_headers(Role.USER)
-        assert client.get(
-            f"/api/v1/analyses/{created['id']}", headers=other_headers
-        ).status_code == 404
-        assert client.get(
-            f"/api/v1/analyses/{created['id']}",
-            headers={**other_headers, "X-Analysis-Token": share["token"]},
-        ).status_code == 200
+        assert (
+            client.get(f"/api/v1/analyses/{created['id']}", headers=other_headers).status_code
+            == 404
+        )
+        assert (
+            client.get(
+                f"/api/v1/analyses/{created['id']}",
+                headers={**other_headers, "X-Analysis-Token": share["token"]},
+            ).status_code
+            == 200
+        )
 
         client.delete(f"/api/v1/shares/{share['id']}", headers=headers)
-        assert client.get(
-            f"/api/v1/analyses/{created['id']}",
-            headers={**other_headers, "X-Analysis-Token": share["token"]},
-        ).status_code == 404
+        assert (
+            client.get(
+                f"/api/v1/analyses/{created['id']}",
+                headers={**other_headers, "X-Analysis-Token": share["token"]},
+            ).status_code
+            == 404
+        )
 
     def test_share_token_is_never_returned_again(self, client, auth_headers, sample_text):
         headers, _ = auth_headers(Role.USER)
@@ -319,9 +328,7 @@ class TestAuthenticatedFlow:
         wait_for(client, created["id"], headers=headers)
         client.post(f"/api/v1/analyses/{created['id']}/share", json={}, headers=headers)
 
-        listed = client.get(
-            f"/api/v1/analyses/{created['id']}/shares", headers=headers
-        ).json()
+        listed = client.get(f"/api/v1/analyses/{created['id']}/shares", headers=headers).json()
         assert all(s["token"] is None for s in listed)
 
     def test_collections(self, client, auth_headers, sample_text):
@@ -334,14 +341,15 @@ class TestAuthenticatedFlow:
         ).json()
         wait_for(client, created["id"], headers=headers)
 
-        assert client.post(
-            f"/api/v1/collections/{collection['id']}/analyses/{created['id']}",
-            headers=headers,
-        ).status_code == 200
+        assert (
+            client.post(
+                f"/api/v1/collections/{collection['id']}/analyses/{created['id']}",
+                headers=headers,
+            ).status_code
+            == 200
+        )
 
-        detail = client.get(
-            f"/api/v1/collections/{collection['id']}", headers=headers
-        ).json()
+        detail = client.get(f"/api/v1/collections/{collection['id']}", headers=headers).json()
         assert len(detail["analyses"]) == 1
 
 
@@ -367,9 +375,7 @@ class TestExports:
     )
     def test_every_format_produces_a_valid_file(self, client, finished, fmt, signature):
         analysis_id, headers = finished
-        response = client.get(
-            f"/api/v1/analyses/{analysis_id}/export/{fmt}", headers=headers
-        )
+        response = client.get(f"/api/v1/analyses/{analysis_id}/export/{fmt}", headers=headers)
         assert response.status_code == 200, response.text
         assert response.content.startswith(signature)
         assert "attachment" in response.headers["content-disposition"]
@@ -398,9 +404,7 @@ class TestExports:
 
     def test_unknown_format_rejected(self, client, finished):
         analysis_id, headers = finished
-        response = client.get(
-            f"/api/v1/analyses/{analysis_id}/export/xlsx", headers=headers
-        )
+        response = client.get(f"/api/v1/analyses/{analysis_id}/export/xlsx", headers=headers)
         assert response.status_code == 400
 
 
@@ -442,9 +446,7 @@ class TestReferenceEndpoints:
     def test_claim_type_vocabulary_is_published(self, client):
         payload = client.get("/api/v1/corpus/claim-types").json()
         assert len(payload["claim_types"]) == 8
-        hypothesis = next(
-            c for c in payload["claim_types"] if c["value"] == "ai_hypothesis"
-        )
+        hypothesis = next(c for c in payload["claim_types"] if c["value"] == "ai_hypothesis")
         assert hypothesis["is_evidence"] is False
 
     def test_pipeline_is_described(self, client):
@@ -524,9 +526,7 @@ class TestUploads:
         assert response.status_code == 400
 
     def test_empty_file_refused(self, client):
-        response = client.post(
-            "/api/v1/uploads", files={"file": ("empty.txt", b"", "text/plain")}
-        )
+        response = client.post("/api/v1/uploads", files={"file": ("empty.txt", b"", "text/plain")})
         assert response.status_code == 400
 
     def test_limits_endpoint(self, client):
@@ -539,9 +539,7 @@ class TestUploads:
             "/api/v1/uploads",
             files={"file": ("text.txt", sample_text.encode(), "text/plain")},
         ).json()
-        created = client.post(
-            "/api/v1/analyses", json={"document_id": upload["document_id"]}
-        )
+        created = client.post("/api/v1/analyses", json={"document_id": upload["document_id"]})
         assert created.status_code == 202
 
 
