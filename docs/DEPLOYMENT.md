@@ -63,6 +63,10 @@ deliberately carries no `NEXT_PUBLIC_*` variables.
 
 ## Connecting a custom domain
 
+> For a start-to-finish walkthrough with real values rather than `example.com`, see
+> [GO_LIVE.md](GO_LIVE.md). It covers both the one-server route
+> (`deploy/docker-compose.prod.yml`, automatic TLS) and the split managed-host route.
+
 A domain is the last step, not the first: it points at something that is already running.
 For this platform that means **two** hosts, because the frontend and the backend have
 genuinely different requirements.

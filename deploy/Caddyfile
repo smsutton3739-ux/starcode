@@ -1,0 +1,55 @@
+# Reverse proxy and TLS for a single-server deployment.
+#
+# Caddy obtains and renews Let's Encrypt certificates automatically, as soon as the DNS
+# records point at this machine and ports 80 and 443 are reachable. There is no certbot
+# step and no renewal cron: if the site loads over https, it will keep doing so.
+#
+# Set DOMAIN and API_DOMAIN in .env (see .env.example). They must match the values the
+# rest of the stack was configured with — CORS_ORIGINS, FRONTEND_BASE_URL,
+# OAUTH_REDIRECT_BASE and the NEXT_PUBLIC_API_URL the frontend was *built* with.
+
+{
+	# Where certificate problems are emailed. Not optional in practice: without it the
+	# first warning you get about an expiring certificate is a broken site.
+	email {$ACME_EMAIL}
+}
+
+# ---- The web app -------------------------------------------------------------------
+
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:3000
+
+	# Security headers the app cannot set for itself are set here; the app sets its own
+	# Content-Security-Policy per request, with a nonce, so it is deliberately not
+	# duplicated. Overriding it here would break every inline script Next.js emits.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+# The apex redirects to the canonical host rather than serving a second copy.
+# https://astro-decoded.com and https://www.astro-decoded.com are different origins for
+# CORS, cookies and CSP, so exactly one of them is the site.
+{$APEX_DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+# ---- The API -----------------------------------------------------------------------
+
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Uploads are capped in the application too; this stops a large body from reaching
+	# it at all.
+	request_body {
+		max_size 30MB
+	}
+}

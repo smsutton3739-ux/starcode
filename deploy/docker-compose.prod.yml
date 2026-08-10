@@ -1,0 +1,75 @@
+# Production overlay: one server, real domain, automatic TLS.
+#
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+#
+# What this changes relative to the development stack:
+#
+#   - Caddy terminates TLS and routes both hostnames. Nothing else is exposed.
+#   - Postgres, Redis, the API and the web app no longer publish ports to the host, so
+#     the database is not reachable from the internet even if the firewall is wrong.
+#   - ENVIRONMENT=production, which makes the app refuse to boot with a development
+#     secret, with DEBUG on, or with CORS_ORIGINS set to '*'.
+#   - The frontend is built with the real API URL, because NEXT_PUBLIC_* values are
+#     compiled into the browser bundle and cannot be changed at runtime.
+#
+# Every value comes from .env next to docker-compose.yml. See .env.example.
+
+services:
+  db:
+    # Not published. The API reaches it over the compose network.
+    ports: !override []
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a real database password in .env}
+
+  redis:
+    ports: !override []
+
+  api:
+    ports: !override []
+    environment:
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?generate one - python3 -c "import secrets; print(secrets.token_urlsafe(48))"}
+      CORS_ORIGINS: https://${DOMAIN:?set DOMAIN in .env}
+      FRONTEND_BASE_URL: https://${DOMAIN}
+      OAUTH_REDIRECT_BASE: https://${API_DOMAIN:?set API_DOMAIN in .env}
+      TRUSTED_HOSTS: ${API_DOMAIN}
+      LOG_FORMAT: json
+      DEBUG: "false"
+
+  worker:
+    environment:
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY}
+      LOG_FORMAT: json
+
+  web:
+    ports: !override []
+    build:
+      args:
+        # Build time, not runtime. Changing this requires a rebuild, not a restart.
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN}
+    environment:
+      NODE_ENV: production
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      APEX_DOMAIN: ${APEX_DOMAIN:-${DOMAIN}}
+      API_DOMAIN: ${API_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?an email address for certificate expiry warnings}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+      - api
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -244,6 +244,7 @@ Stated plainly, so nothing here is mistaken for an oversight.
 | [Developer](docs/DEVELOPER.md) | Working on it: adding agents, calendars, corpus data |
 | [Administrator](docs/ADMINISTRATOR.md) | Running it: users, monitoring, prompts, datasets |
 | [Deployment](docs/DEPLOYMENT.md) | Vercel, AWS, environment, CI/CD |
+| [Going live](docs/GO_LIVE.md) | Putting it on your own domain, start to finish |
 | [Project plan](PROJECT_PLAN.md) | Module checklist and scope decisions |
 
 ---
