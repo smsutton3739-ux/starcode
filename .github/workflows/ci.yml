@@ -156,6 +156,9 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_URL: http://127.0.0.1:8100
+          # The build guard rejects a loopback API URL in a production build; CI is the
+          # one legitimate case, since the API really is on localhost here.
+          NEXT_PUBLIC_ALLOW_LOCALHOST: "true"
         run: npm run build
 
   e2e:
@@ -200,6 +203,9 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_URL: http://127.0.0.1:8100
+          # The build guard rejects a loopback API URL in a production build; CI is the
+          # one legitimate case, since the API really is on localhost here.
+          NEXT_PUBLIC_ALLOW_LOCALHOST: "true"
         run: npm run build
 
       - name: Run the suites

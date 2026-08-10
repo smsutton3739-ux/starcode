@@ -46,6 +46,6 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { NEXT_PUBLIC_API_URL: API_URL },
+    env: { NEXT_PUBLIC_API_URL: API_URL, NEXT_PUBLIC_ALLOW_LOCALHOST: "true" },
   },
 });

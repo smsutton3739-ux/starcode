@@ -39,6 +39,100 @@ Symptoms of getting this wrong:
   build time did not match the running value.
 - *"blocked by CORS policy"* → the backend's `CORS_ORIGINS` does not list the web origin.
 
+### The build now refuses to get this wrong
+
+`next.config.mjs` validates `NEXT_PUBLIC_API_URL` at build time and **fails the build**
+if it is missing, or if it points at `localhost` in a production build. That is
+deliberate: the silent fallback used to bake `http://localhost:8000` into the bundle, and
+the resulting failure appeared in the browser console as a CSP error, pointing at
+entirely the wrong thing.
+
+Set `NEXT_PUBLIC_ALLOW_LOCALHOST=true` for the one legitimate case — building a
+production bundle to run against a local API, which is what CI and the e2e suite do.
+
+Plain `http://` is allowed but warns, because a browser on an HTTPS page blocks
+mixed-content requests.
+
+---
+
+## Connecting a custom domain
+
+A domain is the last step, not the first: it points at something that is already running.
+For this platform that means **two** hosts, because the frontend and the backend have
+genuinely different requirements.
+
+| Host | Runs | Needs |
+| --- | --- | --- |
+| Frontend | Next.js | Any Node host or edge platform |
+| Backend | FastAPI + worker | A long-running process, PostgreSQL with pgvector, and durable file storage |
+
+Vercel cannot host the backend: it needs a persistent process for the job worker and a
+Postgres database with an extension. Use Railway, Render, Fly.io or AWS for that half.
+
+### The usual arrangement
+
+```
+example.com          → frontend    (A / CNAME to your frontend host)
+api.example.com      → backend     (A / CNAME to your backend host)
+```
+
+### The four values that must agree
+
+Changing to a real domain means changing all of these together. Miss one and the site
+loads but every request fails.
+
+| Value | Where it is set | Set it to |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | Frontend **build** | `https://api.example.com` |
+| `CORS_ORIGINS` | Backend runtime | `https://example.com` |
+| `FRONTEND_BASE_URL` | Backend runtime | `https://example.com` |
+| `OAUTH_REDIRECT_BASE` | Backend runtime | `https://api.example.com` |
+
+Then, in your OAuth provider's console, add the redirect URI:
+
+```
+https://api.example.com/api/v1/auth/oauth/google/callback
+https://api.example.com/api/v1/auth/oauth/github/callback
+```
+
+### Checking it worked
+
+```bash
+curl -sI https://api.example.com/api/v1/health | head -1
+curl -s https://api.example.com/api/v1/health | python3 -m json.tool
+
+# The browser's view: this must return your frontend origin, not an error
+curl -sI -X OPTIONS https://api.example.com/api/v1/analyses \
+  -H "Origin: https://example.com" \
+  -H "Access-Control-Request-Method: POST" | grep -i access-control-allow-origin
+```
+
+Then load the site and submit a short text. If the report renders, all four values agree.
+
+### If it does not work
+
+| Symptom (browser console) | Cause |
+| --- | --- |
+| `Refused to connect … Content Security Policy` | The frontend was built with a different `NEXT_PUBLIC_API_URL` than it is calling. Rebuild. |
+| `blocked by CORS policy` | `CORS_ORIGINS` does not list the exact frontend origin |
+| `Mixed Content: … was loaded over HTTPS, but requested an insecure resource` | `NEXT_PUBLIC_API_URL` is `http://` |
+| Share links point at the wrong host | `FRONTEND_BASE_URL` is stale |
+| OAuth returns `redirect_uri_mismatch` | `OAUTH_REDIRECT_BASE`, or the provider console, is stale |
+
+`https://example.com` and `https://www.example.com` are **different origins**. Pick a
+canonical one, redirect the other to it, and list only the canonical one in
+`CORS_ORIGINS`.
+
+### TLS
+
+Vercel, Railway, Render and Fly issue and renew certificates automatically once the DNS
+record resolves. On AWS, request an ACM certificate for `example.com` and
+`api.example.com`, validate by DNS, and attach it to the load balancer.
+
+HSTS is sent automatically when `ENVIRONMENT=production`. It is a one-way door for the
+duration of its `max-age` — do not enable it until TLS is working on every hostname you
+serve.
+
 ---
 
 ## Frontend on Vercel
