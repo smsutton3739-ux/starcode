@@ -239,4 +239,28 @@ class TestSerialization:
         claim = make_claim(
             citations=[CitationDraft(citation_text="Some Book (2019)", verified=False)]
         )
-        assert claim.to_dict()["citations"][0]["verified"] is False
+        assert claim.to_dict()["references"][0]["verified"] is False
+
+    def test_serialised_claim_matches_the_api_schema_shape(self):
+        """A claim inside a stored report and one fetched from the API must have the
+        same shape.
+
+        They diverged once — the report used "citations" where the API used
+        "references" — which crashed the web report view and silently dropped every
+        citation from the PDF, DOCX and Markdown exports. Nothing caught it because each
+        side was individually correct.
+        """
+        from app.schemas.analysis import ClaimOut
+
+        serialised = make_claim(
+            citations=[CitationDraft(citation_text="Herodotus, Histories 1.74")]
+        ).to_dict()
+
+        api_fields = set(ClaimOut.model_fields)
+        # Fields the API adds from the database row and a draft cannot have yet.
+        draft_cannot_have = {"id", "text_span_start", "text_span_end", "section"}
+
+        missing = api_fields - draft_cannot_have - set(serialised)
+        assert not missing, f"serialised claim is missing API fields: {sorted(missing)}"
+        assert isinstance(serialised["references"], list)
+        assert serialised["references"][0]["citation_text"]

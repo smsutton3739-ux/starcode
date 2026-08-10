@@ -230,6 +230,11 @@ class ClaimDraft:
         return self.claim_type in EVIDENCE_TYPES
 
     def to_dict(self) -> dict:
+        # The key is "references", matching both the persisted `Claim.references`
+        # relationship and the `ClaimOut` API schema. A claim serialised into a stored
+        # report and one fetched from the API therefore have the same shape, and any
+        # consumer — the web UI, the PDF exporter, the CSV writer — can read either
+        # without knowing which produced it.
         return {
             "section": self.section.value,
             "claim_type": self.claim_type.value,
@@ -240,7 +245,7 @@ class ClaimDraft:
             "produced_by": self.produced_by,
             "engine": self.engine,
             "algorithm_reference": self.algorithm_reference,
-            "citations": [c.to_dict() for c in self.citations],
+            "references": [c.to_dict() for c in self.citations],
             "quoted_text": self.quoted_text,
             "text_span": list(self.text_span) if self.text_span else None,
             "payload": self.payload,

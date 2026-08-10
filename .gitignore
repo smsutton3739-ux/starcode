@@ -28,3 +28,7 @@ test-results/
 uploads/
 *.log
 .DS_Store
+
+# Local browser-driver scratch files
+frontend/drive*.mjs
+frontend/diag*.mjs
