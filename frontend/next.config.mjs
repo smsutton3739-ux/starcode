@@ -1,3 +1,5 @@
+import { PHASE_PRODUCTION_BUILD } from "next/constants.js";
+
 /**
  * Fail the build rather than ship a bundle pointing at localhost.
  *
@@ -6,14 +8,29 @@
  * deployed site looks fine until every API call is refused by the CSP — an error that
  * points at the browser rather than at the missing variable. Better to stop here, where
  * the message can say exactly what to set.
+ *
+ * Only an actual compile is checked. `next start` and `next lint` load this file too and
+ * both report NODE_ENV=production, but neither produces a bundle: by the time `next start`
+ * runs the value is already baked into .next, and the runtime container has no reason to
+ * carry a build argument. An earlier version keyed the check on NODE_ENV, which made a
+ * correctly built Docker image refuse to boot.
+ *
+ * `next lint` reports the production-build phase as well, so the phase alone cannot tell
+ * the two apart and the CLI verb is read from argv to separate them. Linting a checkout
+ * should not require deployment configuration.
  */
-function resolveApiUrl() {
+function isBuildingABundle(phase) {
+  if (phase !== PHASE_PRODUCTION_BUILD) return false;
+  return process.argv[2] !== "lint";
+}
+
+function resolveApiUrl(phase) {
   const url = process.env.NEXT_PUBLIC_API_URL;
-  const isProductionBuild =
-    process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_ALLOW_LOCALHOST !== "true";
+  const isCheckedBuild =
+    isBuildingABundle(phase) && process.env.NEXT_PUBLIC_ALLOW_LOCALHOST !== "true";
 
   if (!url) {
-    if (isProductionBuild) {
+    if (isCheckedBuild) {
       throw new Error(
         "NEXT_PUBLIC_API_URL is not set.\n\n" +
           "It is compiled into the browser bundle, so it must be present at BUILD time, " +
@@ -28,7 +45,7 @@ function resolveApiUrl() {
     return "http://localhost:8000";
   }
 
-  if (isProductionBuild && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(url)) {
+  if (isCheckedBuild &&/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(url)) {
     throw new Error(
       `NEXT_PUBLIC_API_URL is "${url}", which will not resolve for anyone but you.\n\n` +
         "Set it to the public URL of your API, or set NEXT_PUBLIC_ALLOW_LOCALHOST=true " +
@@ -36,7 +53,7 @@ function resolveApiUrl() {
     );
   }
 
-  if (isProductionBuild && url.startsWith("http://")) {
+  if (isCheckedBuild &&url.startsWith("http://")) {
     // Not fatal — a private network or a proxy in front is legitimate — but the browser
     // will block a plain-HTTP call from an HTTPS page, so say so now.
     console.warn(
@@ -49,8 +66,6 @@ function resolveApiUrl() {
   return url;
 }
 
-const API_URL = resolveApiUrl();
-
 /** @type {import('next').NextConfig} */
 // Content-Security-Policy is set per request in middleware.ts, where a nonce can be
 // minted. These are the static headers that need no request context.
@@ -61,15 +76,15 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "geolocation=(), microphone=(), camera=()" },
 ];
 
-const nextConfig = {
-  reactStrictMode: true,
-  poweredByHeader: false,
-  // Re-exported so middleware.ts and the client read the same validated value rather
-  // than each re-deriving it from the environment.
-  env: { NEXT_PUBLIC_API_URL: API_URL },
-  async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
-  },
-};
-
-export default nextConfig;
+export default function config(phase) {
+  return {
+    reactStrictMode: true,
+    poweredByHeader: false,
+    // Re-exported so middleware.ts and the client read the same validated value rather
+    // than each re-deriving it from the environment.
+    env: { NEXT_PUBLIC_API_URL: resolveApiUrl(phase) },
+    async headers() {
+      return [{ source: "/:path*", headers: securityHeaders }];
+    },
+  };
+}

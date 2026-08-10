@@ -203,7 +203,9 @@ Tesseract language pack installed.
 ## Saving, sharing and exporting
 
 **An account** keeps your analyses, lets you favourite and tag them, organise them into
-collections, and search across everything you have run.
+collections, and search across everything you have run. You sign in with Google or
+GitHub — there is no password to forget, and nothing to reset. Analysing a text never
+requires one.
 
 **Share links** give read access to one analysis. The link is shown once; it is stored
 only as a hash and cannot be recovered, so if you lose it, revoke and make a new one.

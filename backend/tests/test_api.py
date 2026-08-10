@@ -153,6 +153,17 @@ class TestValidation:
 
 
 class TestAuth:
+    @pytest.fixture(autouse=True)
+    def _allow_registration(self, monkeypatch):
+        """Most of this class exercises password accounts, which are off by default.
+
+        The default is off because there is no reset flow; these tests turn it on to
+        cover the code path that runs when an operator has deliberately enabled it.
+        """
+        from app.core.config import settings
+
+        monkeypatch.setattr(settings, "ALLOW_PASSWORD_REGISTRATION", True)
+
     def test_register_and_sign_in(self, client):
         email = f"newuser-{time.time_ns()}@starcode-test.org"
         registered = client.post(
@@ -214,6 +225,36 @@ class TestAuth:
 
     def test_protected_route_requires_auth(self, client):
         assert client.get("/api/v1/analyses").status_code == 401
+
+
+class TestPasswordRegistrationDisabled:
+    """The shipped default. An account nobody can recover is worse than no account."""
+
+    def test_registration_is_refused_with_a_reason(self, client):
+        response = client.post(
+            "/api/v1/auth/register",
+            json={"email": "someone@starcode-test.org", "password": "a-long-enough-passphrase"},
+        )
+        assert response.status_code == 403
+        assert "no password-reset flow" in response.json()["detail"]
+
+    def test_existing_accounts_can_still_sign_in(self, client, user_factory):
+        """An operator-created admin must never be locked out by this setting."""
+        user = user_factory(password="the-correct-passphrase")
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"email": user.email, "password": "the-correct-passphrase"},
+        )
+        assert response.status_code == 200
+
+    def test_the_client_is_told_so_it_can_hide_the_form(self, client):
+        payload = client.get("/api/v1/auth/oauth/providers").json()
+        assert payload["password_registration_enabled"] is False
+        assert "recovered" in payload["note"]
+
+    def test_anonymous_analysis_still_works(self, client, sample_text):
+        """Turning off passwords must not touch the one-button path."""
+        assert client.post("/api/v1/analyses", json={"text": sample_text}).status_code == 202
 
 
 class TestAuthorization:

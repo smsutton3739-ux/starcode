@@ -366,17 +366,41 @@ available.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `POST /auth/register` | Minimum 12 characters; length is weighted over composition |
+| `POST /auth/register` | Minimum 12 characters; length is weighted over composition. **Disabled by default** — see below |
 | `POST /auth/login` | |
 | `POST /auth/refresh` | A refresh token is **not** accepted as an access token |
 | `POST /auth/logout` | |
 | `GET /auth/me` | |
 | `GET/PATCH /auth/me/settings` | |
-| `GET /auth/oauth/providers` | Which providers are configured |
+| `GET /auth/oauth/providers` | What sign-in methods this deployment offers |
 | `GET /auth/oauth/{provider}/authorize` | Google or GitHub |
 
 OAuth returns tokens in the URL **fragment**, which browsers do not send to servers and
 which stays out of referrer headers and access logs.
+
+### Password registration is off unless you turn it on
+
+`ALLOW_PASSWORD_REGISTRATION` defaults to `false`, and `POST /auth/register` answers
+`403` while it is. There is no password-reset flow, and a credential nobody can recover
+is worse than no credential: a user who forgets it is locked out permanently with their
+saved analyses inside. Anonymous analysis needs no account at all, and OAuth verifies the
+address as a side effect of signing in.
+
+Turn it on only alongside a real reset flow. Existing password accounts — including an
+operator-created admin — can still sign in either way, so nobody is locked out by the
+default.
+
+`GET /auth/oauth/providers` reports the deployment's actual capabilities so a client
+never renders a form the API would refuse:
+
+```json
+{
+  "password_registration_enabled": false,
+  "anonymous_analysis_enabled": true,
+  "note": "Password accounts are disabled on this deployment: there is no password-reset flow, so an account could not be recovered.",
+  "providers": [{ "name": "google", "configured": true, "authorize_url": "/api/v1/auth/oauth/google/authorize" }]
+}
+```
 
 ---
 

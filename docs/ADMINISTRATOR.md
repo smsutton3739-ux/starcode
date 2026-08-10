@@ -11,19 +11,35 @@ log also accepts `moderator`. The web console is at `/admin`.
 ## Creating the first administrator
 
 There is no bootstrap endpoint — an unauthenticated route that mints an admin is a
-liability that outlives its usefulness. Register normally, then promote in the database:
+liability that outlives its usefulness. It is a script, run by someone with shell access
+to the deployment:
 
 ```bash
-# Docker
-docker compose exec db psql -U starcode -d starcode \
-  -c "UPDATE users SET role = 'admin' WHERE email = 'you@example.com';"
+# Local, from backend/, with the same environment the API uses
+python3 scripts/create_admin.py --email you@example.com
 
-# Local
-psql "$DATABASE_URL" -c "UPDATE users SET role = 'admin' WHERE email = 'you@example.com';"
+# Docker
+docker compose exec api python3 scripts/create_admin.py --email you@example.com
 ```
 
-After that, promote everyone else through the API or console, which records the change in
-the audit log.
+It prompts for the password without echoing it. For unattended provisioning, set
+`STARCODE_ADMIN_PASSWORD` instead — never pass a password as a command-line argument,
+where it is visible to every process on the host and saved to shell history.
+
+This is the only way to get the first administrator, because password registration is
+disabled by default (see [DEPLOYMENT.md](DEPLOYMENT.md#accounts)). Accounts created this
+way sign in normally regardless of that setting.
+
+Re-running it against an existing address changes that account's role and leaves the
+password alone:
+
+```bash
+python3 scripts/create_admin.py --email colleague@example.com --role moderator
+python3 scripts/create_admin.py --email you@example.com --reset-password   # locked out
+```
+
+After the first one, promote everyone else through the API or admin console, which records
+the change in the audit log — the script does not.
 
 ---
 
@@ -155,9 +171,24 @@ if `total_chunks` is zero.
 
 ### Adding sources
 
-Corpus content lives in code (`backend/app/knowledge/corpus.py`) so that it is
-reviewable, diffable and versioned alongside everything else. Adding entries is a code
-change and a deploy, not a database edit. See [DEVELOPER.md](DEVELOPER.md).
+The seed corpus lives in code (`backend/app/knowledge/corpus.py`) so that it is
+reviewable, diffable and versioned alongside everything else. Adding entries there is a
+code change and a deploy, not a database edit. See [DEVELOPER.md](DEVELOPER.md).
+
+For material too large or too frequently updated for that — a licensed dataset, an
+institutional export — use the JSON importer instead:
+
+```bash
+python3 scripts/import_dataset.py corpus.json --dry-run   # validate, change nothing
+python3 scripts/import_dataset.py corpus.json
+```
+
+It validates the entire file before writing anything, so one bad entry imports nothing and
+every problem is listed at once. It refuses sources without a citation, translations
+without a credit, and events described as records that name no record. Those refusals are
+the point: retrieved passages are cited in reports, and unprovenanced material would
+quietly erode the labelling. Re-running the same file updates rather than duplicates, so
+it is safe in a deploy script. The file format is documented at the top of the script.
 
 The one field to insist on in review is `dating_note`. When a text was written determines
 whether it could have preceded the events it appears to describe — the whole question for

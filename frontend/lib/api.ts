@@ -405,7 +405,11 @@ export async function logout(): Promise<void> {
   clearTokens();
 }
 
-export function oauthProviders(): Promise<{
+/** What sign-in methods this deployment offers. Read it rather than assuming. */
+export function authCapabilities(): Promise<{
+  password_registration_enabled: boolean;
+  anonymous_analysis_enabled: boolean;
+  note: string | null;
   providers: Array<{ name: string; configured: boolean; authorize_url: string }>;
 }> {
   return request("/auth/oauth/providers", { anonymous: true });

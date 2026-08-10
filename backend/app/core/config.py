@@ -43,6 +43,17 @@ class Settings(BaseSettings):
     """The homepage must work with zero friction. Anonymous submissions are allowed and
     rate-limited far more aggressively than authenticated ones."""
 
+    ALLOW_PASSWORD_REGISTRATION: bool = False
+    """Off by default, because there is no password-reset flow.
+
+    Offering a credential nobody can recover is worse than not offering it: a user who
+    forgets it is locked out permanently, with their saved analyses inside. Anonymous
+    use and OAuth both work without this, and OAuth verifies the address as a side
+    effect.
+
+    Turn it on only alongside a real reset flow. Existing password accounts can still
+    sign in either way, so an operator-created admin is never locked out by this."""
+
     # ---- OAuth --------------------------------------------------------------
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""

@@ -223,7 +223,18 @@ Use public-domain translations, credited. Then:
 python -m app.workers.seed_cli   # idempotent
 ```
 
-For bulk data, write an importer producing the same shapes rather than hand-editing.
+For bulk data, use `scripts/import_dataset.py`, which takes the same shapes as JSON:
+
+```bash
+python3 scripts/import_dataset.py corpus.json --dry-run
+python3 scripts/import_dataset.py corpus.json
+```
+
+It validates the whole file before writing anything and refuses entries without
+provenance — no citation, no credited translation, or an event described as recorded that
+names no record. Keep that gate in mind if you extend it: it is where the epistemic
+contract is enforced at ingest, so nothing unattributable reaches the retrieval index and
+gets cited in a report. Its tests are in `tests/test_import_dataset.py`.
 
 ---
 
@@ -406,4 +417,8 @@ backend/app/
   db/                models, portable types, session
   core/              config, logging, security, rate_limit, middleware
   workers/           runner, seed_cli
+backend/scripts/
+  create_admin.py    the only route to the first administrator
+  import_dataset.py  JSON corpus import, with the provenance gate
+  entrypoint.sh      container start: migrate, then serve
 ```

@@ -52,6 +52,9 @@ Rules enforced in code (`backend/app/agents/contracts.py`):
 - [x] **M11 — Deployment**: Dockerfiles, docker-compose, Vercel + AWS notes, CI/CD.
 - [x] **M12 — Testing**: unit, integration, API, a11y, e2e, performance smoke.
 - [x] **M13 — Documentation**: README, install, deploy, API, architecture, developer, admin, user.
+- [x] **M14 — Going live**: custom-domain configuration, build-time environment guard,
+      accounts policy (OAuth + anonymous, no unrecoverable passwords), operator scripts
+      for the first admin and for corpus import.
 
 ---
 
@@ -67,6 +70,31 @@ Rules enforced in code (`backend/app/agents/contracts.py`):
 | 2026-08-07 | M10    | Frontend: homepage, analysis view, dashboard, admin, sky map. |
 | 2026-08-07 | M11–M13| Docker, CI, full docs, test suites green. |
 | 2026-08-10 | —      | Shipped. 271 backend + 22 unit + 19 e2e + 16 a11y tests pass; zero WCAG A/AA violations; full flow verified in a browser. |
+| 2026-08-10 | M14    | Deployment hardening for a real domain: build-time guard on `NEXT_PUBLIC_API_URL`, accounts decision (below), the two operator scripts the docs referenced, OAuth replica constraint documented. 295 backend tests. |
+
+### M14 — what shipped and why
+
+- **Password registration is off by default** (`ALLOW_PASSWORD_REGISTRATION`). There is no
+  reset flow, and an account nobody can recover is worse than none — the person who
+  forgets it loses their saved analyses permanently. `POST /auth/register` answers 403
+  with that reason rather than 404, and `GET /auth/oauth/providers` reports the
+  deployment's real capabilities so the client hides a form the API would refuse. Existing
+  password accounts still sign in, so an operator is never locked out.
+- **`scripts/create_admin.py`** — creates or promotes an administrator from the shell.
+  Without it, disabling registration would leave a fresh deployment with no route to its
+  own admin panel. Passwords come from a hidden prompt or the environment, never from
+  argv. Re-running changes a role without touching the credential; `--reset-password` is
+  the recovery path.
+- **`scripts/import_dataset.py`** — the corpus loader `corpus.py` and this plan had both
+  been pointing at a script that did not exist. It validates the whole file before writing
+  anything and refuses entries without provenance: no citation, no credited translation,
+  or a "recorded" event that names no record. That is the epistemic contract enforced at
+  the point of ingest rather than apologised for later.
+- **Build guard corrected.** The first version keyed on `NODE_ENV=production`, which
+  `next start` and `next lint` also set — so a correctly built Docker image refused to
+  boot. It now fires on the build phase only, verified against all four commands.
+- **OAuth needs one API replica** until its `state` store moves to Redis. Documented in
+  `docs/DEPLOYMENT.md` with three ways to live with it, rather than left as a comment.
 
 ---
 

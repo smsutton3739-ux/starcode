@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ApiRequestError, login, oauthProviders, oauthUrl, register } from "@/lib/api";
+import { ApiRequestError, authCapabilities, login, oauthUrl, register } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,11 +14,22 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [providers, setProviders] = useState<Array<{ name: string; configured: boolean }>>([]);
+  // Null until known, so the form is not rendered and then yanked away.
+  const [canRegister, setCanRegister] = useState<boolean | null>(null);
+  const [registrationNote, setRegistrationNote] = useState<string | null>(null);
 
   useEffect(() => {
-    oauthProviders()
-      .then((data) => setProviders(data.providers))
-      .catch(() => setProviders([]));
+    authCapabilities()
+      .then((data) => {
+        setProviders(data.providers);
+        setCanRegister(data.password_registration_enabled);
+        setRegistrationNote(data.note);
+        if (!data.password_registration_enabled) setMode("login");
+      })
+      .catch(() => {
+        setProviders([]);
+        setCanRegister(false);
+      });
   }, []);
 
   const submit = async (event: React.FormEvent) => {
@@ -127,20 +138,28 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-        {mode === "login" ? "No account yet? " : "Already have an account? "}
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "login" ? "register" : "login");
-            setError(null);
-            setFieldErrors({});
-          }}
-          className="font-medium text-blue-700 underline-offset-4 hover:underline dark:text-blue-400"
-        >
-          {mode === "login" ? "Create one" : "Sign in"}
-        </button>
-      </p>
+      {canRegister && (
+        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+          {mode === "login" ? "No account yet? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "login" ? "register" : "login");
+              setError(null);
+              setFieldErrors({});
+            }}
+            className="font-medium text-blue-700 underline-offset-4 hover:underline dark:text-blue-400"
+          >
+            {mode === "login" ? "Create one" : "Sign in"}
+          </button>
+        </p>
+      )}
+
+      {canRegister === false && registrationNote && (
+        <p className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          {registrationNote}
+        </p>
+      )}
 
       <p className="mt-8 text-center">
         <Link href="/" className="text-sm text-slate-500 underline-offset-4 hover:underline dark:text-slate-400">

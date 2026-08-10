@@ -53,6 +53,12 @@ production bundle to run against a local API, which is what CI and the e2e suite
 Plain `http://` is allowed but warns, because a browser on an HTTPS page blocks
 mixed-content requests.
 
+The check runs on `next build` only. `next start` and `next lint` load the same config
+file and also report `NODE_ENV=production`, but neither compiles a bundle — by the time
+the server starts, the value is already inside `.next`, so the runtime container does not
+need the build argument. This matters for the Docker image, whose runtime stage
+deliberately carries no `NEXT_PUBLIC_*` variables.
+
 ---
 
 ## Connecting a custom domain
@@ -266,6 +272,44 @@ count (`GET /admin/system`).
 **Rate limiting needs Redis when you have more than one API task.** Without it, limits
 fall back to per-worker counters, which multiplies the effective limit by the task count.
 `/api/v1/health` reports which backend is active.
+
+**OAuth sign-in currently requires a single API replica, or sticky sessions.** The
+one-time `state` value that ties an authorization request to its callback is held in
+process memory (`app/api/v1/routers/auth.py`). With several replicas behind a round-robin
+load balancer, a callback that lands on a different replica than the one that issued the
+state is rejected as a forgery, and the user sees a failed sign-in on roughly
+`1 − 1/replicas` of attempts.
+
+Until that state moves to Redis, pick one:
+
+- run a single API task (perfectly reasonable at launch — the worker still scales
+  independently, and anonymous analysis is unaffected);
+- enable session affinity on the load balancer for `/api/v1/auth/oauth/*`;
+- or run OAuth-free and create accounts with `scripts/create_admin.py`.
+
+Anonymous analysis, the homepage, and all analysis endpoints scale horizontally without
+any of this — only the OAuth handshake is affected.
+
+---
+
+## Accounts
+
+`ALLOW_PASSWORD_REGISTRATION` is `false` by default and `POST /auth/register` answers
+`403` while it is. There is no password-reset flow, and an account nobody can recover is
+worse than no account: the person who forgets the password loses their saved analyses
+permanently.
+
+This is not a limitation you need to work around before launching. The homepage works
+with no account at all, and OAuth both creates the account and verifies the address in one
+step. Configure `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` or the GitHub pair and sign-in
+works.
+
+Set `ALLOW_PASSWORD_REGISTRATION=true` only once you have built a reset flow. Existing
+password accounts — including an admin created with `scripts/create_admin.py` — can always
+sign in regardless of the setting, so the default never locks an operator out.
+
+The frontend reads `GET /auth/oauth/providers` and hides the registration form when the
+server says it is unavailable, rather than offering a form the API refuses.
 
 ---
 

@@ -18,6 +18,8 @@ out/
 coverage/
 playwright-report/
 test-results/
+# Incremental tsc cache: a build artifact whose churn is pure diff noise.
+*.tsbuildinfo
 
 # Env & secrets
 .env

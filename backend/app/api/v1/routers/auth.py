@@ -58,6 +58,18 @@ def _issue_tokens(user: User) -> TokenPair:
     dependencies=[Depends(rate_limiter("auth"))],
 )
 def register(payload: RegisterRequest, request: Request, db: DbSession) -> TokenPair:
+    if not settings.ALLOW_PASSWORD_REGISTRATION:
+        # Refused rather than quietly hidden: a client that posts here anyway deserves a
+        # reason, and the reason is that we cannot offer account recovery.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Password accounts are not enabled on this deployment, because there is "
+                "no password-reset flow — an account nobody can recover is worse than no "
+                "account. Use a sign-in provider, or analyse a text without an account."
+            ),
+        )
+
     email = payload.email.lower().strip()
     existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if existing is not None:
@@ -382,7 +394,20 @@ def oauth_callback(
 
 @router.get("/oauth/providers")
 def list_providers() -> dict:
+    """What sign-in methods this deployment actually offers.
+
+    The client reads this rather than assuming, so a deployment with passwords disabled
+    never renders a registration form the API would refuse.
+    """
     return {
+        "password_registration_enabled": settings.ALLOW_PASSWORD_REGISTRATION,
+        "anonymous_analysis_enabled": settings.ALLOW_ANONYMOUS_ANALYSIS,
+        "note": (
+            None
+            if settings.ALLOW_PASSWORD_REGISTRATION
+            else "Password accounts are disabled on this deployment: there is no "
+            "password-reset flow, so an account could not be recovered."
+        ),
         "providers": [
             {
                 "name": name,
@@ -390,7 +415,7 @@ def list_providers() -> dict:
                 "authorize_url": f"{settings.API_V1_PREFIX}/auth/oauth/{name}/authorize",
             }
             for name in PROVIDERS
-        ]
+        ],
     }
 
 
