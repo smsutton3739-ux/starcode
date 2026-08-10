@@ -271,7 +271,10 @@ export function SkyMap() {
                     <td className="p-3 font-medium">
                       {body.body}
                       {body.retrograde && (
-                        <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                        // orange-600 on white measures 3.55:1 at this size, under the
+                        // 4.5:1 minimum for body text; orange-700/300 clears it in both
+                        // themes.
+                        <span className="ml-2 text-xs text-orange-700 dark:text-orange-300">
                           retrograde
                         </span>
                       )}

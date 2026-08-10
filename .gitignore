@@ -32,3 +32,5 @@ uploads/
 # Local browser-driver scratch files
 frontend/drive*.mjs
 frontend/diag*.mjs
+frontend/test-results/
+frontend/playwright-report/

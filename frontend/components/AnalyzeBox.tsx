@@ -189,6 +189,9 @@ export function AnalyzeBox() {
             ref={fileInput}
             type="file"
             accept={ACCEPTED}
+            // Visually hidden but still in the accessibility tree, so it needs its own
+            // name — the adjacent button is a separate element and does not label it.
+            aria-label="Choose a document to analyse: PDF, Word, plain text or an image"
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
