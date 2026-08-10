@@ -37,7 +37,7 @@ Rules enforced in code (`backend/app/agents/contracts.py`):
 
 - [x] **M0 — Repo scaffolding**: monorepo layout, env management, tooling config.
 - [x] **M1 — Backend core**: settings, structured logging, error handling, request IDs.
-- [x] **M2 — Database**: SQLAlchemy 2.0 models (16 tables), Alembic migration, pgvector.
+- [x] **M2 — Database**: SQLAlchemy 2.0 models (30 tables), Alembic migration, pgvector.
 - [x] **M3 — Calendar engine**: 12 calendar systems, RD-based conversions, uncertainty notes.
 - [x] **M4 — Astronomy engine**: Meeus algorithms — JD, moon phases, eclipses, equinoxes,
       planetary longitudes, conjunctions, retrogrades. Pure Python, deterministic, offline.
@@ -60,12 +60,62 @@ Rules enforced in code (`backend/app/agents/contracts.py`):
 | Date       | Module | Note |
 | ---------- | ------ | ---- |
 | 2026-08-07 | M0     | Monorepo scaffolded; plan + epistemic contract fixed first. |
-| 2026-08-07 | M1–M2  | Backend core + 16-table schema + Alembic baseline. |
+| 2026-08-07 | M1–M2  | Backend core + 30-table schema + Alembic baseline. |
 | 2026-08-07 | M3–M4  | Calendar + astronomy engines with unit tests against published values. |
 | 2026-08-07 | M5–M6  | Knowledge corpus, RAG, 8-agent orchestrator w/ offline provider. |
 | 2026-08-07 | M7–M9  | Ingestion, API surface, report assembly and exporters. |
 | 2026-08-07 | M10    | Frontend: homepage, analysis view, dashboard, admin, sky map. |
 | 2026-08-07 | M11–M13| Docker, CI, full docs, test suites green. |
+| 2026-08-10 | —      | Shipped. 271 backend + 22 unit + 19 e2e + 16 a11y tests pass; zero WCAG A/AA violations; full flow verified in a browser. |
+
+---
+
+## Verification record
+
+Every claim in the README is backed by something that was actually run.
+
+| Check | Result |
+| --- | --- |
+| Backend tests | 271 passed (SQLite, offline provider, no network) |
+| Frontend unit tests | 22 passed |
+| End-to-end tests | 19 passed against a real FastAPI process |
+| Accessibility tests | 16 passed; **zero** WCAG 2.1 A/AA violations, both themes |
+| Lint + format | `ruff check` and `ruff format --check` clean |
+| Type check | `tsc --noEmit` clean |
+| Migration | Applies and reverses; `alembic check` agrees with the models |
+| Entrypoint chain | `alembic upgrade head` → seed → worker start, all run directly |
+| Browser walkthrough | Paste → ANALYZE → report, zero console errors |
+
+External validation of the engines (not self-consistency):
+
+| Anchor | Source | Result |
+| --- | --- | --- |
+| Eclipse of Thales | Herodotus 1.74; 28 May 585 BCE Julian | exact day |
+| Bur-Sagale eclipse | Assyrian Eponym Canon; 15 June 763 BCE Julian | exact day |
+| 1999 Aug 11 eclipse γ | NASA Five Millennium Canon: 0.5062 | 0.5058 |
+| 2019 Jan lunar umbral mag. | NASA: 1.1953 | 1.193 |
+| Moon position | Meeus example 47.a | λ, β and distance all match |
+| Sun position | Meeus example 25.b | 0.001° |
+| Lunar phase, solstice | Meeus examples 49.a, 49.b, 27.a | 1e-5 day |
+| 7 BCE triple conjunction | Kepler's Star of Bethlehem proposal | three passes, in Pisces |
+| Rosh Hashanah 5784/5785 | Published Hebrew calendar | exact |
+| Nowruz 1403 | Published Persian calendar | exact |
+| 13.0.0.0.0 | Maya Long Count, GMT correlation | 21 December 2012 |
+
+Bugs found by verification rather than by writing more code:
+
+1. `passlib` 1.7.4 misdetects bcrypt 4.1+ and rejected valid passwords — replaced with
+   bcrypt directly.
+2. Share expiry compared a naive datetime from SQLite against an aware `now()`, turning
+   an authorisation check into a 500.
+3. The orchestrator added a `Report` via `db.add()` after reading the cached relationship,
+   so any caller holding the `Analysis` saw no report.
+4. `ClaimDraft.to_dict()` emitted `citations` where the API schema and the exporters
+   expected `references` — crashed the report view and silently dropped every citation
+   from PDF, DOCX and Markdown exports. Both sides were individually correct, so only an
+   unmocked end-to-end run could find it.
+5. The Halley apparition table had century-wide gaps.
+6. The hidden file input had no accessible name; "retrograde" failed contrast at 3.55:1.
 
 ---
 
