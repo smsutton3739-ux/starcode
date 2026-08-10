@@ -251,7 +251,15 @@ export function SkyMap() {
             </p>
           </div>
 
-          <div className="card overflow-x-auto">
+          {/* A region that scrolls horizontally must be reachable by keyboard, or a
+              keyboard user on a narrow screen cannot see the columns that overflow.
+              tabIndex makes it focusable; the group role and label say what it is. */}
+          <div
+            className="card overflow-x-auto"
+            tabIndex={0}
+            role="group"
+            aria-label="Body positions table, scrolls horizontally"
+          >
             <table className="w-full text-sm">
               <caption className="sr-only">
                 Positions of the Sun, Moon and naked-eye planets

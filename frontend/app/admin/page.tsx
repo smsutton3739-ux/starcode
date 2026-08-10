@@ -95,7 +95,12 @@ export default function AdminPage() {
 
           {/* The raw payload is shown deliberately: an operator debugging a live system
               is better served by the exact response than by a prettified subset of it. */}
-          <div className="card overflow-x-auto p-4">
+          <div
+            className="card overflow-x-auto p-4"
+            tabIndex={0}
+            role="group"
+            aria-label="Raw response, scrolls horizontally"
+          >
             <pre className="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300">
               {JSON.stringify(data, null, 2)}
             </pre>
