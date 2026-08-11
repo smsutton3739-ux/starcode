@@ -46,8 +46,9 @@ services:
     ports: !override []
     build:
       args:
-        # Build time, not runtime. Changing this requires a rebuild, not a restart.
+        # Build time, not runtime. Changing these requires a rebuild, not a restart.
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN}
+        NEXT_PUBLIC_ASTRO_CHARTS_AFF: ${NEXT_PUBLIC_ASTRO_CHARTS_AFF:-}
     environment:
       NODE_ENV: production
 

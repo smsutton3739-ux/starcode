@@ -20,6 +20,9 @@ export function SiteFooter() {
             <Link href="/explore" className="hover:underline">
               Astronomy &amp; calendars
             </Link>
+            <Link href="/tools" className="hover:underline">
+              Chart tools
+            </Link>
             <Link href="/about#limitations" className="hover:underline">
               Known limitations
             </Link>

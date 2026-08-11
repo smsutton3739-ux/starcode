@@ -284,6 +284,38 @@ does not affect anonymous analysis, which is the main path and scales freely.
 
 ---
 
+## The chart tools page
+
+`/tools` embeds third-party birth-chart and synastry calculators from Astro·Charts. It is
+off until you set your affiliate identifier:
+
+```
+NEXT_PUBLIC_ASTRO_CHARTS_AFF=your-affiliate-id
+```
+
+Build time, like every `NEXT_PUBLIC_*` value — on Path 1 the compose overlay passes it as
+a build argument, so a rebuild picks it up:
+
+```bash
+docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build web
+```
+
+Without it the page renders and explains that the tools are not configured, rather than
+embedding a widget that credits nobody.
+
+Two things about it are deliberate and worth keeping. The widgets live on their own page
+rather than inside analysis reports, because a birth chart is astrology and a report is
+supposed to be the place where interpretation is never presented as a finding. And the
+permission to frame that origin is granted on `/tools` alone: a third-party script has
+full access to whatever page it runs on, and the other pages can be holding someone's
+submitted text and saved analyses. Tests in `tests/e2e/analysis.spec.ts` assert both
+halves of that, so widening it by accident fails the build.
+
+The page carries an affiliate disclosure. Keep it — in the US the FTC requires that a
+material connection be disclosed clearly, and it is also simply what a reader is owed.
+
+---
+
 ## If something is wrong
 
 Open the browser's developer console (F12) on https://www.astro-decoded.com and read the

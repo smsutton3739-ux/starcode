@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ASTRO_CHARTS_ORIGIN, routeAllowsEmbeds } from "@/lib/embeds";
 
 /**
  * Nonce-based Content Security Policy.
@@ -22,6 +23,18 @@ export function middleware(request: NextRequest) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   const isDev = process.env.NODE_ENV === "development";
 
+  // Third-party embeds are allowed on a small set of routes and nowhere else. `frame-src`
+  // is what actually admits them: without it they fall back to `default-src 'self'` and
+  // the browser refuses to load the frame at all.
+  //
+  // No `script-src` change is needed for the embed's resize helper. Under
+  // `strict-dynamic` a browser ignores host expressions entirely, so allowlisting the
+  // origin there would do nothing — the script is admitted by carrying the request nonce,
+  // which the page attaches. That keeps one policy for scripts everywhere rather than a
+  // second, weaker one on this route.
+  const embedsAllowed = routeAllowsEmbeds(request.nextUrl.pathname);
+  const frameSrc = embedsAllowed ? `frame-src ${ASTRO_CHARTS_ORIGIN}` : "frame-src 'none'";
+
   const csp = [
     "default-src 'self'",
     // 'unsafe-eval' is required by React Refresh in development only.
@@ -31,6 +44,7 @@ export function middleware(request: NextRequest) {
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     `connect-src 'self' ${apiBase}${isDev ? " ws: wss:" : ""}`,
+    frameSrc,
     "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'self'",

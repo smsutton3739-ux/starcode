@@ -16,6 +16,11 @@ COPY . .
 # connect-src. A mismatch shows up as the browser refusing every API call.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Optional. Empty means the /tools page says the chart embeds are not configured rather
+# than rendering a widget with a placeholder affiliate id.
+ARG NEXT_PUBLIC_ASTRO_CHARTS_AFF=
+ENV NEXT_PUBLIC_ASTRO_CHARTS_AFF=$NEXT_PUBLIC_ASTRO_CHARTS_AFF
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

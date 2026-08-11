@@ -42,6 +42,59 @@ test.describe("static pages", () => {
   }
 });
 
+test.describe("the chart tools page", () => {
+  /**
+   * Tested apart from the other static pages because it embeds a third party.
+   *
+   * `networkidle` is not usable here: the page waits on frames from another origin,
+   * which may poll, hold a connection, or simply be unreachable — any of which hangs the
+   * wait rather than failing it. What our own markup does is fully determined once the
+   * document is parsed, so that is what is waited for.
+   *
+   * The scan is scoped to `main` for the same reason. Cross-origin frame content is
+   * opaque to axe and is not ours to fix; scoping keeps a failure here meaning "our page
+   * has a problem" rather than "someone else's widget does".
+   */
+  const scanOurs = (page: import("@playwright/test").Page) => scan(page, "main");
+
+  test("has no WCAG A/AA violations", async ({ page }) => {
+    await page.goto("/tools", { waitUntil: "domcontentloaded" });
+    const results = await scanOurs(page);
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  test("has no violations in dark mode", async ({ page }) => {
+    await page.goto("/tools", { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: /dark mode/i }).click();
+    await page.waitForTimeout(300);
+    const results = await scanOurs(page);
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  test("says what the embeds are before showing them", async ({ page }) => {
+    await page.goto("/tools", { waitUntil: "domcontentloaded" });
+
+    // The distinction the whole product rests on has to survive onto this page: these
+    // are somebody else's astrology widgets, not a Starcode finding.
+    await expect(page.getByText(/Reading meaning into those positions is astrology/i)).toBeVisible();
+    await expect(page.getByText(/Nothing produced on this page is a Starcode analysis/i)).toBeVisible();
+    await expect(page.getByText(/affiliate identifier/i)).toBeVisible();
+  });
+
+  test("every embedded frame is named for a screen reader", async ({ page }) => {
+    await page.goto("/tools", { waitUntil: "domcontentloaded" });
+
+    const frames = page.locator("main iframe");
+    const count = await frames.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i += 1) {
+      // An unnamed frame is announced as "frame", which tells a screen-reader user
+      // nothing about which of the two they have landed in.
+      await expect(frames.nth(i)).toHaveAttribute("title", /\S/);
+    }
+  });
+});
+
 test.describe("the report", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");

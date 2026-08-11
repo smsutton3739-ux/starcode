@@ -230,3 +230,41 @@ test.describe("error handling", () => {
     await expect(page.getByText(/could not be found/i)).toBeVisible({ timeout: 30_000 });
   });
 });
+
+test.describe("third-party embeds are fenced in", () => {
+  /**
+   * The chart tools page frames another company's widgets and runs their script. That is
+   * a deliberate exception to an otherwise closed policy, and the value of the exception
+   * depends entirely on it staying narrow: the pages that hold someone's submitted text
+   * and their saved analyses must not gain the same permission by accident.
+   */
+  const frameSrc = async (page: import("@playwright/test").Page, path: string) => {
+    const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+    const csp = response?.headers()["content-security-policy"] ?? "";
+    return /frame-src ([^;]*)/.exec(csp)?.[1].trim() ?? "";
+  };
+
+  test("the tools page may frame the widget host", async ({ page }) => {
+    expect(await frameSrc(page, "/tools")).toBe("https://astro-charts.com");
+  });
+
+  for (const path of ["/", "/about", "/explore", "/login", "/dashboard"]) {
+    test(`${path} may frame nothing`, async ({ page }) => {
+      expect(await frameSrc(page, path)).toBe("'none'");
+    });
+  }
+
+  test("the script policy is the same on the tools page as everywhere else", async ({ page }) => {
+    // The embed's resize helper is admitted by nonce, not by allowlisting its origin, so
+    // introducing it must not have loosened script-src on this route.
+    const scriptSrc = async (path: string) => {
+      const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+      const csp = response?.headers()["content-security-policy"] ?? "";
+      // Nonces differ per request, so compare the shape rather than the literal.
+      return (/script-src ([^;]*)/.exec(csp)?.[1] ?? "").replace(/'nonce-[^']+'/, "'nonce-X'").trim();
+    };
+
+    expect(await scriptSrc("/tools")).toBe(await scriptSrc("/"));
+    expect(await scriptSrc("/tools")).not.toContain("astro-charts.com");
+  });
+});
