@@ -190,9 +190,16 @@ is installed anywhere.
 
 ### 1. The API, worker and database
 
-`deploy/render.yaml` creates all three at once. In Render: **Blueprints → New Blueprint
+`render.yaml` creates all three at once. In Render: **Blueprints → New Blueprint
 Instance**, point it at this repository, and approve. You get the API, the background
 worker, PostgreSQL and Redis, already wired together, with `SECRET_KEY` generated for you.
+
+Leave **Blueprint Path** empty. The file is at the repository root, which is where Render
+looks by default — and the field is case-sensitive, so a typed path is one capital letter
+away from "not found".
+
+Set **Branch** to whichever branch holds this work; Render offers the default branch
+first and does not warn you if the blueprint only exists on another one.
 
 Four things it cannot do for you, in order:
 

@@ -4,6 +4,10 @@
 # creates all three pieces at once: the API, the background worker, and a PostgreSQL
 # database, already wired to each other.
 #
+# This lives at the repository root because that is where Render looks by default, which
+# means the "Blueprint Path" field can be left empty. It is case-sensitive, and a path
+# typed on a phone is one capital letter away from "blueprint not found".
+#
 # The frontend is not here. It is a Next.js app and belongs on Vercel or Netlify, which
 # is also where its custom domain goes. See docs/GO_LIVE.md.
 #
