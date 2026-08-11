@@ -1,0 +1,123 @@
+# Render blueprint: the backend half of the platform.
+#
+# Render's dashboard → Blueprints → New Blueprint Instance, pointed at this repository,
+# creates all three pieces at once: the API, the background worker, and a PostgreSQL
+# database, already wired to each other.
+#
+# The frontend is not here. It is a Next.js app and belongs on Vercel or Netlify, which
+# is also where its custom domain goes. See docs/GO_LIVE.md.
+#
+# WHAT YOU MUST STILL DO BY HAND, in this order:
+#
+#   1. Enable pgvector on the database, once, after it is created:
+#        psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS vector;"
+#      Without it the app still runs — retrieval falls back to an in-process cosine scan
+#      and says so at /api/v1/health — but that scan is linear in corpus size.
+#
+#   2. Set CORS_ORIGINS and FRONTEND_BASE_URL to your real frontend URL. They are left
+#      blank deliberately: a wrong value here is the failure that looks like the site is
+#      broken, and a placeholder would be wrong silently.
+#
+#   3. Add a custom domain (api.astro-decoded.com) to the API service, and create the
+#      CNAME Render gives you at your registrar.
+#
+#   4. Optionally set ANTHROPIC_API_KEY. Without it the interpretive sections report
+#      themselves as unavailable instead of being filled with generated text.
+
+services:
+  # ---- The API ---------------------------------------------------------------------
+  - type: web
+    name: starcode-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /api/v1/health/live
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true # Render generates once and keeps it; never appears in git.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: starcode-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: starcode-redis
+          property: connectionString
+      - key: OAUTH_REDIRECT_BASE
+        fromService:
+          type: web
+          name: starcode-api
+          property: host
+      # ---- Set these two yourself, to your frontend's URL ----
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false
+      # ---- Optional ----
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LOG_FORMAT
+        value: json
+      # One uvicorn worker fits the starter instance. Raise it with the plan, not before:
+      # two workers on a small instance is how you get an OOM loop rather than headroom.
+      - key: WEB_CONCURRENCY
+        value: "1"
+
+  # ---- The background worker -------------------------------------------------------
+  #
+  # Not optional. Analyses are queued by the API and executed here; without this service
+  # every submission sits at "queued" forever and the site looks broken in the one way
+  # that is hardest to diagnose from the outside.
+  - type: worker
+    name: starcode-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    dockerCommand: python -m app.workers.runner
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: starcode-api
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: starcode-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: starcode-redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LOG_FORMAT
+        value: json
+      # The API service owns migrations; two processes racing `alembic upgrade` on a cold
+      # start is a deadlock waiting to happen.
+      - key: SEED_ON_START
+        value: "false"
+
+  # ---- Cache and rate-limit store --------------------------------------------------
+  #
+  # Without it rate limits fall back to per-process counters, which multiplies the
+  # effective limit by the number of instances. /api/v1/health reports which is in use.
+  - type: redis
+    name: starcode-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: [] # Reachable only from inside this Render project.
+
+databases:
+  - name: starcode-db
+    databaseName: starcode
+    user: starcode
+    plan: basic-256mb
+    postgresMajorVersion: "16"

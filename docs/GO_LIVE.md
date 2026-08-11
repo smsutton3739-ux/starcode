@@ -33,13 +33,14 @@ below. Everything runs on that one box. About $6–12/month.
 MySQL, maybe a "Node.js app" button. → **Path 2**. Keep the domain where it is, run the
 software elsewhere, point DNS at it. The free tiers cover a launch.
 
-**C. You are not sure.** Look for the words "SSH access" and "root" in your hosting
-control panel. If they are absent, assume B. A "Node.js selector" in cPanel can sometimes
-run the web app, but it cannot give you PostgreSQL with pgvector, so B still applies to
-the API.
+**C. You are not sure.** Take Path 2. It works whichever of the two you turn out to have,
+because your domain never moves either way — and if you are unsure what your hosting is,
+you do not want to be administering a Linux server. A "Node.js selector" in cPanel can
+sometimes run the web app, but it cannot give you PostgreSQL with pgvector, so Path 2
+still applies to the API.
 
 Either path ends with the same site at the same address. Path 1 is cheaper and keeps
-everything in one place; Path 2 is less to operate.
+everything in one place; Path 2 is less to operate and has nothing to patch.
 
 ---
 
@@ -187,36 +188,42 @@ docker compose logs -f api
 Your registrar keeps the domain and you add DNS records pointing at two services. Nothing
 is installed anywhere.
 
-### 1. The API and database
+### 1. The API, worker and database
 
-Use Railway, Render or Fly.io — all three run a persistent process and offer PostgreSQL
-with pgvector.
+`deploy/render.yaml` creates all three at once. In Render: **Blueprints → New Blueprint
+Instance**, point it at this repository, and approve. You get the API, the background
+worker, PostgreSQL and Redis, already wired together, with `SECRET_KEY` generated for you.
 
-1. Create a PostgreSQL database. Enable the `pgvector` extension (Railway and Render both
-   offer it; on Render pick the "pgvector" image).
-2. Create a service from this repository, root directory `backend`, using its `Dockerfile`.
-3. Create a **second** service from the same repository and Dockerfile, with the start
-   command `python -m app.workers.runner`. This is the worker. Without it, analyses are
-   submitted and never run.
-4. Set these environment variables on both:
+Four things it cannot do for you, in order:
 
-   ```
-   ENVIRONMENT=production
-   DATABASE_URL=<the connection string, with +psycopg after postgresql>
-   SECRET_KEY=<generated>
-   CORS_ORIGINS=https://www.astro-decoded.com
-   FRONTEND_BASE_URL=https://www.astro-decoded.com
-   OAUTH_REDIRECT_BASE=https://api.astro-decoded.com
-   TRUSTED_HOSTS=api.astro-decoded.com
-   LOG_FORMAT=json
-   ANTHROPIC_API_KEY=<optional>
+1. **Enable pgvector**, once, after the database exists. From the database's "Connect"
+   tab, copy the PSQL command and run:
+
+   ```bash
+   psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS vector;"
    ```
 
-   The `DATABASE_URL` these platforms give you starts `postgresql://`. The app needs
-   `postgresql+psycopg://` — change that prefix or it will not connect.
+   Without it the app still works — retrieval falls back to an in-process scan and
+   `/api/v1/health` says so — but that scan gets slower as the corpus grows.
 
-5. Add `api.astro-decoded.com` as a custom domain on the API service, and create the
-   `CNAME` record it tells you to at your registrar.
+2. **Set `CORS_ORIGINS` and `FRONTEND_BASE_URL`** on the API service, both to
+   `https://www.astro-decoded.com`. The blueprint leaves them blank on purpose: a wrong
+   value here is exactly the failure that looks like the whole site is broken.
+
+3. **Add the custom domain** `api.astro-decoded.com` to the API service, then create the
+   `CNAME` Render gives you at your registrar.
+
+4. **Optionally set `ANTHROPIC_API_KEY`** on both the API and the worker.
+
+Prefer Railway or Fly.io? Both work — create the same three services by hand from
+`backend/Dockerfile`, with the worker's start command set to `python -m app.workers.runner`.
+The image binds `$PORT` when the platform sets one, and the app rewrites a
+platform-supplied `postgresql://` URL to the driver SQLAlchemy needs, so the connection
+string can be pasted as given.
+
+**The worker is not optional.** The API queues analyses and the worker runs them. Skip it
+and every submission sits at "queued" forever — which looks like the site is broken, with
+nothing in the API logs to say why.
 
 ### 2. The web app
 

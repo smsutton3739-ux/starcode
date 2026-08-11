@@ -61,6 +61,13 @@ USER starcode
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:8000/api/v1/health/live || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-8000}/api/v1/health/live" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Shell form so PORT expands. Managed platforms (Render, Railway, Fly, Cloud Run) assign
+# a port and expect the process to bind it; a container that listens on a fixed 8000
+# instead is reported as unhealthy and restarted forever, with nothing in the logs to say
+# why. Locally PORT is unset and this is exactly the old command.
+#
+# WEB_CONCURRENCY is the same story from the other side: two uvicorn workers is right for
+# a real server and too much for a 512 MB free-tier instance, which OOMs instead.
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-2}"]

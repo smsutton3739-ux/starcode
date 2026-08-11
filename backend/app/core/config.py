@@ -116,6 +116,25 @@ class Settings(BaseSettings):
     def _no_empty_secret(cls, v: str) -> str:
         return v or DEV_SECRET_SENTINEL
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _name_the_driver(cls, v: str) -> str:
+        """Accept the URL managed platforms actually hand you.
+
+        Render, Railway, Fly, Heroku and Supabase all supply `postgresql://…` (or the
+        older `postgres://…`). SQLAlchemy 2 reads the part before `://` as the driver and
+        has no default for bare `postgresql`, so pasting the platform's own connection
+        string — the obvious thing to do — fails at import with a message about a missing
+        DBAPI that says nothing about the fix.
+
+        A URL that already names a driver is left exactly as it is, so anyone deliberately
+        using asyncpg or pg8000 keeps it.
+        """
+        for prefix in ("postgresql://", "postgres://"):
+            if v.startswith(prefix):
+                return f"postgresql+psycopg://{v[len(prefix) :]}"
+        return v
+
     @model_validator(mode="after")
     def _production_hardening(self) -> Settings:
         if self.ENVIRONMENT == "production":
