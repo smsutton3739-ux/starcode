@@ -66,11 +66,15 @@ services:
       - key: FRONTEND_BASE_URL
         sync: false
 
-      - key: OAUTH_REDIRECT_BASE
-        fromService:
-          type: web
-          name: starcode-api
-          property: host
+      # OAUTH_REDIRECT_BASE is deliberately absent.
+      #
+      # Deriving it from this service resolves to a bare hostname with no scheme, which
+      # produces callback URLs that no provider will accept — and it would resolve to the
+      # onrender.com name rather than the custom domain the OAuth console was told about.
+      # Both failures surface only as redirect_uri_mismatch at sign-in.
+      #
+      # Set it by hand when you enable Google or GitHub sign-in, to the full public API
+      # URL including the scheme: https://api.astro-decoded.com
 
       # ---- Sized for a free instance ----
       #
