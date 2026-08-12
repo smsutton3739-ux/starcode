@@ -76,6 +76,20 @@ async def lifespan(app: FastAPI):
         create_all()
         logger.info("app.schema_ensured")
 
+    if settings.SWEEP_STALE_JOBS_IN_API:
+        # No separate worker process is required — the API threads each analysis — but
+        # then nothing recovers work abandoned by a killed process unless this does.
+        from app.workers.runner import requeue_stale_jobs, start_sweeper_thread
+
+        try:
+            recovered = requeue_stale_jobs()
+            if recovered:
+                logger.info("app.recovered_abandoned_jobs", count=recovered)
+        except Exception as exc:  # noqa: BLE001
+            # A cold start must not be blocked by a sweep; the periodic one will retry.
+            logger.warning("app.startup_sweep_failed", error=str(exc))
+        start_sweeper_thread()
+
     from app.agents.provider import provider_status
 
     status_payload = provider_status()

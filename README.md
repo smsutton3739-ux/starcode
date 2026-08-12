@@ -233,6 +233,34 @@ Stated plainly, so nothing here is mistaken for an oversight.
 
 ---
 
+## Running it free
+
+The documented free deployment — Vercel, Render and Supabase, all on free tiers — costs
+nothing beyond a domain. Two of its limits are worth knowing before you meet them, because
+both look like faults and neither is one:
+
+- **The API sleeps after ~15 minutes without traffic.** The next visitor waits 30–60
+  seconds while Render starts it again. An analysis interrupted by that shutdown is not
+  lost: the API sweeps for abandoned work when it starts and periodically after, and
+  requeues anything a stopped process left behind.
+- **Supabase pauses a project after 7 days with no queries.** Restoring it is one click in
+  their dashboard, but until you click it the site is down. Visiting your own site
+  occasionally is enough to prevent it.
+
+Neither is a trial. Paying removes them when you want them removed.
+
+Without `ANTHROPIC_API_KEY` the platform runs its deterministic engine, and that is a
+supported mode rather than a crippled one. Language and script detection, entity and date
+extraction, calendar conversion, the whole astronomy engine, corpus retrieval, citations
+and every export format work fully. The interpretive sections — translation, historical
+context, symbolism, traditional and scholarly readings — report themselves as unavailable
+instead of being filled with generated text, which is the same rule applied everywhere
+else here.
+
+See [docs/GO_LIVE.md](docs/GO_LIVE.md).
+
+---
+
 ## Documentation
 
 | Guide | For |

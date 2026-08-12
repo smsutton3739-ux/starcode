@@ -3,6 +3,15 @@
 Frontend on Vercel, backend on AWS, or both in containers anywhere. This covers the
 configuration that actually bites.
 
+> **Deploying free, on managed hosts?** Go to [GO_LIVE.md](GO_LIVE.md) instead — Vercel,
+> Render and Supabase, click by click, with `render.yaml` doing most of it. This page is
+> the reference for the settings themselves and for the self-hosted and AWS shapes.
+>
+> One thing that page assumes and this one does not: a **dedicated worker process is
+> optional**. The API runs each analysis on its own thread, so a single service is a
+> complete deployment. Split the worker out when analysis volume starts competing with
+> request handling — not before.
+
 ---
 
 ## Before anything else

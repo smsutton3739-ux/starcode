@@ -13,6 +13,7 @@ a row runs it, and a job interrupted by a restart is picked up again rather than
 from __future__ import annotations
 
 import signal
+import threading
 import time
 from datetime import UTC, datetime, timedelta
 
@@ -103,6 +104,33 @@ def requeue_stale_jobs() -> int:
                         "Submitting it again usually works."
                     )
         return len(stale)
+
+
+def start_sweeper_thread() -> threading.Thread:
+    """Sweep for abandoned jobs from inside a process that is not the standalone worker.
+
+    The API already runs each analysis on a thread, so a single-process deployment needs
+    no worker service — but it does still need somebody to notice work that a killed
+    process left behind. Free hosting tiers stop idle instances routinely, so this is the
+    normal case there rather than a disaster case.
+
+    A daemon thread, so it never delays shutdown, and every failure is swallowed: a
+    sweep that cannot reach the database must not take the API down with it.
+    """
+
+    def loop() -> None:
+        while True:
+            time.sleep(settings.JOB_SWEEP_INTERVAL_SECONDS)
+            try:
+                requeued = requeue_stale_jobs()
+                if requeued:
+                    logger.info("worker.stale_sweep", requeued=requeued, source="api")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("worker.sweep_failed", error=str(exc))
+
+    thread = threading.Thread(target=loop, daemon=True, name="job-sweeper")
+    thread.start()
+    return thread
 
 
 def main() -> int:

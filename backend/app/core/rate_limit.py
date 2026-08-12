@@ -89,6 +89,19 @@ def get_backend() -> _InProcessBackend | _RedisBackend:
     with _backend_lock:
         if _backend is not None:
             return _backend
+        if not settings.REDIS_URL.strip():
+            # Deliberately unset, which is correct for a single-instance deployment.
+            # Reported as a decision rather than a failure: an operator scanning the logs
+            # of a working free-tier deployment should not find a warning about a service
+            # they chose not to run.
+            logger.info(
+                "rate_limit.backend",
+                backend="in-process",
+                note="REDIS_URL is unset; limits are per-process, which is exact on one instance",
+            )
+            _backend = _InProcessBackend()
+            return _backend
+
         try:
             _backend = _RedisBackend(settings.REDIS_URL)
             logger.info("rate_limit.backend", backend="redis")

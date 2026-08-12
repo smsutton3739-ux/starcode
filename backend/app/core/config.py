@@ -73,6 +73,21 @@ class Settings(BaseSettings):
     CACHE_TTL_SECONDS: int = 3600
     JOB_POLL_INTERVAL_SECONDS: float = 0.5
 
+    SWEEP_STALE_JOBS_IN_API: bool = True
+    """Recover abandoned jobs from inside the API process.
+
+    The API runs each analysis on its own thread, so a deployment with no separate worker
+    process is a supported shape — but then nothing performs the sweep that returns work
+    abandoned by a killed process. On a host that stops idle instances (every free tier
+    does), an analysis interrupted by a shutdown would sit at "running" forever and the
+    user would be told to keep waiting for something nobody is doing.
+
+    Turn this off when a dedicated worker runs `app.workers.runner`, which sweeps for
+    itself. Leaving it on alongside one is harmless — the sweep only touches jobs older
+    than `STALE_AFTER`, which a live worker would have finished."""
+
+    JOB_SWEEP_INTERVAL_SECONDS: int = 300
+
     # ---- Rate limiting (requests per window) --------------------------------
     RATE_LIMIT_ANONYMOUS_PER_HOUR: int = 10
     RATE_LIMIT_USER_PER_HOUR: int = 120

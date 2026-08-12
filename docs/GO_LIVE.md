@@ -8,14 +8,17 @@ anything — it is the decision the rest depends on.
 
 ## First: what "hosting" you have matters, and most registrar hosting will not work
 
-Starcode is not a website. It is four running things:
+Starcode is not a website. It is three running things:
 
 | Part | Needs |
 | --- | --- |
 | Web app | A **Node.js** runtime (Next.js server-rendering — not static files) |
 | API | A **long-running Python 3.11 process** (FastAPI), always on |
 | Database | **PostgreSQL with the `pgvector` extension** installed |
-| Worker | A **second always-on Python process** that runs analyses in the background |
+
+A fourth, a dedicated worker process, is optional: the API runs each analysis on its own
+thread, so a single service is a complete deployment. Split the worker out when analysis
+volume starts competing with request handling.
 
 The shared hosting that comes bundled with a domain — cPanel, "web hosting", the
 one-click site builder — almost always provides PHP, MySQL and static file serving. None
@@ -183,84 +186,162 @@ docker compose logs -f api
 
 ---
 
-## Path 2 — keep the domain where it is, run the software on managed hosts
+## Path 2 — free hosting, domain stays where it is
 
-Your registrar keeps the domain and you add DNS records pointing at two services. Nothing
-is installed anywhere.
+Three free accounts, nothing installed anywhere, no card required:
 
-### 1. The API, worker and database
+| Piece | Where | Free tier limit that matters |
+| --- | --- | --- |
+| Database | Supabase | Project pauses after 7 days with no queries |
+| API | Render | Instance stops after ~15 min idle; next request waits ~1 min |
+| Web app | Vercel | Generous; nothing you will hit |
 
-`render.yaml` creates all three at once. In Render: **Blueprints → New Blueprint
-Instance**, point it at this repository, and approve. You get the API, the background
-worker, PostgreSQL and Redis, already wired together, with `SECRET_KEY` generated for you.
+Do them in this order. Each step needs a value from the one before it.
 
-Leave **Blueprint Path** empty. The file is at the repository root, which is where Render
-looks by default — and the field is case-sensitive, so a typed path is one capital letter
-away from "not found".
+### 1. Supabase — the database
 
-Set **Branch** to whichever branch holds this work; Render offers the default branch
-first and does not warn you if the blueprint only exists on another one.
+1. [supabase.com](https://supabase.com) → sign in with GitHub → **New project**.
+2. Name it `starcode`. Choose the region closest to you. **Set a database password and
+   save it somewhere** — it is shown once and you need it in step 4.
+3. Wait about two minutes for provisioning.
+4. **SQL Editor** (left sidebar) → **New query** → paste and **Run**:
 
-Four things it cannot do for you, in order:
-
-1. **Enable pgvector**, once, after the database exists. From the database's "Connect"
-   tab, copy the PSQL command and run:
-
-   ```bash
-   psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS vector;"
+   ```sql
+   create extension if not exists vector;
    ```
 
-   Without it the app still works — retrieval falls back to an in-process scan and
-   `/api/v1/health` says so — but that scan gets slower as the corpus grows.
+   This is what makes semantic search use the database rather than an in-process scan.
+   Without it the app still works and `/api/v1/health` says so, but the scan slows as the
+   corpus grows.
 
-2. **Set `CORS_ORIGINS` and `FRONTEND_BASE_URL`** on the API service, both to
-   `https://www.astro-decoded.com`. The blueprint leaves them blank on purpose: a wrong
-   value here is exactly the failure that looks like the whole site is broken.
+5. **Connect** (top of the page) → the **Session pooler** tab → copy the URI.
 
-3. **Add the custom domain** `api.astro-decoded.com` to the API service, then create the
-   `CNAME` Render gives you at your registrar.
+   **Take the session pooler string, not "Direct connection".** The direct address is
+   IPv6-only and Render cannot reach it; the failure is a connection timeout that says
+   nothing about addressing.
 
-4. **Optionally set `ANTHROPIC_API_KEY`** on both the API and the worker.
+   Replace `[YOUR-PASSWORD]` in that string with the password from step 2. Keep the whole
+   thing — you paste it as `DATABASE_URL` next.
 
-Prefer Railway or Fly.io? Both work — create the same three services by hand from
-`backend/Dockerfile`, with the worker's start command set to `python -m app.workers.runner`.
-The image binds `$PORT` when the platform sets one, and the app rewrites a
-platform-supplied `postgresql://` URL to the driver SQLAlchemy needs, so the connection
-string can be pasted as given.
+   It will start `postgresql://`. Paste it exactly as Supabase gives it; the app rewrites
+   the prefix to the driver SQLAlchemy needs.
 
-**The worker is not optional.** The API queues analyses and the worker runs them. Skip it
-and every submission sits at "queued" forever — which looks like the site is broken, with
-nothing in the API logs to say why.
+### 2. Render — the API
 
-### 2. The web app
+1. [render.com](https://render.com) → sign in with GitHub → **Blueprints** → **New
+   Blueprint Instance**.
+2. Connect `smsutton3739-ux/starcode`.
+3. **Branch**: the branch holding this work. Render offers the default branch first and
+   does not warn you when the blueprint is only on another one.
+4. **Blueprint Path**: leave **empty**. `render.yaml` is at the repository root, where
+   Render looks by default. The field is case-sensitive, so anything typed is one capital
+   letter from "blueprint not found".
+5. **Apply**. Render prompts for the three values the blueprint deliberately leaves
+   unset:
 
-Deploy the `frontend` directory to Vercel or Netlify.
+   | Prompt | Paste |
+   | --- | --- |
+   | `DATABASE_URL` | The session pooler URI from step 1.5, password filled in |
+   | `CORS_ORIGINS` | `https://www.astro-decoded.com` |
+   | `FRONTEND_BASE_URL` | `https://www.astro-decoded.com` |
 
-Set **one** environment variable, and set it before the first build:
+   Getting `CORS_ORIGINS` wrong is the failure that looks like the whole site is broken.
+   Exact scheme, exact host, no trailing slash.
 
-```
-NEXT_PUBLIC_API_URL=https://api.astro-decoded.com
-```
+6. First build takes 5–10 minutes: the image installs Tesseract so scanned manuscripts
+   can be read. Slow is normal here, not stuck.
+7. When it is live, **Settings → Custom Domains → Add** `api.astro-decoded.com`. Render
+   gives you a `CNAME` value — create that record at your registrar.
 
-This one is compiled into the code that runs in the browser, so it must be present when
-the site is *built*, not just when it runs. If you set it afterwards you must redeploy.
-The build refuses to complete without it rather than silently shipping a site that points
-at `localhost` — that check exists because it is the single most common way this goes
-wrong.
+Everything else the API needs is already in the blueprint, including a generated
+`SECRET_KEY` you never see or store.
 
-Then add `www.astro-decoded.com` as a custom domain and create the `CNAME` at your
-registrar (Vercel: `cname.vercel-dns.com`).
+### 3. Vercel — the web app
 
-### 3. The apex
+1. [vercel.com](https://vercel.com) → sign in with GitHub → **Add New → Project** →
+   import `smsutton3739-ux/starcode`.
+2. **Root Directory**: click **Edit** and set it to `frontend`. This is the one setting
+   people miss; without it Vercel tries to build the repository root and fails.
+3. **Environment Variables** — add one, *before the first build*:
 
-Point `astro-decoded.com` at the same frontend host and set a redirect to `www`. Vercel
-and Netlify both do this from their dashboard. If your registrar offers "URL forwarding",
-that works too.
+   ```
+   NEXT_PUBLIC_API_URL = https://api.astro-decoded.com
+   ```
 
-### 4. Then
+   It is compiled into the code that runs in the browser, so it must exist at build time.
+   Set it afterwards and you must redeploy. The build refuses to finish without it rather
+   than shipping a site quietly pointed at `localhost`.
 
-Check it and create your admin account exactly as in Path 1, steps 5 and 6 — for the
-admin script, use your host's shell or one-off-command feature.
+4. **Deploy**.
+5. **Settings → Domains** → add `www.astro-decoded.com`, and add `astro-decoded.com` set
+   to redirect to it. Create the DNS records Vercel shows you at your registrar.
+
+### 4. Make yourself an administrator
+
+Render's free tier has no shell, so `scripts/create_admin.py` is out of reach. Bootstrap
+through the database instead — three steps, then you close the door again:
+
+1. Render → your service → **Environment** → add `ALLOW_PASSWORD_REGISTRATION` = `true`.
+   Save; the service redeploys.
+2. Go to `https://www.astro-decoded.com/login`, click **Create one**, and register with
+   your email and a long password.
+3. Supabase → **SQL Editor** → run, with your address:
+
+   ```sql
+   update users set role = 'admin' where email = 'you@example.com';
+   ```
+
+4. Back in Render, set `ALLOW_PASSWORD_REGISTRATION` to `false` again.
+
+Your account keeps working — the setting governs new registrations, not existing
+accounts. If you would rather not open registration even briefly, configure Google or
+GitHub sign-in first (see [Sign-in](#sign-in)), sign in that way, and run only step 3.
+
+### What "free" actually costs you
+
+**The API sleeps.** After ~15 minutes without traffic Render stops the instance, and the
+next visitor waits up to a minute for the first page. It is genuinely free rather than
+free-with-an-asterisk, and $7/month removes it whenever you want.
+
+An analysis interrupted by that sleep is recovered rather than lost: the API sweeps for
+abandoned work when it starts and periodically after, and requeues anything a stopped
+process left behind.
+
+**Supabase pauses after 7 days of no queries.** You restore it from the dashboard in a
+click, but a site nobody visits for a week is down until you do. Visiting your own site
+occasionally is enough to prevent it.
+
+**No background worker and no Redis, on purpose.** Render's free tier has no worker
+service — but the API runs each analysis on its own thread, so it does not need one. Add
+a worker when analysis volume starts competing with request handling, not before. Redis
+is likewise unnecessary on a single instance: rate limits are counted in-process, which
+on one instance is not an approximation but exact.
+
+### Running without an AI key
+
+The blueprint sets `AI_PROVIDER=offline`, so the platform runs its deterministic engine
+and nothing calls a paid API.
+
+What still works, fully: language and script detection, entity and date extraction,
+calendar conversion across all twelve systems, the entire astronomy engine — eclipses,
+moon phases, planetary positions, conjunctions — corpus retrieval, citations, the report,
+and every export format.
+
+What does not: the interpretive sections. They report themselves as unavailable rather
+than being filled with generated text. That is the same rule the platform applies
+everywhere — the absence of evidence is stated, not papered over.
+
+To switch it on later, add `ANTHROPIC_API_KEY` in Render's **Environment** tab and change
+`AI_PROVIDER` to `auto`. Both take effect on the redeploy that follows. Leaving
+`AI_PROVIDER=offline` while adding a key does nothing, which is the intended behaviour of
+naming the mode explicitly.
+
+### Deploying elsewhere
+
+Railway and Fly.io work the same way: one service built from `backend/Dockerfile`. The
+image binds `$PORT` when the platform sets one, and the app rewrites a platform-supplied
+`postgresql://` URL to the driver SQLAlchemy needs, so the connection string can be
+pasted as given.
 
 ---
 
@@ -341,7 +422,9 @@ first error.
 | `blocked by CORS policy` | `CORS_ORIGINS` on the API is not exactly `https://www.astro-decoded.com`. A trailing slash or a missing `www` is enough to break it. |
 | `Mixed Content` | `NEXT_PUBLIC_API_URL` is `http://` where it should be `https://`. |
 | Nothing loads at all | DNS has not propagated, or the certificate has not been issued yet. Check `dig +short www.astro-decoded.com` and `docker compose logs caddy`. |
-| The page loads, ANALYZE spins forever | The worker is not running. On Path 1: `docker compose ps` — the `worker` service should be up. On Path 2: you need that second service. |
+| The page loads, ANALYZE spins forever | On Path 1, check `docker compose ps` — the `worker` service should be up. On Path 2 the API runs analyses itself, so this is usually the free instance having just woken: give it a minute and resubmit. |
+| `connection to server ... failed` in the Render logs | `DATABASE_URL` is Supabase's *direct* connection, which is IPv6-only. Use the **Session pooler** string instead. |
+| `password authentication failed` | `[YOUR-PASSWORD]` is still literally in `DATABASE_URL`, or the password contains characters that need URL-encoding. |
 | `redirect_uri_mismatch` on sign-in | The URI in the Google or GitHub console does not match the one above, character for character. |
 
 `https://api.astro-decoded.com/api/v1/health` reports what the API thinks its own state
@@ -352,13 +435,18 @@ deterministic offline engine.
 
 ## What it costs, roughly
 
-| | Path 1 | Path 2 |
+| | Path 1 | Path 2 as documented |
 | --- | --- | --- |
-| Server | $6–12/mo VPS | Free tier to ~$20/mo |
-| Database | included | included, or ~$7/mo |
+| Server | $6–12/mo VPS | **$0** — Render free |
+| Database | included | **$0** — Supabase free |
+| Web app | included | **$0** — Vercel free |
 | TLS | free | free |
 | Domain | what you already pay | same |
 | AI | only if you set `ANTHROPIC_API_KEY`, billed per analysis | same |
+
+Path 2 costs nothing beyond the domain you already own. The two things you buy by paying
+later: $7/month on Render stops the API sleeping between visitors, and a Supabase paid
+plan stops the database pausing after a quiet week. Neither is needed to launch.
 
 Without an Anthropic key the platform still runs: language detection, entity and date
 extraction, calendar conversion and the whole astronomy engine are deterministic local
