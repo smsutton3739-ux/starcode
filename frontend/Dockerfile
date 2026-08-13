@@ -17,6 +17,18 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# The build refuses to bake a localhost API URL into a public bundle, which is the whole
+# point of the guard — but the ARG default above is localhost, for `docker compose up`.
+# So a local build has to be able to say "yes, deliberately", and this is how.
+#
+# Defaulted to false rather than true on purpose. `docker build ./frontend` with no
+# arguments is far more likely to be someone building for deployment than someone
+# building for their laptop, and that person needs the error. docker-compose.yml opts in
+# explicitly because it genuinely does mean localhost; the production overlay never sets
+# it, so the guard stays live exactly where it earns its keep.
+ARG NEXT_PUBLIC_ALLOW_LOCALHOST=false
+ENV NEXT_PUBLIC_ALLOW_LOCALHOST=$NEXT_PUBLIC_ALLOW_LOCALHOST
+
 # Optional. Empty means the /tools page says the chart embeds are not configured rather
 # than rendering a widget with a placeholder affiliate id.
 ARG NEXT_PUBLIC_ASTRO_CHARTS_AFF=

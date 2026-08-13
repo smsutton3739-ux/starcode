@@ -34,6 +34,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      - name: Every module imports from a clean install
+        working-directory: backend
+        # The runtime dependencies only, in a throwaway environment, with nothing from
+        # the dev extras or the runner image to fill a gap. This is what the deployment
+        # gets, and it is the check that was missing when a missing `pydantic[email]`
+        # built cleanly and then crashed at startup — the error surfaces at import, so
+        # importing everything is enough to catch it.
+        run: |
+          python -m venv /tmp/clean
+          /tmp/clean/bin/pip install --quiet --upgrade pip
+          /tmp/clean/bin/pip install --quiet .
+          /tmp/clean/bin/python - <<'PY'
+          import importlib, pkgutil, sys
+          import app
+          failed = []
+          for mod in pkgutil.walk_packages(app.__path__, prefix="app."):
+              try:
+                  importlib.import_module(mod.name)
+              except Exception as exc:
+                  failed.append(f"{mod.name}: {type(exc).__name__}: {exc}")
+          for line in failed:
+              print(f"FAIL {line}", file=sys.stderr)
+          sys.exit(1 if failed else 0)
+          PY
+
       - name: Lint
         working-directory: backend
         run: ruff check app tests scripts
@@ -281,7 +306,9 @@ jobs:
           push: false
           load: true
           tags: starcode-web:ci
-          build-args: NEXT_PUBLIC_API_URL=http://localhost:8000
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8000
+            NEXT_PUBLIC_ALLOW_LOCALHOST=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

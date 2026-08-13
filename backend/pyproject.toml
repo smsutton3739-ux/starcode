@@ -6,7 +6,13 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
-    "pydantic>=2.9.0",
+    # The [email] extra is not optional here: `EmailStr` in app/schemas/user.py imports
+    # email-validator at class-definition time, so without it the app does not fail when
+    # someone submits a bad address — it fails at import, before serving anything. A
+    # machine with email-validator already present for unrelated reasons hides this
+    # completely, which is how it reached a deploy.
+    "pydantic[email]>=2.9.0,<3",
+    "email-validator>=2.2.0,<3",
     "pydantic-settings>=2.6.0",
     "sqlalchemy>=2.0.36",
     "alembic>=1.14.0",
@@ -21,6 +27,11 @@ dependencies = [
     "redis>=5.2.0",
     "anthropic>=0.40.0",
     "pypdf>=5.1.0",
+    # Rasterises scanned PDFs so they can be OCR'd. The runtime image already installs
+    # poppler-utils, which exists for nothing else, so leaving this undeclared meant
+    # shipping the system half of the feature without the Python half — and the import is
+    # guarded, so it degraded silently rather than announcing itself.
+    "pdf2image>=1.17.0,<2",
     "python-docx>=1.1.2",
     "pillow>=11.0.0",
     "pytesseract>=0.3.13",

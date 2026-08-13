@@ -109,6 +109,9 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
         NEXT_PUBLIC_ASTRO_CHARTS_AFF: ${NEXT_PUBLIC_ASTRO_CHARTS_AFF:-}
+        # This stack genuinely is localhost, so it opts out of the build guard that
+        # stops a public bundle being built against an address only you can reach.
+        NEXT_PUBLIC_ALLOW_LOCALHOST: "true"
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
