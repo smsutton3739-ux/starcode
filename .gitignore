@@ -9,6 +9,9 @@ venv/
 htmlcov/
 .coverage
 *.egg-info/
+# setuptools' output directory, created by `pip install .` in the backend.
+build/
+dist/
 
 # Node
 node_modules/
