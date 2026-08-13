@@ -162,7 +162,11 @@ class AstronomicalEvent(UUIDPrimaryKey, Timestamped, Base):
     separation_degrees: Mapped[float | None] = mapped_column(Float)
 
     is_computed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    computation_engine: Mapped[str | None] = mapped_column(String(120))
+    # 300: for computed events this names the algorithm, which is short, but for catalogue
+    # entries it carries the full scholarly citation the figure comes from — the Halley
+    # apparitions cite Yeomans & Kiang at 137 characters. Truncating a citation in a
+    # product whose whole claim is that findings are traceable would be the wrong trade.
+    computation_engine: Mapped[str | None] = mapped_column(String(300))
     accuracy_note: Mapped[str | None] = mapped_column(Text)
 
     historical_source_id: Mapped[str | None] = mapped_column(

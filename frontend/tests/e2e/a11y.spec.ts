@@ -86,7 +86,16 @@ test.describe("the chart tools page", () => {
 
     const frames = page.locator("main iframe");
     const count = await frames.count();
-    expect(count).toBeGreaterThan(0);
+
+    if (count === 0) {
+      // A deployment without NEXT_PUBLIC_ASTRO_CHARTS_AFF renders no embeds at all, which
+      // is correct rather than broken — so assert the page says so, instead of failing on
+      // the absence of frames it was never going to have. An earlier version of this test
+      // assumed the configured build and failed on CI for that reason alone.
+      await expect(page.getByText(/not configured on this deployment/i)).toBeVisible();
+      return;
+    }
+
     for (let i = 0; i < count; i += 1) {
       // An unnamed frame is announced as "frame", which tells a screen-reader user
       // nothing about which of the two they have landed in.

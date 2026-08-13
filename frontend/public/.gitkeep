@@ -1,0 +1,6 @@
+Next.js serves this directory at the site root, and the Dockerfile copies it into the
+runtime image. Git does not track empty directories, so without this file the directory
+exists on every developer's machine and on nobody's build — which failed the image build
+at COPY with "/app/public: not found".
+
+Delete this once there is a real asset here (robots.txt, an OG image, a font).

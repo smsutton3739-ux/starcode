@@ -184,6 +184,10 @@ jobs:
           # The build guard rejects a loopback API URL in a production build; CI is the
           # one legitimate case, since the API really is on localhost here.
           NEXT_PUBLIC_ALLOW_LOCALHOST: "true"
+          # A placeholder, so /tools renders its embeds and the accessibility suite can
+          # check them. Unset, the page correctly shows "not configured" instead and the
+          # frames it is meant to be testing do not exist.
+          NEXT_PUBLIC_ASTRO_CHARTS_AFF: ci-placeholder
         run: npm run build
 
   e2e:
