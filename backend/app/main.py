@@ -87,7 +87,9 @@ async def lifespan(app: FastAPI):
                 logger.info("app.recovered_abandoned_jobs", count=recovered)
         except Exception as exc:  # noqa: BLE001
             # A cold start must not be blocked by a sweep; the periodic one will retry.
-            logger.warning("app.startup_sweep_failed", error=str(exc))
+            logger.warning(
+                "app.startup_sweep_failed", error=str(exc), database=settings.database_target
+            )
         start_sweeper_thread()
 
     from app.agents.provider import provider_status

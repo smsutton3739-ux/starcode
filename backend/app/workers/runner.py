@@ -126,7 +126,12 @@ def start_sweeper_thread() -> threading.Thread:
                 if requeued:
                     logger.info("worker.stale_sweep", requeued=requeued, source="api")
             except Exception as exc:  # noqa: BLE001
-                logger.warning("worker.sweep_failed", error=str(exc))
+                # Name the database, credentials stripped. A bare "connection refused"
+                # cannot distinguish a wrong host from an unreachable one, which is the
+                # only question worth asking when a fallback default might be in play.
+                logger.warning(
+                    "worker.sweep_failed", error=str(exc), database=settings.database_target
+                )
 
     thread = threading.Thread(target=loop, daemon=True, name="job-sweeper")
     thread.start()

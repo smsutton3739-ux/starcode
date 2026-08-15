@@ -9,6 +9,7 @@ from __future__ import annotations
 import secrets
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -64,6 +65,14 @@ class Settings(BaseSettings):
 
     # ---- Database -----------------------------------------------------------
     DATABASE_URL: str = "postgresql+psycopg://starcode:starcode@localhost:5432/starcode"
+    ALLOW_LOCAL_DATABASE: bool = False
+    """Permit a loopback DATABASE_URL in production.
+
+    Off by default so that an unset DATABASE_URL fails loudly instead of falling back to
+    the development default above. Turn it on only if the database genuinely runs inside
+    this container — note that the Docker Compose stacks here do not qualify, since they
+    reach Postgres by service name rather than over loopback."""
+
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
     DATABASE_ECHO: bool = False
@@ -162,9 +171,46 @@ class Settings(BaseSettings):
                 raise ValueError("DEBUG must be false in production.")
             if "*" in self.cors_origins:
                 raise ValueError("CORS_ORIGINS may not be '*' in production.")
+            if self.database_is_loopback and not self.ALLOW_LOCAL_DATABASE:
+                raise ValueError(
+                    "DATABASE_URL points at "
+                    f"{self.database_target}, which is this container's own loopback "
+                    "address and not a database.\n\n"
+                    "Almost always this means DATABASE_URL is not set on the service at "
+                    "all, and the development default is being used. That default is a "
+                    "silent failure: the API still starts and still serves every route "
+                    "that does not touch the database, so the deployment looks healthy "
+                    "while nothing can be read or written.\n\n"
+                    "Set DATABASE_URL to the connection string for your database — on "
+                    "Supabase, the Session pooler URI. Set ALLOW_LOCAL_DATABASE=true if "
+                    "the database really is local to this container."
+                )
         return self
 
     # ---- Derived helpers ----------------------------------------------------
+    @property
+    def database_target(self) -> str:
+        """Where the database connection points, with the credentials removed.
+
+        Safe to log. This exists because a connection failure that names only the driver
+        error ("connection refused") leaves you unable to tell a wrong host from a host
+        that is right but unreachable — the whole question when a fallback default is in
+        play.
+        """
+        parts = urlsplit(self.DATABASE_URL)
+        if not parts.hostname:
+            # SQLite and other file-backed URLs have no host; the path is the identity,
+            # and it carries no credentials.
+            return self.DATABASE_URL
+        port = f":{parts.port}" if parts.port else ""
+        return f"{parts.hostname}{port}{parts.path}"
+
+    @property
+    def database_is_loopback(self) -> bool:
+        """True when the database URL points at this machine's own loopback interface."""
+        host = (urlsplit(self.DATABASE_URL).hostname or "").lower()
+        return host in {"localhost", "127.0.0.1", "::1", "0.0.0.0"}  # noqa: S104
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
