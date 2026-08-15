@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from sqlalchemy import JSON, Text, TypeDecorator
+from sqlalchemy import JSON, Float, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -35,6 +35,34 @@ class VectorType(TypeDecorator):
 
     impl = Text
     cache_ok = True
+
+    class Comparator(TypeDecorator.Comparator):
+        """Expose pgvector's distance operators through the decorator.
+
+        A TypeDecorator does not inherit the comparator of the type it wraps, so
+        `Model.embedding.cosine_distance(...)` raised AttributeError even though the
+        underlying column really is a `vector`. Nothing caught it: the test suite runs on
+        SQLite, which takes the in-process scan instead, so the only code path that ever
+        called this was the one that only runs in production.
+
+        Written against the raw operators rather than by delegating to pgvector's own
+        comparator, so the expression is identical whether or not pgvector is importable
+        at class-definition time, and so an import failure cannot silently remove methods
+        from the model.
+        """
+
+        def cosine_distance(self, other: Any) -> Any:
+            # 1 - cosine similarity. For L2-normalised vectors this orders identically to
+            # similarity, which is what the retrieval layer relies on.
+            return self.op("<=>", return_type=Float)(other)
+
+        def l2_distance(self, other: Any) -> Any:
+            return self.op("<->", return_type=Float)(other)
+
+        def max_inner_product(self, other: Any) -> Any:
+            return self.op("<#>", return_type=Float)(other)
+
+    comparator_factory = Comparator
 
     def __init__(self, dimensions: int = 384, **kwargs: Any) -> None:
         self.dimensions = dimensions

@@ -86,6 +86,53 @@ jobs:
           path: backend/coverage.xml
           retention-days: 7
 
+  postgres-tests:
+    name: Tests against a real PostgreSQL
+    runs-on: ubuntu-latest
+    # The suite runs on SQLite everywhere else, which needs no services and keeps `pytest`
+    # instant. The cost is that SQLite silently accepts things PostgreSQL rejects, and
+    # takes different code paths entirely: the pgvector retrieval path had never once been
+    # executed by a test, and shipped broken twice — a column too narrow for its contents,
+    # and a vector index that returned two rows where it should have returned twenty.
+    # Production is PostgreSQL, so the suite runs there too.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: starcode
+          POSTGRES_PASSWORD: starcode
+          POSTGRES_DB: starcode_tests
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U starcode"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install
+        working-directory: backend
+        run: pip install -e ".[dev]"
+
+      - name: Enable pgvector
+        run: |
+          PGPASSWORD=starcode psql -h localhost -U starcode -d starcode_tests \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://starcode:starcode@localhost:5432/starcode_tests
+          ENVIRONMENT: test
+          SECRET_KEY: ci-only-secret-not-used-anywhere-real
+          AI_PROVIDER: offline
+        run: pytest -q
+
   migrations:
     name: Migrations apply to a real PostgreSQL
     runs-on: ubuntu-latest
