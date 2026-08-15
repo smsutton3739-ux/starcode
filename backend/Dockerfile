@@ -63,6 +63,15 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS "http://localhost:${PORT:-8000}/api/v1/health/live" || exit 1
 
+# Migrate, seed, then exec the command below.
+#
+# This belongs in the image, not only in docker-compose.yml. It was previously set there
+# alone, which meant `docker compose up` migrated and every other runtime did not: on
+# Render the image runs with just its CMD, so the schema was never created and the first
+# query failed on a table that did not exist. A container that cannot prepare its own
+# database is not deployable anywhere except the one place that remembers to do it for it.
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
+
 # Shell form so PORT expands. Managed platforms (Render, Railway, Fly, Cloud Run) assign
 # a port and expect the process to bind it; a container that listens on a fixed 8000
 # instead is reported as unhealthy and restarted forever, with nothing in the logs to say
