@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- builder ---------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.15-rc-alpine AS builder
 
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 
@@ -19,7 +19,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools wheel && pip install .
 
 # ---- runtime ---------------------------------------------------------------------
-FROM python:3.11-slim AS runtime
+FROM python:3.15-rc-alpine AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
