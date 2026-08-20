@@ -113,6 +113,18 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
             db.add(target)
         count += 1
 
+    # Flush before the next loop: RECORDED_ASTRONOMICAL_EVENTS and the comet/supernova
+    # catalogues below both describe some of the same real events (e.g. SN 1054, Halley's
+    # 66 CE apparition) under the same designation. Without a flush here, a pending insert
+    # from this loop is invisible to the lookups below within the same session, so both
+    # loops independently decide "not found" and both insert — two rows for one
+    # designation. That went uncaught on first seed (empty table, no constraint to catch
+    # it) and only broke on the next redeploy, once a real duplicate already existed to
+    # collide with. Flushing makes this loop's inserts visible to the next loop's SELECTs,
+    # so the second loop correctly finds and updates the first loop's row instead of
+    # creating a duplicate.
+    db.flush()
+
     # Comet apparitions and supernovae from the static catalogues.
     for comet in COMET_APPARITIONS:
         existing = db.execute(
@@ -129,6 +141,8 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
         if existing is None:
             db.add(target)
         count += 1
+
+    db.flush()
 
     for sn in HISTORICAL_SUPERNOVAE:
         existing = db.execute(
@@ -154,7 +168,8 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
 
 def _upsert_datasets(db: Session, counts: dict[str, int]) -> None:
     for row in corpus.DATASETS:
-        existing = db.execute(select(Dataset).where(Dataset.key == row["key"])).scalar_one_or_none()
+        existing = db.execute(select(Dataset).where(Dataset.key == row["key"]))
+        .scalar_one_or_none()
         target = existing or Dataset(key=row["key"])
         for field, value in row.items():
             if field != "key":
