@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- builder ---------------------------------------------------------------------
-FROM python:3.15-rc-alpine AS builder
+FROM python:3.13-slim-bookworm AS builder
 
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Build-only toolchain, kept out of the runtime image.
-RUN apk add --no-cache build-base postgresql-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 COPY pyproject.toml ./
@@ -17,7 +20,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools wheel && pip install .
 
 # ---- runtime ---------------------------------------------------------------------
-FROM python:3.15-rc-alpine AS runtime
+FROM python:3.13-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -26,9 +29,9 @@ ENV PYTHONUNBUFFERED=1 \
 
 # tesseract and poppler are what make OCR of scanned manuscripts work; without them the
 # app still runs and says plainly that OCR is unavailable rather than failing silently.
-# postgresql-client is the runtime half of postgresql-dev.
-RUN apk add --no-cache \
-        postgresql-client \
+# libpq5 is the runtime half of libpq-dev.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq5 \
         tesseract-ocr \
         tesseract-ocr-eng \
         tesseract-ocr-grc \
@@ -36,14 +39,15 @@ RUN apk add --no-cache \
         tesseract-ocr-ara \
         tesseract-ocr-lat \
         poppler-utils \
-        curl
+        curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
 
 # Never run as root: a container escape from an application that parses untrusted PDFs
 # and images should not land on a privileged shell.
-RUN addgroup -g 1001 starcode \
-    && adduser -D -u 1001 -G starcode starcode \
+RUN groupadd -g 1001 starcode \
+    && useradd -m -u 1001 -g starcode starcode \
     && mkdir -p /var/lib/starcode/uploads \
     && chown -R starcode:starcode /var/lib/starcode
 
