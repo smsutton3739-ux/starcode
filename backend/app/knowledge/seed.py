@@ -168,8 +168,9 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
 
 def _upsert_datasets(db: Session, counts: dict[str, int]) -> None:
     for row in corpus.DATASETS:
-        existing = db.execute(select(Dataset).where(Dataset.key == row["key"]))
-        .scalar_one_or_none()
+        existing = db.execute(
+            select(Dataset).where(Dataset.key == row["key"])
+        ).scalar_one_or_none()
         target = existing or Dataset(key=row["key"])
         for field, value in row.items():
             if field != "key":
