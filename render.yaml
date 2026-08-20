@@ -90,18 +90,18 @@ services:
       - key: DATABASE_MAX_OVERFLOW
         value: "2"
 
-      # ---- No AI key: run the deterministic engine, and say so ----
+      # ---- AI provider: auto-detect from ANTHROPIC_API_KEY ----
       #
-      # Explicit rather than inferred. With AI_PROVIDER=auto the absence of a key would
-      # produce the same behaviour, but naming it means the mode is a decision recorded
-      # in the deployment rather than a side effect of a missing variable — and adding a
-      # key later without changing this would silently do nothing.
+      # "auto" uses the Anthropic provider when ANTHROPIC_API_KEY is set (via the Render
+      # dashboard, kept out of git) and falls back to the deterministic offline engine
+      # when it isn't — so adding or rotating the key takes effect on the next deploy
+      # with no change needed here.
       #
       # Extraction, calendar conversion and the whole astronomy engine are local
-      # computation and work fully. The interpretive sections report themselves as
-      # unavailable instead of being filled with generated text.
+      # computation and work fully in either mode. The interpretive sections report
+      # themselves as unavailable only when running fully offline.
       - key: AI_PROVIDER
-        value: offline
+        value: auto
 
       # Empty, not absent: the app reads this as "no cache configured" and says so once,
       # rather than spending a second failing to reach localhost on first use and logging
