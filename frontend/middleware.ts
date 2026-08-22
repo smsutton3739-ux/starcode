@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-
 // Inlined rather than imported from @/lib/embeds: Vercel's Edge Function bundler for
 // this project fails to resolve that cross-module import ("referencing unsupported
 // modules"), even though nothing in that file is actually Edge-incompatible. The values
