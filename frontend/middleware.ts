@@ -64,4 +64,13 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
+export const config = {
+  // Everything except static assets and image optimisation, which are served directly
+  // and need no policy of their own. A plain string matcher, not the extended
+  // { source, missing } object form: Vercel's deployment packaging step rejects that
+  // form on this project even though Next.js itself compiles it without complaint. The
+  // only thing given up is skipping the CSP header on prefetch requests specifically —
+  // a minor optimization, not a security property — so this is a safe, complete
+  // equivalent rather than a workaround that quietly weakens the policy.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
