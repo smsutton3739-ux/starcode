@@ -64,13 +64,4 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = 
-{ matcher: // Everything except static assets and image optimisation, which are served // directly and need no policy of their own. {source: "/((?!_next/static|_next/image|favicon.ico).*)",
-
- missing: [
-  { type: "header", key: "next-router-prefetch" },
-  { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-  ],
-};
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
