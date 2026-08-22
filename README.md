@@ -3,7 +3,7 @@
 **Paste any ancient text, manuscript, prophecy, or historical document.**
 
 Starcode analyses ancient texts, historical documents, astronomical references and
-traditional prophecies, and returns a structured report that separates what is
+traditional prophecies, and returns a structured report that separates  what is
 *established* from what is *interpreted* from what is *conjectured*.
 
 One box. One button. A report you can check.
