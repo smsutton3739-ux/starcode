@@ -1,6 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ASTRO_CHARTS_ORIGIN, routeAllowsEmbeds } from "@/lib/embeds";
 
+// Inlined rather than imported from @/lib/embeds: Vercel's Edge Function bundler for
+// this project fails to resolve that cross-module import ("referencing unsupported
+// modules"), even though nothing in that file is actually Edge-incompatible. The values
+// are duplicated here as the Edge-safe copy; lib/embeds.ts remains the source of truth
+// for everything else in the app (page components, widget URLs), which run in a normal
+// runtime and are unaffected.
+const ASTRO_CHARTS_ORIGIN = "https://astro-charts.com";
+const EMBED_ROUTES = ["/tools"];
+function routeAllowsEmbeds(pathname: string): boolean {
+  return EMBED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
 /**
  * Nonce-based Content Security Policy.
  *
