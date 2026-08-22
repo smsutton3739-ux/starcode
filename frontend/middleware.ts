@@ -28,7 +28,7 @@ function routeAllowsEmbeds(pathname: string): boolean {
  * matters is already client-driven — and a real CSP is worth more than a static shell.
  */
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const nonce = (crypto.randomUUID()).toString("base64");
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   const isDev = process.env.NODE_ENV === "development";
 
