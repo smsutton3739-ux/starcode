@@ -28,7 +28,14 @@ function routeAllowsEmbeds(pathname: string): boolean {
  * matters is already client-driven — and a real CSP is worth more than a static shell.
  */
 export function middleware(request: NextRequest) {
-  const nonce = (crypto.randomUUID()).toString("base64");
+ // crypto.randomUUID() alone, not wrapped in Buffer.from(...).toString("base64"): Buffer
+// is a Node.js global unavailable in the Edge Runtime middleware always runs under.
+// Next's bundler polyfills it when it sees the reference, but that polyfill itself uses
+// __dirname, which has no Edge shim either, so it throws at request time instead of at
+// build time — a working build that 500s on every request. A UUID is already unique and
+// unpredictable per request, which is everything a CSP nonce requires; base64 added
+// nothing but the Node dependency.
+const nonce = crypto.randomUUID();
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   const isDev = process.env.NODE_ENV === "development";
 
