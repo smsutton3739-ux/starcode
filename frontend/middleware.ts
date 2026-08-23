@@ -81,12 +81,12 @@ const nonce = crypto.randomUUID();
 }
 
 export const config = {
-  // Everything except static assets and image optimisation, which are served directly
-  // and need no policy of their own. A plain string matcher, not the extended
-  // { source, missing } object form: Vercel's deployment packaging step rejects that
-  // form on this project even though Next.js itself compiles it without complaint. The
-  // only thing given up is skipping the CSP header on prefetch requests specifically —
-  // a minor optimization, not a security property — so this is a safe, complete
-  // equivalent rather than a workaround that quietly weakens the policy.
+  // Node.js runtime, not Edge: Next.js bundles next/server with a copy of ua-parser-js
+  // that references __dirname, a Node-only global with no Edge Runtime shim — a
+  // long-standing framework bug that crashes middleware on every request in the Edge
+  // Runtime regardless of anything in this file's own code. Running on the Node.js
+  // runtime (stable as of Next.js 15.5) sidesteps the whole bug class, since __dirname
+  // genuinely exists there.
+  runtime: "nodejs",
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
