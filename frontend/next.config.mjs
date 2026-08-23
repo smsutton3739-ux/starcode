@@ -84,9 +84,14 @@ export default function config(phase) {
   return {
     reactStrictMode: true,
     poweredByHeader: false,
-    // Node.js Middleware opt-in (see middleware.ts for why): some Next.js 15.x releases
-    // still gate this behind the experimental flag even though the feature is stable.
-    experimental: { nodeMiddleware: true },
+    // Node.js Middleware needs no config flag as of Next.js 15.5 (this project is on
+    // 15.5.23) — it is stable, opted into per-file via `export const config = { runtime:
+    // "nodejs" }` in middleware.ts alone. An earlier version of this file also set
+    // `experimental: { nodeMiddleware: true }`, believing the flag was still required.
+    // It isn't: Next's own build now warns that key is unrecognized, and leaving it in
+    // caused Vercel's function bundler to fail to trace `next/server` into the deployed
+    // middleware bundle at all, producing a 500 (ERR_MODULE_NOT_FOUND) on every request
+    // in production while working fine in local dev. Do not re-add this flag.
     env: { NEXT_PUBLIC_API_URL: resolveApiUrl(phase) },
     async headers() {
       return [{ source: "/:path*", headers: securityHeaders }];
