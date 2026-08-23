@@ -80,8 +80,9 @@ export default function config(phase) {
   return {
     reactStrictMode: true,
     poweredByHeader: false,
-    // Re-exported so middleware.ts and the client read the same validated value rather
-    // than each re-deriving it from the environment.
+    // Node.js Middleware opt-in (see middleware.ts for why): some Next.js 15.x releases
+    // still gate this behind the experimental flag even though the feature is stable.
+    experimental: { nodeMiddleware: true },
     env: { NEXT_PUBLIC_API_URL: resolveApiUrl(phase) },
     async headers() {
       return [{ source: "/:path*", headers: securityHeaders }];
