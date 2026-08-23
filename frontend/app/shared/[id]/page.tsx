@@ -20,7 +20,7 @@ export default function SharedAnalysisPage() {
   }, [params.id, router, searchParams]);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-24 text-center text-slate-600 dark:text-slate-400">
+    <div className="mx-auto max-w-md px-4 py-24 text-center text-ink-600 dark:text-ink-400">
       Opening the shared report…
     </div>
   );

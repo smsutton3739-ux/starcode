@@ -83,38 +83,38 @@ export function EclipseFinder() {
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-xs text-ink-500 dark:text-ink-400">
           Ranges are capped at 200 years — a longer scan would take minutes of CPU without
           telling you anything a narrower one does not.
         </p>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-crimson-700 dark:text-crimson-400">
           {error}
         </p>
       )}
 
       {events && (
         <div className="card">
-          <p className="border-b border-slate-200 p-4 text-sm dark:border-slate-800">
+          <p className="border-b border-ink-200 p-4 text-sm dark:border-ink-800">
             {events.length} eclipse{events.length === 1 ? "" : "s"} found.
           </p>
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-ink-100 dark:divide-ink-800">
             {events.map((event, index) => (
               <li key={index} className="p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="font-medium">{event.gregorian_label}</span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-ink-500 dark:text-ink-400">
                     {event.hour_ut.toFixed(1)}h UT
                   </span>
                 </div>
                 <p className="mt-1 text-sm">{event.label}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-ink-500 dark:text-ink-400">
                   magnitude {event.details.magnitude} · γ = {event.details.gamma}
                   {event.details.zodiac_sign && ` · in ${event.details.zodiac_sign}`}
                 </p>
-                <p className="mt-2 text-xs italic text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-xs italic text-ink-500 dark:text-ink-400">
                   {event.accuracy_note}
                 </p>
               </li>

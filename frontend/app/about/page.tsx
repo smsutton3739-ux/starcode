@@ -2,15 +2,19 @@ import Link from "next/link";
 
 export const metadata = { title: "How it works" };
 
+// These hex values are the claim palette and MUST stay in sync with the `claim.*`
+// tokens in tailwind.config.ts and `tone_colors` in backend/app/services/export.py —
+// three independent renderers (this page, the live report UI, and PDF/DOCX exports)
+// all need to agree on what each claim type looks like.
 const CLAIM_TYPES = [
-  ["Source text", "Quoted verbatim from what you submitted. No interpretation added.", "#475569"],
-  ["Verified history", "Attested in the historical record and citable. Requires a real citation to exist at all.", "#15803d"],
-  ["Calculation", "Computed by the ephemeris and calendar engines. Reproducible, and reported with its accuracy.", "#1d4ed8"],
-  ["Text analysis", "An observation about the text itself — its language, structure or vocabulary.", "#0f766e"],
-  ["Tradition holds", "What a religious or cultural tradition has understood this to mean. Reported, not endorsed.", "#a16207"],
-  ["Scholars argue", "A position argued in academic literature. Where scholars disagree, the disagreement is reported.", "#7c3aed"],
-  ["AI hypothesis", "Model-generated conjecture. Not evidence. Confidence is capped by design.", "#c2410c"],
-  ["Unresolved", "Genuinely undetermined on the available evidence.", "#64748b"],
+  ["Source text", "Quoted verbatim from what you submitted. No interpretation added.", "#494A50"],
+  ["Verified history", "Attested in the historical record and citable. Requires a real citation to exist at all.", "#256149"],
+  ["Calculation", "Computed by the ephemeris and calendar engines. Reproducible, and reported with its accuracy.", "#2E5AA8"],
+  ["Text analysis", "An observation about the text itself — its language, structure or vocabulary.", "#216568"],
+  ["Tradition holds", "What a religious or cultural tradition has understood this to mean. Reported, not endorsed.", "#855A1C"],
+  ["Scholars argue", "A position argued in academic literature. Where scholars disagree, the disagreement is reported.", "#563E74"],
+  ["AI hypothesis", "Model-generated conjecture. Not evidence. Confidence is capped by design.", "#8E4325"],
+  ["Unresolved", "Genuinely undetermined on the available evidence.", "#656257"],
 ];
 
 export default function AboutPage() {
@@ -40,15 +44,15 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold">The eight kinds of statement</h2>
         <ul className="mt-4 space-y-3">
           {CLAIM_TYPES.map(([label, description, color]) => (
-            <li key={label} className="flex gap-4 rounded-lg border-l-4 bg-slate-50 p-4 dark:bg-slate-900" style={{ borderLeftColor: color }}>
+            <li key={label} className="flex gap-4 rounded-lg border-l-4 bg-ink-50 p-4 dark:bg-ink-900" style={{ borderLeftColor: color }}>
               <div>
                 <p className="font-medium">{label}</p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+                <p className="mt-1 text-sm text-ink-600 dark:text-ink-400">{description}</p>
               </div>
             </li>
           ))}
         </ul>
-        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-4 text-sm text-ink-600 dark:text-ink-400">
           The first three are <strong>evidence</strong>. The rest are commentary, however
           plausible. Reports separate them, and you can filter to evidence alone.
         </p>

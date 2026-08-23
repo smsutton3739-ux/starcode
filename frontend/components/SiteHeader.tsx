@@ -35,14 +35,14 @@ export function SiteHeader() {
     <header
       className={`no-print sticky top-0 z-40 border-b backdrop-blur ${
         minimal
-          ? "border-transparent bg-white/70 dark:bg-slate-950/70"
-          : "border-slate-200 bg-white/90 dark:border-slate-800 dark:bg-slate-950/90"
+          ? "border-transparent bg-ink-50/70 dark:bg-ink-950/70"
+          : "border-ink-200 bg-ink-50/90 dark:border-ink-800 dark:bg-ink-950/90"
       }`}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link
           href="/"
-          className="flex items-center gap-2 font-semibold tracking-tight"
+          className="flex items-center gap-2 font-display text-lg font-medium tracking-tight"
           aria-label="Starcode home"
         >
           <Logo className="h-7 w-7" />
@@ -57,8 +57,8 @@ export function SiteHeader() {
               aria-current={pathname === item.href ? "page" : undefined}
               className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
                 pathname === item.href
-                  ? "bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  ? "bg-ink-100 font-medium text-ink-900 dark:bg-ink-800 dark:text-ink-100"
+                  : "text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800"
               }`}
             >
               {item.label}
@@ -98,7 +98,7 @@ export function SiteHeader() {
                   <Link
                     href="/dashboard"
                     role="menuitem"
-                    className="block rounded px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="block rounded px-3 py-2 hover:bg-ink-100 dark:hover:bg-ink-800"
                     onClick={() => setMenuOpen(false)}
                   >
                     Dashboard
@@ -107,7 +107,7 @@ export function SiteHeader() {
                     <Link
                       href="/admin"
                       role="menuitem"
-                      className="block rounded px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="block rounded px-3 py-2 hover:bg-ink-100 dark:hover:bg-ink-800"
                       onClick={() => setMenuOpen(false)}
                     >
                       Admin
@@ -116,7 +116,7 @@ export function SiteHeader() {
                   <button
                     type="button"
                     role="menuitem"
-                    className="block w-full rounded px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="block w-full rounded px-3 py-2 text-left hover:bg-ink-100 dark:hover:bg-ink-800"
                     onClick={async () => {
                       await logout();
                       setUser(null);

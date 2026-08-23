@@ -54,7 +54,7 @@ export default function AdminPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">Administration</h1>
 
-      <div role="tablist" aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
+      <div role="tablist" aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2 border-b border-ink-200 dark:border-ink-800">
         {(["system", "usage", "users", "audit"] as Tab[]).map((key) => (
           <button
             key={key}
@@ -63,8 +63,8 @@ export default function AdminPage() {
             onClick={() => setTab(key)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors ${
               tab === key
-                ? "border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300"
-                : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                ? "border-lapis-600 text-lapis-700 dark:border-lapis-400 dark:text-lapis-300"
+                : "border-transparent text-ink-600 hover:text-ink-900 dark:text-ink-400 dark:hover:text-ink-100"
             }`}
           >
             {key}
@@ -72,9 +72,9 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {loading && <p className="mt-8 text-slate-500 dark:text-slate-400">Loading…</p>}
+      {loading && <p className="mt-8 text-ink-500 dark:text-ink-400">Loading…</p>}
       {error && (
-        <p role="alert" className="mt-8 text-red-700 dark:text-red-400">
+        <p role="alert" className="mt-8 text-crimson-700 dark:text-crimson-400">
           {error}
         </p>
       )}
@@ -87,7 +87,7 @@ export default function AdminPage() {
               <p className="mt-1 text-3xl font-semibold tabular-nums">
                 {Math.round((data.evidence_ratio as number) * 100)}%
               </p>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-2 text-sm text-ink-600 dark:text-ink-400">
                 {data.evidence_ratio_note as string}
               </p>
             </div>
@@ -101,7 +101,7 @@ export default function AdminPage() {
             role="group"
             aria-label="Raw response, scrolls horizontally"
           >
-            <pre className="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300">
+            <pre className="whitespace-pre-wrap font-mono text-xs text-ink-700 dark:text-ink-300">
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>

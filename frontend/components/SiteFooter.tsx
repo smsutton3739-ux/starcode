@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="no-print border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-      <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-600 dark:text-slate-400">
+    <footer className="no-print border-t border-ink-200 bg-ink-50 dark:border-ink-800 dark:bg-ink-900">
+      <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-ink-600 dark:text-ink-400">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-md">
-            <p className="font-medium text-slate-900 dark:text-slate-100">Starcode</p>
+            <p className="font-medium text-ink-900 dark:text-ink-100">Starcode</p>
             <p className="mt-1">
               A research aid for ancient texts, historical documents and astronomical
               references. Every finding is labelled by kind, and interpretation is never
@@ -28,7 +28,7 @@ export function SiteFooter() {
             </Link>
           </nav>
         </div>
-        <p className="mt-6 border-t border-slate-200 pt-4 text-xs dark:border-slate-800">
+        <p className="mt-6 border-t border-ink-200 pt-4 text-xs dark:border-ink-800">
           Starcode reports what sources say and what calculations show. It does not
           adjudicate religious or interpretive questions, and it makes no claims about
           future events.

@@ -105,29 +105,29 @@ export function CalendarConverter() {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-crimson-700 dark:text-crimson-400">
           {error}
         </p>
       )}
 
       {result && (
         <>
-          <div className="card divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="card divide-y divide-ink-100 dark:divide-ink-800">
             {result.conversions.map((conversion) => (
               <div key={conversion.system} className="p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <span className="text-xs uppercase tracking-wide text-ink-500 dark:text-ink-400">
                     {conversion.system.replace(/_/g, " ")}
                   </span>
                   {!conversion.is_exact && (
-                    <span className="badge border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                    <span className="badge border-gold-300 bg-gold-50 text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200">
                       approximate
                     </span>
                   )}
                 </div>
                 <p className="mt-1 font-medium">{conversion.label}</p>
                 {conversion.uncertainty_note && (
-                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1.5 text-xs text-ink-500 dark:text-ink-400">
                     {conversion.uncertainty_note}
                   </p>
                 )}
@@ -136,13 +136,13 @@ export function CalendarConverter() {
           </div>
 
           <div className="card p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
               Era systems · {result.weekday}
             </h3>
             <ul className="mt-2 space-y-1.5 text-sm">
               {Object.entries(result.eras).map(([key, value]) => (
                 <li key={key}>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-ink-500 dark:text-ink-400">
                     {key.replace(/_/g, " ")}:
                   </span>{" "}
                   {value}

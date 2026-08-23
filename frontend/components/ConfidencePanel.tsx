@@ -18,7 +18,7 @@ export function ConfidencePanel({ summary }: { summary: ConfidenceSummary }) {
             </span>
           </div>
           <div
-            className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+            className="mt-2 h-2 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-700"
             role="img"
             aria-label={`Overall confidence ${Math.round(summary.overall * 100)} percent, ${summary.band}`}
           >
@@ -27,7 +27,7 @@ export function ConfidencePanel({ summary }: { summary: ConfidenceSummary }) {
               style={{ width: `${Math.round(summary.overall * 100)}%` }}
             />
           </div>
-          <p className="mt-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs uppercase tracking-wide text-ink-500 dark:text-ink-400">
             {summary.band}
           </p>
         </div>
@@ -35,12 +35,12 @@ export function ConfidencePanel({ summary }: { summary: ConfidenceSummary }) {
 
       {/* The rationale is the most important thing here: a bare percentage invites a
           reader to treat interpretation as measurement. */}
-      <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+      <p className="rounded-lg bg-ink-50 p-4 text-sm text-ink-700 dark:bg-ink-800/60 dark:text-ink-300">
         {summary.rationale}
       </p>
 
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
           What this analysis is made of
         </h3>
         <ul className="mt-3 space-y-2">
@@ -55,20 +55,20 @@ export function ConfidencePanel({ summary }: { summary: ConfidenceSummary }) {
                     <span aria-hidden="true">{style.icon}</span>
                     {style.label}
                   </span>
-                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-700">
                     <span
-                      className={`block h-full ${style.isEvidence ? "bg-green-600" : "bg-slate-400"}`}
+                      className={`block h-full ${style.isEvidence ? "bg-verdigris-600" : "bg-ink-400"}`}
                       style={{ width: `${share}%` }}
                     />
                   </span>
-                  <span className="w-24 shrink-0 text-right tabular-nums text-slate-600 dark:text-slate-400">
+                  <span className="w-24 shrink-0 text-right tabular-nums text-ink-600 dark:text-ink-400">
                     {info.count} · {share}%
                   </span>
                 </li>
               );
             })}
         </ul>
-        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-xs text-ink-500 dark:text-ink-400">
           Green bars are evidence-grade: direct quotation, reproducible calculation, or
           cited history. Grey bars are interpretation and conjecture.
         </p>

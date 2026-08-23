@@ -126,7 +126,7 @@ export function AnalyzeBox() {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={`card overflow-hidden transition-colors ${
-          dragging ? "border-blue-500 ring-2 ring-blue-500/30" : ""
+          dragging ? "border-lapis-500 ring-2 ring-lapis-500/30" : ""
         }`}
       >
         <label htmlFor="analyze-input" className="sr-only">
@@ -143,7 +143,7 @@ export function AnalyzeBox() {
               ? ""
               : "Paste your text here…\n\nYou can also paste a link, or drag a PDF, Word document or photograph of a manuscript onto this box."
           }
-          className="w-full resize-y border-0 bg-transparent p-5 text-base leading-relaxed placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:opacity-60 dark:placeholder:text-slate-500"
+          className="w-full resize-y border-0 bg-transparent p-5 text-base leading-relaxed placeholder:text-ink-400 focus:outline-none focus:ring-0 disabled:opacity-60 dark:placeholder:text-ink-500"
           onKeyDown={(event) => {
             // Enter inserts a newline — people paste multi-line texts here. Submitting
             // needs the modifier, so a stray Enter never fires an analysis early.
@@ -156,13 +156,13 @@ export function AnalyzeBox() {
         />
 
         {attachment && (
-          <div className="mx-5 mb-4 animate-rise rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <div className="mx-5 mb-4 animate-rise rounded-lg border border-ink-200 bg-ink-50 p-4 dark:border-ink-700 dark:bg-ink-800">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">
                   {attachment.kind === "file" ? attachment.name : attachment.url}
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-ink-600 dark:text-ink-400">
                   {attachment.characters.toLocaleString()} characters extracted
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function AnalyzeBox() {
               </button>
             </div>
             {attachment.warnings.length > 0 && (
-              <ul className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-sm text-amber-800 dark:border-slate-700 dark:text-amber-300">
+              <ul className="mt-3 space-y-2 border-t border-ink-200 pt-3 text-sm text-gold-800 dark:border-ink-700 dark:text-gold-300">
                 {attachment.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
@@ -184,7 +184,7 @@ export function AnalyzeBox() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+        <div className="flex flex-wrap items-center gap-3 border-t border-ink-200 bg-ink-50 px-5 py-3 dark:border-ink-800 dark:bg-ink-900/60">
           <input
             ref={fileInput}
             type="file"
@@ -207,10 +207,10 @@ export function AnalyzeBox() {
           >
             Attach a file
           </button>
-          <span className="text-xs text-slate-500 dark:text-slate-400" id="analyze-help">
+          <span className="text-xs text-ink-500 dark:text-ink-400" id="analyze-help">
             PDF, Word, images and scans. Or paste a link.
           </span>
-          <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+          <span className="ml-auto text-xs text-ink-400 dark:text-ink-500">
             {!attachment && text.length > 0 && `${text.length.toLocaleString()} characters`}
           </span>
         </div>
@@ -220,7 +220,7 @@ export function AnalyzeBox() {
         type="button"
         onClick={() => void submit()}
         disabled={!canSubmit}
-        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-blue-700 px-6 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 dark:bg-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-slate-700"
+        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-lapis-700 px-6 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-lapis-800 disabled:cursor-not-allowed disabled:bg-ink-300 dark:bg-lapis-600 dark:hover:bg-lapis-500 dark:disabled:bg-ink-700"
       >
         {busy ? (
           <>
@@ -238,14 +238,14 @@ export function AnalyzeBox() {
       {error && (
         <div
           role="alert"
-          className="mt-4 animate-rise rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+          className="mt-4 animate-rise rounded-lg border border-crimson-300 bg-crimson-50 p-4 text-sm text-crimson-900 dark:border-crimson-800 dark:bg-crimson-950 dark:text-crimson-200"
         >
           {error}
         </div>
       )}
 
       {looksLikeUrl && !attachment && (
-        <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-center text-sm text-ink-500 dark:text-ink-400">
           That looks like a link — the page will be fetched and its text extracted.
         </p>
       )}
@@ -256,7 +256,7 @@ export function AnalyzeBox() {
           onClick={() => setShowAdvanced((open) => !open)}
           aria-expanded={showAdvanced}
           aria-controls="advanced-settings"
-          className="text-sm text-slate-500 underline-offset-4 hover:underline dark:text-slate-400"
+          className="text-sm text-ink-500 underline-offset-4 hover:underline dark:text-ink-400"
         >
           {showAdvanced ? "Hide advanced settings" : "Advanced settings"}
         </button>

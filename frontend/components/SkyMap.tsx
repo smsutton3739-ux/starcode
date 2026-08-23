@@ -109,7 +109,7 @@ export function SkyMap() {
               onChange={(event) => setYear(Number(event.target.value))}
               className="input mt-1"
             />
-            <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+            <span className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
               {year <= 0 ? `${1 - year} BCE` : `${year} CE`} · 0 means 1 BCE
             </span>
           </label>
@@ -144,7 +144,7 @@ export function SkyMap() {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-crimson-700 dark:text-crimson-400">
           {error}
         </p>
       )}
@@ -160,7 +160,7 @@ export function SkyMap() {
                 .map((b) => `${b.body} in ${b.zodiac_sign}`)
                 .join(". ")}`}
             >
-              <circle cx={centre} cy={centre} r={ringRadius + 26} className="fill-slate-900 dark:fill-slate-950" />
+              <circle cx={centre} cy={centre} r={ringRadius + 26} className="fill-ink-900 dark:fill-ink-950" />
 
               {SIGNS.map((sign, index) => {
                 const start = index * 30;
@@ -174,7 +174,7 @@ export function SkyMap() {
                       y1={inner.y}
                       x2={edge.x}
                       y2={edge.y}
-                      className="stroke-slate-700"
+                      className="stroke-ink-700"
                       strokeWidth={0.6}
                     />
                     <text
@@ -182,7 +182,7 @@ export function SkyMap() {
                       y={mid.y}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-slate-400"
+                      className="fill-ink-400"
                       fontSize={9}
                     >
                       {sign.slice(0, 3)}
@@ -195,14 +195,14 @@ export function SkyMap() {
                 cx={centre}
                 cy={centre}
                 r={ringRadius - 14}
-                className="fill-none stroke-slate-700"
+                className="fill-none stroke-ink-700"
                 strokeWidth={0.8}
               />
               <text
                 x={centre}
                 y={centre - 6}
                 textAnchor="middle"
-                className="fill-slate-500"
+                className="fill-ink-500"
                 fontSize={10}
               >
                 Earth
@@ -211,7 +211,7 @@ export function SkyMap() {
                 x={centre}
                 y={centre + 8}
                 textAnchor="middle"
-                className="fill-slate-600"
+                className="fill-ink-600"
                 fontSize={8}
               >
                 ecliptic longitude
@@ -234,7 +234,7 @@ export function SkyMap() {
                       x={x}
                       y={y - (BODY_RADIUS[body.body] ?? 4) - 4}
                       textAnchor="middle"
-                      className="fill-slate-200"
+                      className="fill-ink-200"
                       fontSize={9}
                     >
                       {body.body}
@@ -245,7 +245,7 @@ export function SkyMap() {
               })}
             </svg>
 
-            <p className="mt-3 text-center text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-3 text-center text-sm text-ink-600 dark:text-ink-400">
               Moon phase: {sky.moon_phase} ·{" "}
               {Math.round(sky.moon_illuminated_fraction * 100)}% illuminated
             </p>
@@ -264,7 +264,7 @@ export function SkyMap() {
               <caption className="sr-only">
                 Positions of the Sun, Moon and naked-eye planets
               </caption>
-              <thead className="border-b border-slate-200 text-left dark:border-slate-800">
+              <thead className="border-b border-ink-200 text-left dark:border-ink-800">
                 <tr>
                   <th scope="col" className="p-3 font-medium">Body</th>
                   <th scope="col" className="p-3 font-medium">Zodiac sign</th>
@@ -273,7 +273,7 @@ export function SkyMap() {
                   <th scope="col" className="p-3 font-medium">Accuracy</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
                 {sky.bodies.map((body) => (
                   <tr key={body.body}>
                     <td className="p-3 font-medium">
@@ -282,7 +282,7 @@ export function SkyMap() {
                         // orange-600 on white measures 3.55:1 at this size, under the
                         // 4.5:1 minimum for body text; orange-700/300 clears it in both
                         // themes.
-                        <span className="ml-2 text-xs text-orange-700 dark:text-orange-300">
+                        <span className="ml-2 text-xs text-terra-700 dark:text-terra-300">
                           retrograde
                         </span>
                       )}
@@ -294,7 +294,7 @@ export function SkyMap() {
                     <td className="p-3 tabular-nums">
                       {body.ecliptic_longitude.toFixed(2)}°
                     </td>
-                    <td className="p-3 tabular-nums text-slate-500 dark:text-slate-400">
+                    <td className="p-3 tabular-nums text-ink-500 dark:text-ink-400">
                       ±{body.accuracy_degrees}°
                     </td>
                   </tr>
@@ -303,9 +303,9 @@ export function SkyMap() {
             </table>
           </div>
 
-          <div className="card space-y-3 p-4 text-sm text-slate-600 dark:text-slate-400">
+          <div className="card space-y-3 p-4 text-sm text-ink-600 dark:text-ink-400">
             <p>
-              <strong className="text-slate-900 dark:text-slate-100">
+              <strong className="text-ink-900 dark:text-ink-100">
                 Signs and constellations are not the same thing.
               </strong>{" "}
               {sky.sign_vs_constellation_note}
@@ -313,7 +313,7 @@ export function SkyMap() {
             <p>{sky.time_uncertainty.note}</p>
             {sky.active_meteor_showers.length > 0 && (
               <p>
-                <strong className="text-slate-900 dark:text-slate-100">
+                <strong className="text-ink-900 dark:text-ink-100">
                   Meteor showers active on this date:
                 </strong>{" "}
                 {sky.active_meteor_showers

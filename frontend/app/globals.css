@@ -16,14 +16,23 @@
   }
 
   body {
-    @apply bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-ink-50 font-body text-ink-700 antialiased dark:bg-ink-950 dark:text-ink-100;
+  }
+
+  /* Bodoni Moda for display headings gives the manuscript identity its voice; body copy
+     stays in Spectral so long report text stays readable at length. Scoped to semantic
+     heading tags rather than a utility class so every page inherits it automatically. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
   }
 
   /* A visible focus ring on every interactive element. Keyboard users must always be
      able to see where they are; removing this to tidy the design would make the app
      unusable without a mouse. */
   :focus-visible {
-    @apply outline-none ring-2 ring-blue-600 ring-offset-2 dark:ring-blue-400 dark:ring-offset-slate-950;
+    @apply outline-none ring-2 ring-lapis-600 ring-offset-2 dark:ring-lapis-400 dark:ring-offset-ink-950;
   }
 
   /* Respect a stated preference for reduced motion. The animations here are decorative
@@ -42,31 +51,37 @@
 
 @layer components {
   .skip-link {
-    @apply absolute left-2 top-2 z-50 -translate-y-20 rounded bg-blue-700 px-4 py-2 text-white transition-transform focus:translate-y-0;
+    @apply absolute left-2 top-2 z-50 -translate-y-20 rounded bg-lapis-700 px-4 py-2 text-white transition-transform focus:translate-y-0;
+  }
+
+  /* The eyebrow label: small caps mono, wide tracking, gold in light mode / clay in dark.
+     Used above headings throughout the site — the one recurring typographic signature. */
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-gold-700 dark:text-gold-400;
   }
 
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-sm border border-ink-200 bg-white shadow-sm dark:border-ink-800 dark:bg-ink-900;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply btn bg-blue-700 text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500;
+    @apply btn bg-lapis-700 text-white hover:bg-lapis-800 dark:bg-lapis-600 dark:hover:bg-lapis-500;
   }
 
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+    @apply btn border border-ink-300 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-200 dark:hover:bg-ink-800;
   }
 
   .btn-ghost {
-    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+    @apply btn text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800;
   }
 
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
+    @apply w-full rounded-sm border border-ink-300 bg-white px-3 py-2 text-ink-900 placeholder:text-ink-400 focus:border-lapis-600 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100 dark:placeholder:text-ink-500;
   }
 
   .badge {
@@ -74,7 +89,43 @@
   }
 
   .prose-report {
-    @apply text-[15px] leading-relaxed text-slate-700 dark:text-slate-300;
+    @apply font-body text-[15px] leading-relaxed text-ink-700 dark:text-ink-300;
+  }
+
+  /*
+   * The signature element: a tablet split in two by a wedge, echoing cuneiform tablets
+   * divided between the sign observed and the outcome read from it. Used wherever the
+   * product's core move — "here is what you gave us" / "here is the structured reading"
+   * — appears: the homepage hero and the source-quote/interpretation contrast in a claim
+   * card. Not used to decorate; only where the content genuinely has two paired halves.
+   */
+  .tablet {
+    @apply grid overflow-hidden rounded-sm bg-gradient-to-br from-gold-100 to-gold-200 text-ink-900 shadow-lg dark:from-ink-800 dark:to-ink-900 dark:text-ink-100;
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .tablet-half {
+    @apply p-6;
+  }
+
+  .tablet-wedge {
+    @apply relative bg-gold-800/20 dark:bg-ink-600/40;
+    width: 1px;
+  }
+
+  .tablet-wedge::after {
+    content: "";
+    @apply absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-gold-800 dark:bg-ink-300;
+  }
+
+  @media (max-width: 640px) {
+    .tablet {
+      grid-template-columns: 1fr;
+    }
+    .tablet-wedge {
+      width: auto;
+      height: 1px;
+    }
   }
 }
 
@@ -90,7 +141,7 @@
   }
 
   .card {
-    @apply border border-slate-300 shadow-none;
+    @apply border border-ink-300 shadow-none;
     break-inside: avoid;
   }
 

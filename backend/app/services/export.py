@@ -362,28 +362,29 @@ def _build_pdf(analysis: Analysis) -> bytes:
         alignment=TA_JUSTIFY,
         spaceAfter=4,
     )
-    small = ParagraphStyle("Small", parent=body, fontSize=8, textColor=colors.HexColor("#555555"))
+    small = ParagraphStyle("Small", parent=body, fontSize=8, textColor=colors.HexColor("#494A50"))
     quote = ParagraphStyle(
         "Quote",
         parent=body,
         leftIndent=10 * mm,
         fontName="Times-Italic",
-        textColor=colors.HexColor("#333333"),
+        textColor=colors.HexColor("#33374A"),
     )
     h1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=18, spaceAfter=6)
     h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=13, spaceBefore=10, spaceAfter=4)
 
     # Each claim type gets a colour, matching the web UI so a printed report reads the
-    # same way as the screen.
+    # same way as the screen. These hex values MUST stay in sync with the `claim.*`
+    # tokens in frontend/tailwind.config.ts and the legend in frontend/app/about/page.tsx.
     tone_colors = {
-        "source_text": "#475569",
-        "verified_history": "#15803d",
-        "astronomical_calculation": "#1d4ed8",
-        "textual_analysis": "#0f766e",
-        "traditional_interpretation": "#a16207",
-        "scholarly_interpretation": "#7c3aed",
-        "ai_hypothesis": "#c2410c",
-        "uncertain": "#64748b",
+        "source_text": "#494A50",
+        "verified_history": "#256149",
+        "astronomical_calculation": "#2E5AA8",
+        "textual_analysis": "#216568",
+        "traditional_interpretation": "#855A1C",
+        "scholarly_interpretation": "#563E74",
+        "ai_hypothesis": "#8E4325",
+        "uncertain": "#656257",
     }
 
     story: list = [Paragraph(escape(analysis.title), h1)]
@@ -395,8 +396,8 @@ def _build_pdf(analysis: Analysis) -> bytes:
             colWidths=[document.width],
             style=TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#fffbeb")),
-                    ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#f59e0b")),
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FBF4E5")),
+                    ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#C8952F")),
                     ("LEFTPADDING", (0, 0), (-1, -1), 6),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 6),
                     ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -427,7 +428,7 @@ def _build_pdf(analysis: Analysis) -> bytes:
         if section["key"] == "executive_summary":
             continue
         story.append(Paragraph(escape(section["title"]), h2))
-        story.append(HRFlowable(width="100%", thickness=0.4, color=colors.HexColor("#cbd5e1")))
+        story.append(HRFlowable(width="100%", thickness=0.4, color=colors.HexColor("#DCD2BC")))
 
         if section.get("is_empty"):
             story.append(Paragraph(f"<i>{escape(section.get('empty_reason', ''))}</i>", small))
@@ -435,7 +436,7 @@ def _build_pdf(analysis: Analysis) -> bytes:
 
         for claim in section.get("claims", []):
             label = claim.get("presentation", {}).get("label", claim["claim_type"])
-            colour = tone_colors.get(claim["claim_type"], "#475569")
+            colour = tone_colors.get(claim["claim_type"], "#494A50")
             story.append(
                 Paragraph(
                     f'<font color="{colour}"><b>[{escape(label)}]</b></font> '
@@ -481,8 +482,8 @@ def _build_pdf(analysis: Analysis) -> bytes:
             table.setStyle(
                 TableStyle(
                     [
-                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e2e8f0")),
-                        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cbd5e1")),
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#ECE5D5")),
+                        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#DCD2BC")),
                         ("VALIGN", (0, 0), (-1, -1), "TOP"),
                         ("FONTSIZE", (0, 0), (-1, -1), 8),
                     ]

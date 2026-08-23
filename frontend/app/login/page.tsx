@@ -59,7 +59,7 @@ export default function LoginPage() {
       <h1 className="text-2xl font-semibold tracking-tight">
         {mode === "login" ? "Sign in" : "Create an account"}
       </h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+      <p className="mt-2 text-sm text-ink-600 dark:text-ink-400">
         An account saves your analyses and lets you search across them. You can analyse
         texts without one.
       </p>
@@ -73,10 +73,10 @@ export default function LoginPage() {
               </a>
             ))}
           </div>
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
-            <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-ink-400">
+            <span className="h-px flex-1 bg-ink-200 dark:bg-ink-800" />
             or
-            <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            <span className="h-px flex-1 bg-ink-200 dark:bg-ink-800" />
           </div>
         </>
       )}
@@ -95,7 +95,7 @@ export default function LoginPage() {
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
           />
           {fieldErrors.email && (
-            <span id="email-error" className="mt-1 block text-sm text-red-700 dark:text-red-400">
+            <span id="email-error" className="mt-1 block text-sm text-crimson-700 dark:text-crimson-400">
               {fieldErrors.email.join(" ")}
             </span>
           )}
@@ -115,20 +115,20 @@ export default function LoginPage() {
             aria-describedby={fieldErrors.password ? "password-error" : "password-help"}
           />
           {mode === "register" && (
-            <span id="password-help" className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+            <span id="password-help" className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
               At least 12 characters. Length matters far more than symbols — a memorable
               phrase beats a short scramble.
             </span>
           )}
           {fieldErrors.password && (
-            <span id="password-error" className="mt-1 block text-sm text-red-700 dark:text-red-400">
+            <span id="password-error" className="mt-1 block text-sm text-crimson-700 dark:text-crimson-400">
               {fieldErrors.password.join(" ")}
             </span>
           )}
         </label>
 
         {error && (
-          <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <p role="alert" className="rounded-lg border border-crimson-300 bg-crimson-50 p-3 text-sm text-crimson-900 dark:border-crimson-800 dark:bg-crimson-950 dark:text-crimson-200">
             {error}
           </p>
         )}
@@ -139,7 +139,7 @@ export default function LoginPage() {
       </form>
 
       {canRegister && (
-        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-ink-600 dark:text-ink-400">
           {mode === "login" ? "No account yet? " : "Already have an account? "}
           <button
             type="button"
@@ -148,7 +148,7 @@ export default function LoginPage() {
               setError(null);
               setFieldErrors({});
             }}
-            className="font-medium text-blue-700 underline-offset-4 hover:underline dark:text-blue-400"
+            className="font-medium text-lapis-700 underline-offset-4 hover:underline dark:text-lapis-400"
           >
             {mode === "login" ? "Create one" : "Sign in"}
           </button>
@@ -156,13 +156,13 @@ export default function LoginPage() {
       )}
 
       {canRegister === false && registrationNote && (
-        <p className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <p className="mt-6 rounded-lg border border-ink-200 bg-ink-50 p-3 text-center text-xs text-ink-600 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-400">
           {registrationNote}
         </p>
       )}
 
       <p className="mt-8 text-center">
-        <Link href="/" className="text-sm text-slate-500 underline-offset-4 hover:underline dark:text-slate-400">
+        <Link href="/" className="text-sm text-ink-500 underline-offset-4 hover:underline dark:text-ink-400">
           Continue without an account
         </Link>
       </p>

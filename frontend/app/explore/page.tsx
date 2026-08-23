@@ -40,7 +40,7 @@ export default function ExplorePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">Astronomy &amp; calendars</h1>
-      <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-400">
+      <p className="mt-2 max-w-2xl text-ink-600 dark:text-ink-400">
         The same engines the analysis uses, available directly. Everything here is
         computed from published algorithms, and every result states its own accuracy.
       </p>
@@ -48,7 +48,7 @@ export default function ExplorePage() {
       <div
         role="tablist"
         aria-label="Reference tools"
-        className="mt-6 flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800"
+        className="mt-6 flex flex-wrap gap-2 border-b border-ink-200 dark:border-ink-800"
       >
         {TABS.map((entry) => (
           <button
@@ -60,8 +60,8 @@ export default function ExplorePage() {
             onClick={() => setTab(entry.key)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               tab === entry.key
-                ? "border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300"
-                : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                ? "border-lapis-600 text-lapis-700 dark:border-lapis-400 dark:text-lapis-300"
+                : "border-transparent text-ink-600 hover:text-ink-900 dark:text-ink-400 dark:hover:text-ink-100"
             }`}
           >
             {entry.label}
@@ -69,7 +69,7 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{active.blurb}</p>
+      <p className="mt-4 text-sm text-ink-600 dark:text-ink-400">{active.blurb}</p>
 
       <div
         role="tabpanel"

@@ -32,11 +32,11 @@ export default function OAuthCallbackPage() {
       {error ? (
         <>
           <h1 className="text-xl font-semibold">Sign-in failed</h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">{error}</p>
+          <p className="mt-2 text-ink-600 dark:text-ink-400">{error}</p>
           <a href="/login" className="btn-primary mt-6">Back to sign in</a>
         </>
       ) : (
-        <p className="text-slate-600 dark:text-slate-400">Signing you in…</p>
+        <p className="text-ink-600 dark:text-ink-400">Signing you in…</p>
       )}
     </div>
   );

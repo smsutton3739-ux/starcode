@@ -21,7 +21,7 @@ export function AdvancedSettings({ value, onChange }: Props) {
 
   return (
     <div className="card space-y-5 p-5 text-sm">
-      <p className="text-slate-600 dark:text-slate-400">
+      <p className="text-ink-600 dark:text-ink-400">
         These are optional. The defaults produce a full analysis.
       </p>
 
@@ -47,11 +47,11 @@ export function AdvancedSettings({ value, onChange }: Props) {
                 onChange={(event) =>
                   set(field as keyof AnalysisOptions, event.target.checked as never)
                 }
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700 dark:border-slate-600"
+                className="mt-1 h-4 w-4 rounded border-ink-300 text-lapis-700 dark:border-ink-600"
               />
               <span>
                 <span className="font-medium">{label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{help}</span>
+                <span className="block text-xs text-ink-500 dark:text-ink-400">{help}</span>
               </span>
             </label>
           );
@@ -104,7 +104,7 @@ export function AdvancedSettings({ value, onChange }: Props) {
             }
             className="input mt-1"
           />
-          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+          <span className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
             Years either side of a date found in the text. A wider window finds more
             events — and makes any match weaker evidence, because coincidences become
             easy.
@@ -121,7 +121,7 @@ export function AdvancedSettings({ value, onChange }: Props) {
             <option value={584283}>584283 — GMT (standard)</option>
             <option value={584285}>584285 — GMT variant</option>
           </select>
-          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+          <span className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
             Every Long Count conversion depends on this. The two options differ by two
             days.
           </span>

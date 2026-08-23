@@ -132,7 +132,7 @@ export default function AnalysisPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight">{analysis.title}</h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
               {analysis.document?.word_count.toLocaleString()} words
               {analysis.detected_language && ` · ${analysis.detected_language}`}
               {analysis.duration_ms != null &&
@@ -160,14 +160,14 @@ export default function AnalysisPage() {
         </div>
 
         {shareUrl && (
-          <div className="mt-4 animate-rise rounded-lg border border-green-300 bg-green-50 p-4 text-sm dark:border-green-700 dark:bg-green-950">
-            <p className="font-medium text-green-900 dark:text-green-200">
+          <div className="mt-4 animate-rise rounded-lg border border-verdigris-300 bg-verdigris-50 p-4 text-sm dark:border-verdigris-700 dark:bg-verdigris-950">
+            <p className="font-medium text-verdigris-900 dark:text-verdigris-200">
               Share link created and copied to your clipboard.
             </p>
-            <p className="mt-1 break-all font-mono text-xs text-green-800 dark:text-green-300">
+            <p className="mt-1 break-all font-mono text-xs text-verdigris-800 dark:text-verdigris-300">
               {shareUrl}
             </p>
-            <p className="mt-2 text-xs text-green-800 dark:text-green-300">
+            <p className="mt-2 text-xs text-verdigris-800 dark:text-verdigris-300">
               Anyone with this link can read the report. It expires in 30 days, and you
               can revoke it at any time from your dashboard.
             </p>
@@ -175,7 +175,7 @@ export default function AnalysisPage() {
         )}
 
         {analysis.document?.ocr_applied && (
-          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+          <div className="mt-4 rounded-lg border border-gold-300 bg-gold-50 p-4 text-sm text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200">
             <strong>This text came from OCR.</strong> Optical recognition of historical
             documents makes predictable errors — similar letterforms are confused,
             diacritics are dropped, marginalia get interleaved. Verify anything the

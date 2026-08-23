@@ -12,11 +12,11 @@ import {
 import type { AnalysisSummary } from "@/lib/types";
 
 const STATUS_STYLE: Record<string, string> = {
-  completed: "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-200",
-  partial: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200",
-  running: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200",
-  queued: "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  failed: "border-red-300 bg-red-50 text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-200",
+  completed: "border-verdigris-300 bg-verdigris-50 text-verdigris-900 dark:border-verdigris-700 dark:bg-verdigris-950 dark:text-verdigris-200",
+  partial: "border-gold-300 bg-gold-50 text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200",
+  running: "border-lapis-300 bg-lapis-50 text-lapis-900 dark:border-lapis-700 dark:bg-lapis-950 dark:text-lapis-200",
+  queued: "border-ink-300 bg-ink-50 text-ink-700 dark:border-ink-600 dark:bg-ink-800 dark:text-ink-300",
+  failed: "border-crimson-300 bg-crimson-50 text-crimson-900 dark:border-crimson-700 dark:bg-crimson-950 dark:text-crimson-200",
 };
 
 export default function DashboardPage() {
@@ -54,7 +54,7 @@ export default function DashboardPage() {
           Sign in to keep your analyses, organise them into collections, and search across
           everything you have run.
         </p>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm text-ink-500 dark:text-ink-400">
           Analyses you ran without an account are stored in this browser only, and are
           reachable from the link you were given.
         </p>
@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your analyses</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
             {total} saved
           </p>
         </div>
@@ -101,12 +101,12 @@ export default function DashboardPage() {
       </div>
 
       {loading ? (
-        <p className="mt-10 text-center text-slate-500 dark:text-slate-400">Loading…</p>
+        <p className="mt-10 text-center text-ink-500 dark:text-ink-400">Loading…</p>
       ) : error ? (
-        <p className="mt-10 text-center text-red-700 dark:text-red-400">{error}</p>
+        <p className="mt-10 text-center text-crimson-700 dark:text-crimson-400">{error}</p>
       ) : items.length === 0 ? (
         <div className="card mt-10 p-10 text-center">
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-ink-600 dark:text-ink-400">
             {query || favoritesOnly
               ? "Nothing matches that."
               : "You have not run any analyses yet."}
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   >
                     {item.title}
                   </Link>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
                     <span className={`badge ${STATUS_STYLE[item.status] ?? ""}`}>
                       {item.status}
                     </span>
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                     {item.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="badge border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                        className="badge border-ink-300 bg-ink-50 text-ink-600 dark:border-ink-600 dark:bg-ink-800 dark:text-ink-300"
                       >
                         {tag}
                       </span>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                       setItems((current) => current.filter((entry) => entry.id !== item.id));
                       setTotal((value) => value - 1);
                     }}
-                    className="btn-ghost h-9 w-9 !px-0 text-slate-400 hover:text-red-600"
+                    className="btn-ghost h-9 w-9 !px-0 text-ink-400 hover:text-crimson-600"
                   >
                     <span aria-hidden="true">×</span>
                   </button>

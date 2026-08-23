@@ -28,7 +28,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
 
   return (
     <article
-      className={`rounded-lg border border-l-4 border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 ${style.border}`}
+      className={`rounded-lg border border-l-4 border-ink-200 bg-ink-50 p-4 dark:border-ink-800 dark:bg-ink-900 ${style.border}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className={`badge ${style.badge}`} title={style.description}>
@@ -36,9 +36,9 @@ export function ClaimCard({ claim }: { claim: Claim }) {
           {style.label}
         </span>
 
-        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-1.5 text-xs text-ink-500 dark:text-ink-400">
           <span
-            className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+            className="h-1.5 w-16 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-700"
             role="img"
             aria-label={`Confidence ${Math.round(claim.confidence * 100)} percent, ${confidenceBand(claim.confidence)}`}
           >
@@ -51,7 +51,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
         </span>
 
         {!style.isEvidence && (
-          <span className="text-xs italic text-slate-500 dark:text-slate-400">
+          <span className="text-xs italic text-ink-500 dark:text-ink-400">
             not evidence
           </span>
         )}
@@ -60,7 +60,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
       <p className="prose-report mt-3 whitespace-pre-wrap">{claim.statement}</p>
 
       {claim.quoted_text && claim.claim_type === "source_text" && (
-        <blockquote className="mt-3 border-l-2 border-slate-300 pl-4 font-serif text-slate-700 dark:border-slate-600 dark:text-slate-300">
+        <blockquote className="mt-3 border-l-2 border-ink-300 pl-4 font-serif text-ink-700 dark:border-ink-600 dark:text-ink-300">
           {claim.quoted_text}
         </blockquote>
       )}
@@ -71,28 +71,28 @@ export function ClaimCard({ claim }: { claim: Claim }) {
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
-            className="mt-3 text-xs font-medium text-blue-700 underline-offset-4 hover:underline dark:text-blue-400"
+            className="mt-3 text-xs font-medium text-lapis-700 underline-offset-4 hover:underline dark:text-lapis-400"
           >
             {open ? "Hide the reasoning" : "Why this, and how sure?"}
           </button>
 
           {open && (
-            <div className="mt-3 animate-fade-in space-y-3 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+            <div className="mt-3 animate-fade-in space-y-3 rounded-lg bg-ink-50 p-4 text-sm dark:bg-ink-800/60">
               {claim.reasoning && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
                     Reasoning
                   </p>
-                  <p className="mt-1 text-slate-700 dark:text-slate-300">{claim.reasoning}</p>
+                  <p className="mt-1 text-ink-700 dark:text-ink-300">{claim.reasoning}</p>
                 </div>
               )}
 
               {claim.confidence_basis && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
                     What the confidence is based on
                   </p>
-                  <p className="mt-1 text-slate-700 dark:text-slate-300">
+                  <p className="mt-1 text-ink-700 dark:text-ink-300">
                     {claim.confidence_basis}
                   </p>
                 </div>
@@ -100,10 +100,10 @@ export function ClaimCard({ claim }: { claim: Claim }) {
 
               {claim.engine && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
                     Computed by
                   </p>
-                  <p className="mt-1 font-mono text-xs text-slate-700 dark:text-slate-300">
+                  <p className="mt-1 font-mono text-xs text-ink-700 dark:text-ink-300">
                     {claim.engine}
                     {claim.algorithm_reference && (
                       <span className="block font-sans not-italic">
@@ -116,12 +116,12 @@ export function ClaimCard({ claim }: { claim: Claim }) {
 
               {references.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
                     Sources
                   </p>
                   <ul className="mt-1 space-y-1.5">
                     {references.map((reference, index) => (
-                      <li key={reference.id ?? index} className="text-slate-700 dark:text-slate-300">
+                      <li key={reference.id ?? index} className="text-ink-700 dark:text-ink-300">
                         {reference.url ? (
                           <a
                             href={reference.url}
@@ -136,7 +136,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
                         )}
                         {!reference.verified && (
                           // A model-supplied citation must never look like a checked one.
-                          <span className="ml-2 badge border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-200">
+                          <span className="ml-2 badge border-terra-300 bg-terra-50 text-terra-900 dark:border-terra-700 dark:bg-terra-950 dark:text-terra-200">
                             unverified — check before citing
                           </span>
                         )}
@@ -146,7 +146,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
                 </div>
               )}
 
-              <p className="border-t border-slate-200 pt-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              <p className="border-t border-ink-200 pt-2 text-xs text-ink-500 dark:border-ink-700 dark:text-ink-400">
                 Produced by the <span className="font-mono">{claim.produced_by}</span> step.
               </p>
             </div>

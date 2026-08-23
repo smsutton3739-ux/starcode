@@ -47,7 +47,7 @@ export function ReportView({ analysis }: { analysis: AnalysisDetail }) {
       <div className="card p-6">
         <p>No report was produced for this analysis.</p>
         {analysis.error_message && (
-          <p className="mt-2 text-sm text-red-700 dark:text-red-400">
+          <p className="mt-2 text-sm text-crimson-700 dark:text-crimson-400">
             {analysis.error_message}
           </p>
         )}
@@ -77,8 +77,8 @@ export function ReportView({ analysis }: { analysis: AnalysisDetail }) {
             aria-pressed={evidenceOnly}
             className={`badge ${
               evidenceOnly
-                ? "border-blue-500 bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100"
-                : "border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                ? "border-lapis-500 bg-lapis-100 text-lapis-900 dark:bg-lapis-900 dark:text-lapis-100"
+                : "border-ink-300 bg-ink-50 text-ink-700 dark:border-ink-600 dark:bg-ink-900 dark:text-ink-300"
             }`}
           >
             Evidence only
@@ -118,7 +118,7 @@ export function ReportView({ analysis }: { analysis: AnalysisDetail }) {
           </div>
         </div>
         {evidenceOnly && (
-          <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mt-3 text-xs text-ink-600 dark:text-ink-400">
             Showing only quotations, calculations and cited history. Interpretations and
             hypotheses are hidden — they are still part of the analysis.
           </p>
@@ -149,7 +149,7 @@ function ExecutiveSummary({ analysis }: { analysis: AnalysisDetail }) {
       <p className="prose-report mt-3">{report.executive_summary}</p>
 
       {analysis.failed_stages.length > 0 && (
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+        <div className="mt-4 rounded-lg border border-gold-300 bg-gold-50 p-3 text-sm text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200">
           <strong>Incomplete:</strong> these stages did not finish, and their sections are
           empty rather than guessed: {analysis.failed_stages.join(", ")}.
         </div>
@@ -184,7 +184,7 @@ function SectionBlock({
         <h2 id={anchor} className="text-xl font-semibold">
           {section.title}
         </h2>
-        <p className="mt-2 text-sm italic text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm italic text-ink-500 dark:text-ink-400">
           {section.empty_reason ?? "Nothing was produced for this section."}
         </p>
       </section>
@@ -227,7 +227,7 @@ function SectionBlock({
       )}
 
       {claims.length === 0 && section.claim_count > 0 && (
-        <p className="mt-3 text-sm italic text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm italic text-ink-500 dark:text-ink-400">
           {section.claim_count} finding{section.claim_count === 1 ? "" : "s"} in this
           section are hidden by the current filter.
         </p>
@@ -246,7 +246,7 @@ interface ReferenceItem {
 function ReferenceList({ references }: { references: ReferenceItem[] }) {
   if (references.length === 0) {
     return (
-      <p className="mt-2 text-sm italic text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm italic text-ink-500 dark:text-ink-400">
         No citations were produced for this analysis.
       </p>
     );
@@ -259,12 +259,12 @@ function ReferenceList({ references }: { references: ReferenceItem[] }) {
     <div className="mt-4 space-y-5">
       {verified.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
             From the reference corpus
           </h3>
           <ul className="mt-2 space-y-2 text-sm">
             {verified.map((reference, index) => (
-              <li key={index} className="text-slate-700 dark:text-slate-300">
+              <li key={index} className="text-ink-700 dark:text-ink-300">
                 {reference.citation_text}
               </li>
             ))}
@@ -274,17 +274,17 @@ function ReferenceList({ references }: { references: ReferenceItem[] }) {
 
       {unverified.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-400">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-terra-700 dark:text-terra-400">
             Unverified — check before citing
           </h3>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-xs text-ink-600 dark:text-ink-400">
             These came from the language model rather than the curated corpus. Language
             models invent plausible-looking references, so confirm each one exists before
             relying on it.
           </p>
           <ul className="mt-2 space-y-2 text-sm">
             {unverified.map((reference, index) => (
-              <li key={index} className="text-slate-700 dark:text-slate-300">
+              <li key={index} className="text-ink-700 dark:text-ink-300">
                 {reference.citation_text}
               </li>
             ))}
@@ -305,7 +305,7 @@ interface FurtherReadingItem {
 function FurtherReading({ items }: { items: FurtherReadingItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="mt-2 text-sm italic text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm italic text-ink-500 dark:text-ink-400">
         No further reading was suggested.
       </p>
     );
@@ -315,8 +315,8 @@ function FurtherReading({ items }: { items: FurtherReadingItem[] }) {
       {items.map((item, index) => (
         <li key={index}>
           <p className="font-medium">{item.title}</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{item.citation}</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.why}</p>
+          <p className="text-sm text-ink-600 dark:text-ink-400">{item.citation}</p>
+          <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{item.why}</p>
         </li>
       ))}
     </ul>
