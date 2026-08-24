@@ -80,7 +80,7 @@ Redis and no API key are needed for almost any work.**
 
 ```bash
 # backend/
-pytest -q                          # whole suite, ~17s, no services needed
+pytest -q                          # 325 tests, ~21s, no services needed
 pytest tests/test_astronomy.py -q  # one file
 pytest -k "eclipse" -q             # by name
 ruff check app tests scripts --fix
@@ -151,12 +151,12 @@ backend/
     api/v1/routers/     health, auth, analyses, exports, uploads, search, library,
                         reference (astronomy/calendars/corpus), admin
     services/           ingest, url_fetch, export, analysis_service, tagging
-    db/                 28 models, portable column types, session
+    db/                 28 ORM models + 2 association tables (30 tables), session
     core/               config, logging, security, rate_limit, middleware
     workers/            runner (background jobs), seed_cli
   alembic/versions/     4 migrations
   scripts/              create_admin.py, import_dataset.py, entrypoint.sh
-  tests/                ~280 test functions across 12 files
+  tests/                12 files, 325 tests collected
 frontend/
   app/                  App Router pages (/, /analysis/[id], /dashboard, /explore,
                         /tools, /login, /admin, /shared/[id], /about, /auth/callback)

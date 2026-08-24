@@ -65,9 +65,21 @@ describe("confidence", () => {
     expect(confidenceBand(value)).toBe(band);
   });
 
-  it("colours low confidence as a warning", () => {
-    expect(confidenceColor(0.9)).toContain("green");
-    expect(confidenceColor(0.2)).toContain("red");
+  // Pinned to the exact class rather than a colour word. The manuscript restyle renamed
+  // green -> verdigris and red -> crimson, and this assertion failed on the rename while
+  // the behaviour it guards never changed. Values are paired either side of all three
+  // thresholds so a boundary that slips by 0.01 is caught too.
+  it.each([
+    [1, "bg-verdigris-600"],
+    [0.7, "bg-verdigris-600"],
+    [0.69, "bg-gold-500"],
+    [0.5, "bg-gold-500"],
+    [0.49, "bg-terra-500"],
+    [0.3, "bg-terra-500"],
+    [0.29, "bg-crimson-500"],
+    [0, "bg-crimson-500"],
+  ])("colours %s with %s", (value, className) => {
+    expect(confidenceColor(value)).toBe(className);
   });
 });
 
