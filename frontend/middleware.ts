@@ -1,3 +1,12 @@
+// Production history, so the next person (or Claude) doesn't re-diagnose this from
+// scratch: this file previously shipped broken in production twice in a row —
+// ERR_MODULE_NOT_FOUND on "next/server" (caused by package.json's stale
+// `"type": "module"`), then "Cannot use import statement outside a module" on the very
+// next deploy even after that field was removed. The second failure was Vercel reusing
+// a cached webpack compilation of this exact file from the prior, broken build — the
+// fix that time was a genuine content change here to force cache invalidation, which is
+// this comment block. If middleware ever 500s again in production after a config-only
+// fix (no change to this file), suspect stale build cache before suspecting the fix.
 import { NextResponse, type NextRequest } from "next/server";
 // Inlined rather than imported from @/lib/embeds: Vercel's Edge Function bundler for
 // this project fails to resolve that cross-module import ("referencing unsupported
