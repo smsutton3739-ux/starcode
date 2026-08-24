@@ -106,9 +106,10 @@ npx playwright test --project=chromium
 Playwright starts the web server itself on `:3100` (`next start`), so the build must run
 first. `scripts/e2e-backend.sh` wipes `/tmp/starcode-e2e` and touches nothing else.
 
-Note: the `npm run test:a11y` script points at `tests/a11y.spec.ts`, but the file lives at
-`tests/e2e/a11y.spec.ts` — the filter matches nothing. Use
-`npx playwright test tests/e2e/a11y.spec.ts` instead.
+`npm run test:a11y` runs the accessibility suite alone (`tests/e2e/a11y.spec.ts`, 20
+tests). Playwright's positional argument is a regex matched against the path *as the
+runner resolves it*, so a filter that omits the `e2e/` segment silently selects nothing
+rather than erroring usefully — check `--list` before trusting a narrowed run.
 
 ### Database changes
 
