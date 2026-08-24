@@ -1,23 +1,21 @@
-// Production history, so the next person (or Claude) doesn't re-diagnose this from
-// scratch: this file previously shipped broken in production three times in a row.
-//   1. ERR_MODULE_NOT_FOUND on "next/server" — caused by importing the bare specifier
-//      "next/server" (no extension) under strict ESM. The `next` package has no
-//      "exports" map, so Node's ESM resolver does not auto-append .js the way
-//      CommonJS require() does; it requires an exact file match. Fixed by importing
-//      "next/server.js" explicitly, below.
-//   2. "Cannot use import statement outside a module" — caused by removing
-//      `"type": "module"` from package.json while trying to fix #1. That was backwards:
-//      `type: module` is required, not the bug. next/server.js is itself a CommonJS
-//      file (require/module.exports) that only becomes importable via
-//      `import { NextResponse } from "..."` through Node's CJS-to-ESM named-export
-//      interop, which only activates when the importing file is genuinely loaded as an
-//      ES module in the first place.
-//   3. A stale Vercel build cache serving a prior broken compiled chunk even after a
-//      source fix landed — resolved by making a real content change here (this exact
-//      comment) to force cache invalidation. If middleware ever 500s again after a
-//      config-only fix with no change to this file's content, suspect stale build cache
-//      before suspecting the fix.
-import { NextResponse, type NextRequest } from "next/server.js";
+// Deployment note, so the next person does not re-diagnose this from scratch: this
+// middleware 500'd in production (MIDDLEWARE_INVOCATION_FAILED on every request) for a
+// reason that had nothing to do with this file. The Vercel project had no Framework
+// Preset set, so Vercel never ran its Next.js builder: it deployed no page functions and
+// no _next/static assets, and picked this file up with its framework-agnostic Routing
+// Middleware builder instead, which transpiles middleware.ts on its own and requires a
+// default export. Hence the error trail — ERR_MODULE_NOT_FOUND on "next/server",
+// "Cannot use import statement outside a module", and finally "No exports found in
+// module" — all reported against /var/task/frontend/middleware.js, a file Next.js never
+// emits. Next.js compiles this to .next/server/middleware.js, and that bundle was always
+// correct. The fix is frontend/vercel.json pinning "framework": "nextjs".
+//
+// So: if this file ever 500s in production again while `next start` serves it fine
+// locally, check what Vercel actually deployed before changing any code here. Requesting
+// a hashed chunk from the build log (/_next/static/chunks/<name>.js) settles it in one
+// call — a 404 there means Vercel did not build this as a Next.js app, and nothing in
+// this file can fix that.
+import { NextResponse, type NextRequest } from "next/server";
 // Inlined rather than imported from @/lib/embeds: Vercel's Edge Function bundler for
 // this project fails to resolve that cross-module import ("referencing unsupported
 // modules"), even though nothing in that file is actually Edge-incompatible. The values

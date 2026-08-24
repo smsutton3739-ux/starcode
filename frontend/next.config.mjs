@@ -87,11 +87,10 @@ export default function config(phase) {
     // Node.js Middleware needs no config flag as of Next.js 15.5 (this project is on
     // 15.5.23) — it is stable, opted into per-file via `export const config = { runtime:
     // "nodejs" }` in middleware.ts alone. An earlier version of this file also set
-    // `experimental: { nodeMiddleware: true }`, believing the flag was still required.
-    // It isn't: Next's own build now warns that key is unrecognized, and leaving it in
-    // caused Vercel's function bundler to fail to trace `next/server` into the deployed
-    // middleware bundle at all, producing a 500 (ERR_MODULE_NOT_FOUND) on every request
-    // in production while working fine in local dev. Do not re-add this flag.
+    // `experimental: { nodeMiddleware: true }`, believing the flag was still required;
+    // Next's own build warns that key is unrecognized, so it is gone. Removing it was
+    // neither the cause of nor the fix for the production 500 that was blamed on it —
+    // that was Vercel's missing Framework Preset, see middleware.ts and vercel.json.
     env: { NEXT_PUBLIC_API_URL: resolveApiUrl(phase) },
     async headers() {
       return [{ source: "/:path*", headers: securityHeaders }];

@@ -19,6 +19,8 @@ node_modules/
 out/
 .turbo/
 coverage/
+# `vercel link` / `vercel build` scratch: local project link and Build Output API dir.
+.vercel/
 playwright-report/
 test-results/
 # Incremental tsc cache: a build artifact whose churn is pure diff noise.

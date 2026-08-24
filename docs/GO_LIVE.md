@@ -262,7 +262,16 @@ Everything else the API needs is already in the blueprint, including a generated
    import `smsutton3739-ux/starcode`.
 2. **Root Directory**: click **Edit** and set it to `frontend`. This is the one setting
    people miss; without it Vercel tries to build the repository root and fails.
-3. **Environment Variables** — add one, *before the first build*:
+3. **Framework Preset**: confirm it says **Next.js**, not **Other**. `frontend/vercel.json`
+   pins it, so a fresh import should get this right on its own — but check, because the
+   failure it causes does not look like a settings problem. On **Other**, Vercel still runs
+   `next build` and reports a green build, then deploys none of it: no page functions, no
+   `_next/static` assets, and `middleware.ts` picked up by Vercel's framework-agnostic
+   Routing Middleware builder instead of Next's. Every request 500s with
+   `MIDDLEWARE_INVOCATION_FAILED` and the runtime log blames `/var/task/frontend/middleware.js`,
+   a path Next.js never emits. To check a live deployment, request any hashed chunk from
+   its build log — `/_next/static/chunks/<name>.js`. A 404 there means the preset is wrong.
+4. **Environment Variables** — add one, *before the first build*:
 
    ```
    NEXT_PUBLIC_API_URL = https://api.astro-decoded.com
@@ -272,8 +281,8 @@ Everything else the API needs is already in the blueprint, including a generated
    Set it afterwards and you must redeploy. The build refuses to finish without it rather
    than shipping a site quietly pointed at `localhost`.
 
-4. **Deploy**.
-5. **Settings → Domains** → add `www.astro-decoded.com`, and add `astro-decoded.com` set
+5. **Deploy**.
+6. **Settings → Domains** → add `www.astro-decoded.com`, and add `astro-decoded.com` set
    to redirect to it. Create the DNS records Vercel shows you at your registrar.
 
 ### 4. Make yourself an administrator
