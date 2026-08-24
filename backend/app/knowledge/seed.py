@@ -94,9 +94,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
     count = 0
     for row in corpus.RECORDED_ASTRONOMICAL_EVENTS:
         existing = db.execute(
-            select(AstronomicalEvent).where(
-                AstronomicalEvent.designation == row["designation"]
-            )
+            select(AstronomicalEvent).where(AstronomicalEvent.designation == row["designation"])
         ).scalar_one_or_none()
         target = existing or AstronomicalEvent(designation=row["designation"])
         target.event_type = row["event_type"]
@@ -108,9 +106,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
         target.is_computed = row.get("is_computed", False)
         target.description = row.get("description")
         target.visibility_regions = row.get("visibility_regions", [])
-        target.computation_engine = (
-            "historical record" if not row.get("is_computed") else None
-        )
+        target.computation_engine = "historical record" if not row.get("is_computed") else None
         slug = row.get("source_slug")
         target.historical_source_id = source_ids.get(slug) if slug else None
         if existing is None:
@@ -132,9 +128,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
     # Comet apparitions and supernovae from the static catalogues.
     for comet in COMET_APPARITIONS:
         existing = db.execute(
-            select(AstronomicalEvent).where(
-                AstronomicalEvent.designation == comet.designation
-            )
+            select(AstronomicalEvent).where(AstronomicalEvent.designation == comet.designation)
         ).scalar_one_or_none()
         target = existing or AstronomicalEvent(designation=comet.designation)
         target.event_type = "comet"
@@ -152,9 +146,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
 
     for sn in HISTORICAL_SUPERNOVAE:
         existing = db.execute(
-            select(AstronomicalEvent).where(
-                AstronomicalEvent.designation == sn["designation"]
-            )
+            select(AstronomicalEvent).where(AstronomicalEvent.designation == sn["designation"])
         ).scalar_one_or_none()
         target = existing or AstronomicalEvent(designation=str(sn["designation"]))
         target.event_type = "supernova"
@@ -176,9 +168,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
 
 def _upsert_datasets(db: Session, counts: dict[str, int]) -> None:
     for row in corpus.DATASETS:
-        existing = db.execute(
-            select(Dataset).where(Dataset.key == row["key"])
-        ).scalar_one_or_none()
+        existing = db.execute(select(Dataset).where(Dataset.key == row["key"])).scalar_one_or_none()
         target = existing or Dataset(key=row["key"])
         for field, value in row.items():
             if field != "key":
