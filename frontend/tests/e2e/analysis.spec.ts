@@ -17,8 +17,12 @@ test.describe("the one-button promise", () => {
   test("homepage shows exactly one box and one button", async ({ page }) => {
     await page.goto("/");
 
+    // Matched on the part of the promise that names what you may paste, not the whole
+    // sentence: the manuscript restyle rewrote the hero copy around this phrase, and the
+    // exact-string assertion failed on the rewording while the promise it guards was
+    // still on the page.
     await expect(
-      page.getByText("Paste any ancient text, manuscript, prophecy, or historical document."),
+      page.getByText(/ancient text, manuscript, prophecy, or historical document/),
     ).toBeVisible();
     await expect(page.locator("#analyze-input")).toBeVisible();
     await expect(page.getByRole("button", { name: "ANALYZE" })).toBeVisible();

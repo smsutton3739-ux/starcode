@@ -71,6 +71,7 @@ Rules enforced in code (`backend/app/agents/contracts.py`):
 | 2026-08-07 | M11–M13| Docker, CI, full docs, test suites green. |
 | 2026-08-10 | —      | Shipped. 271 backend + 22 unit + 19 e2e + 16 a11y tests pass; zero WCAG A/AA violations; full flow verified in a browser. |
 | 2026-08-10 | M14    | Deployment hardening for a real domain: build-time guard on `NEXT_PUBLIC_API_URL`, accounts decision (below), the two operator scripts the docs referenced, OAuth replica constraint documented. 295 backend tests. |
+| 2026-08-25 | —      | CI green again, red since run 35 on 20 August: `package-lock.json` resynced so `npm ci` installs (the frontend and e2e jobs had been failing at Install, and the backend job's format check was gating its own test step). Two assertions left stale by the manuscript restyle fixed. Counts in this file and the docs re-measured against actual runs. |
 
 ### M14 — what shipped and why
 
@@ -104,10 +105,10 @@ Every claim in the README is backed by something that was actually run.
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 271 passed (SQLite, offline provider, no network) |
-| Frontend unit tests | 22 passed |
-| End-to-end tests | 19 passed against a real FastAPI process |
-| Accessibility tests | 16 passed; **zero** WCAG 2.1 A/AA violations, both themes |
+| Backend tests | 325 passed (SQLite, offline provider, no network) |
+| Frontend unit tests | 29 passed |
+| End-to-end tests | 26 passed against a real FastAPI process |
+| Accessibility tests | 20 passed; **zero** WCAG 2.1 A/AA violations, both themes |
 | Lint + format | `ruff check` and `ruff format --check` clean |
 | Type check | `tsc --noEmit` clean |
 | Migration | Applies and reverses; `alembic check` agrees with the models |

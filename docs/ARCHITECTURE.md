@@ -187,7 +187,7 @@ interpretations" would be precisely the failure this platform exists to prevent.
 better to have an empty section that says why than a full one that cannot be trusted.
 
 This is also what makes the repository runnable by anyone who clones it, and what lets
-271 tests run with no network and no credentials.
+325 tests run with no network and no credentials.
 
 ---
 

@@ -37,7 +37,7 @@ Postgres, Redis, or an API key to work on almost anything.
 
 ```bash
 cd backend
-pytest -q                          # 271 tests, ~17s
+pytest -q                          # 325 tests, ~21s
 pytest tests/test_astronomy.py -q  # one file
 pytest -k "eclipse" -q             # by name
 ruff check app tests --fix

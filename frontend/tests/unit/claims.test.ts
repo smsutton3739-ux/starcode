@@ -65,9 +65,22 @@ describe("confidence", () => {
     expect(confidenceBand(value)).toBe(band);
   });
 
-  it("colours low confidence as a warning", () => {
-    expect(confidenceColor(0.9)).toContain("green");
-    expect(confidenceColor(0.2)).toContain("red");
+  // Asserted as the exact class, not a substring like "green": this matched on colour
+  // names until the manuscript restyle renamed the palette (green became verdigris, red
+  // became crimson), which failed the test without any behaviour changing. The class
+  // name is the contract; what the design system calls that colour is its own business.
+  // Values are paired around each threshold so a boundary that slips shows up here.
+  it.each([
+    [1, "bg-verdigris-600"],
+    [0.7, "bg-verdigris-600"],
+    [0.69, "bg-gold-500"],
+    [0.5, "bg-gold-500"],
+    [0.49, "bg-terra-500"],
+    [0.3, "bg-terra-500"],
+    [0.29, "bg-crimson-500"],
+    [0, "bg-crimson-500"],
+  ])("colours %s as %s", (value, className) => {
+    expect(confidenceColor(value)).toBe(className);
   });
 });
 

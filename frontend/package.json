@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test tests/a11y.spec.ts"
+    "test:a11y": "playwright test tests/e2e/a11y.spec.ts"
   },
   "dependencies": {
     "@testing-library/user-event": "^14.6.3",
