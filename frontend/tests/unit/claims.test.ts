@@ -65,10 +65,11 @@ describe("confidence", () => {
     expect(confidenceBand(value)).toBe(band);
   });
 
-  // Pinned to the exact class rather than a colour word. The manuscript restyle renamed
-  // green -> verdigris and red -> crimson, and this assertion failed on the rename while
-  // the behaviour it guards never changed. Values are paired either side of all three
-  // thresholds so a boundary that slips by 0.01 is caught too.
+  // Asserted as the exact class, not a substring like "green": this matched on colour
+  // names until the manuscript restyle renamed the palette (green became verdigris, red
+  // became crimson), which failed the test without any behaviour changing. The class
+  // name is the contract; what the design system calls that colour is its own business.
+  // Values are paired around each threshold so a boundary that slips shows up here.
   it.each([
     [1, "bg-verdigris-600"],
     [0.7, "bg-verdigris-600"],
@@ -78,7 +79,7 @@ describe("confidence", () => {
     [0.3, "bg-terra-500"],
     [0.29, "bg-crimson-500"],
     [0, "bg-crimson-500"],
-  ])("colours %s with %s", (value, className) => {
+  ])("colours %s as %s", (value, className) => {
     expect(confidenceColor(value)).toBe(className);
   });
 });
