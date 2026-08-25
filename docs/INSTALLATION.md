@@ -189,7 +189,7 @@ restart is picked up rather than lost.
 ## Verifying the installation
 
 ```bash
-cd backend && pytest -q              # expect: 271 passed
+cd backend && pytest -q              # expect: 325 passed
 cd frontend && npm test              # expect: 22 passed
 cd frontend && npm run typecheck     # expect: no output
 ```

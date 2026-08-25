@@ -180,12 +180,12 @@ backend/
     core/         config, logging, security, rate limiting, middleware
     workers/      background job runner, seed CLI
   alembic/        migrations
-  tests/          271 tests
+  tests/          325 tests
 frontend/
   app/            App Router pages
   components/     report viewer, sky map, claim cards, converters
   lib/            API client, claim presentation, types
-  tests/          22 unit, 19 e2e, 16 accessibility
+  tests/          29 unit, 26 e2e, 20 accessibility
 docs/             installation, deployment, API, architecture, developer, admin, user
 ```
 
@@ -194,10 +194,10 @@ docs/             installation, deployment, API, architecture, developer, admin,
 ## Testing
 
 ```bash
-cd backend && pytest                      # 271 tests, no services needed
-cd frontend && npm test                   # 22 unit tests
+cd backend && pytest                      # 325 tests, no services needed
+cd frontend && npm test                   # 29 unit tests
 ./scripts/e2e-backend.sh &                # then, in frontend/
-cd frontend && npx playwright test        # 19 e2e + 16 accessibility
+cd frontend && npx playwright test        # 26 e2e + 20 accessibility
 ```
 
 The backend suite runs on SQLite with the offline provider, so it needs no database, no

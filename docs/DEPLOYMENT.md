@@ -367,10 +367,10 @@ express more confidence in its own conjecture; think carefully before you do.
 
 | Job | Checks |
 | --- | --- |
-| `backend` | ruff lint, format, mypy, 271 tests with coverage |
+| `backend` | ruff lint, format, mypy, 325 tests with coverage |
 | `migrations` | Upgrade, seed, **downgrade and back up**, and `alembic check` against real PostgreSQL |
 | `frontend` | lint, typecheck, unit tests, production build |
-| `e2e` | 19 end-to-end + 16 accessibility tests against the real stack |
+| `e2e` | 26 end-to-end + 20 accessibility tests against the real stack |
 | `security` | pip-audit, npm audit, committed-credential scan |
 | `docker` | Both images build; the API image boots and answers |
 
