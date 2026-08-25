@@ -118,6 +118,31 @@ class Settings(BaseSettings):
     """'auto' uses Anthropic when a key is present and the deterministic offline engine
     otherwise, so the platform is fully functional (and testable) without credentials."""
 
+    # ---- Billing ------------------------------------------------------------
+    STRIPE_SECRET_KEY: str = ""
+    """Absent disables billing entirely: checkout and portal refuse with a clear message
+    and every account stays on the free tier. A deployment without Stripe is a supported
+    shape, the same way one without an Anthropic key is."""
+
+    STRIPE_WEBHOOK_SECRET: str = ""
+    """Signing secret for the webhook endpoint. Without it the webhook route refuses
+    every request rather than trusting unsigned input — subscription state is the one
+    thing an unauthenticated caller must never be able to write."""
+
+    STRIPE_PRICE_ID_PAID: str = ""
+    BILLING_SUCCESS_PATH: str = "/billing?checkout=success"
+    BILLING_CANCEL_PATH: str = "/pricing?checkout=cancelled"
+
+    @property
+    def billing_enabled(self) -> bool:
+        """Billing is only on when every part needed to complete a purchase is present.
+
+        A partial configuration is worse than none: a Checkout button that 500s on click,
+        or a webhook that cannot verify signatures, both look like outages rather than
+        like the missing setting they are.
+        """
+        return bool(self.STRIPE_SECRET_KEY and self.STRIPE_PRICE_ID_PAID)
+
     # ---- Ingestion ----------------------------------------------------------
     MAX_UPLOAD_BYTES: int = 25 * 1024 * 1024
     MAX_TEXT_CHARS: int = 400_000

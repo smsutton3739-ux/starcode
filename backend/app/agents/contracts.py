@@ -252,6 +252,13 @@ class ClaimDraft:
             "ordering": self.ordering,
             "presentation": CLAIM_TYPE_PRESENTATION[self.claim_type],
             "is_evidence": self.is_evidence,
+            # Always false at this layer. Whether a reader may see this claim is a
+            # question about that reader, not about the claim, and it is answered later
+            # by services/entitlements.py. The key is emitted here so that a claim inside
+            # a stored report and one fetched from the API keep the identical shape the
+            # test below pins — the divergence that once dropped every citation from the
+            # exports started exactly this way.
+            "locked": False,
         }
 
 

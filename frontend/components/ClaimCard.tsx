@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { claimStyle, confidenceBand, confidenceColor } from "@/lib/claims";
 import type { Claim } from "@/lib/types";
 
@@ -20,6 +21,13 @@ export function ClaimCard({ claim }: { claim: Claim }) {
   // citation list should render an empty section, never white-screen the report.
   const references = claim.references ?? [];
 
+  // A withheld claim keeps its type, confidence and citations — only the readable
+  // fields were replaced — so it renders as a real card with the content masked rather
+  // than disappearing. A shorter report would misrepresent what the analysis found.
+  const locked = claim.locked === true;
+
+  // Locked claims keep their citations, and the inner sections already guard on the
+  // fields that were cleared, so the disclosure opens onto the sources alone.
   const hasDetail =
     Boolean(claim.reasoning) ||
     Boolean(claim.confidence_basis) ||
@@ -57,9 +65,37 @@ export function ClaimCard({ claim }: { claim: Claim }) {
         )}
       </div>
 
-      <p className="prose-report mt-3 whitespace-pre-wrap">{claim.statement}</p>
+      {locked ? (
+        <div className="mt-3 rounded-lg border border-dashed border-gold-400 bg-gold-50/60 p-4 dark:border-gold-600 dark:bg-gold-950/30">
+          <p className="flex items-center gap-2 font-display text-sm text-gold-900 dark:text-gold-200">
+            {/* Icon and text together: the accessibility suite checks that meaning
+                survives with colour stripped out, so the lock is never the only signal. */}
+            <span aria-hidden="true">🔒</span>
+            <span className="font-semibold">Interpretation locked</span>
+          </p>
+          <p className="mt-2 text-sm text-ink-700 dark:text-ink-300">
+            This {style.label.toLowerCase()} was produced by the analysis and is included
+            in your report — the text is held back on the free plan.
+            {references.length > 0 && (
+              <>
+                {" "}
+                It cites {references.length}{" "}
+                {references.length === 1 ? "source" : "sources"}, listed below.
+              </>
+            )}
+          </p>
+          <Link
+            href="/pricing"
+            className="mt-3 inline-block rounded-md bg-lapis-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-lapis-700 dark:bg-lapis-500 dark:hover:bg-lapis-400"
+          >
+            Unlock interpretations
+          </Link>
+        </div>
+      ) : (
+        <p className="prose-report mt-3 whitespace-pre-wrap">{claim.statement}</p>
+      )}
 
-      {claim.quoted_text && claim.claim_type === "source_text" && (
+      {!locked && claim.quoted_text && claim.claim_type === "source_text" && (
         <blockquote className="mt-3 border-l-2 border-ink-300 pl-4 font-serif text-ink-700 dark:border-ink-600 dark:text-ink-300">
           {claim.quoted_text}
         </blockquote>

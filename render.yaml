@@ -66,6 +66,31 @@ services:
       - key: FRONTEND_BASE_URL
         sync: false
 
+      # ---- Billing (only if you sell subscriptions) ----
+      #
+      # All three are sync: false, so a Blueprint sync never overwrites them — a synced
+      # secret would be replaced with an empty value on the next deploy and every webhook
+      # would start failing signature verification with nothing in the diff to explain it.
+      #
+      # STRIPE_SECRET_KEY      Stripe dashboard → Developers → API keys → Secret key
+      # STRIPE_WEBHOOK_SECRET  Shown once when you add the webhook endpoint (below)
+      # STRIPE_PRICE_ID_PAID   The price on your subscription product (price_..., not prod_...)
+      #
+      # Webhook endpoint to register in Stripe:
+      #   https://api.astro-decoded.com/api/v1/billing/webhook
+      # Note the /api/v1 prefix — the router is mounted under API_V1_PREFIX, and an
+      # endpoint registered without it 404s every delivery.
+      #
+      # Leave all three unset to run without billing: checkout refuses with a clear
+      # message, the webhook refuses every request rather than trusting unsigned input,
+      # and every account stays on the free tier.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_PAID
+        sync: false
+
       # OAUTH_REDIRECT_BASE is deliberately absent.
       #
       # Deriving it from this service resolves to a bare hostname with no scheme, which

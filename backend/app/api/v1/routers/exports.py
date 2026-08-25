@@ -39,7 +39,7 @@ def export(
     analysis = get_owned_or_shared_analysis(db, analysis_id, user, anonymous_token)
 
     try:
-        content, mime_type, filename = export_analysis(analysis, fmt.lower())
+        content, mime_type, filename = export_analysis(analysis, fmt.lower(), user)
     except ExportError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

@@ -388,6 +388,87 @@ does not affect anonymous analysis, which is the main path and scales freely.
 
 ---
 
+## Subscriptions
+
+Optional. With none of the three Stripe values set, the platform runs exactly as
+documented everywhere else: every account is on the free tier, checkout refuses with a
+message naming the missing setting, and the webhook refuses every request rather than
+trusting unsigned input.
+
+### 1. Create the product and price
+
+In the Stripe dashboard, **Product catalogue → Add product**. Give it a recurring price.
+Copy the **price** id — it begins `price_`. The product id (`prod_`) is not what the
+application needs and will fail at checkout.
+
+### 2. Register the webhook endpoint
+
+**Developers → Webhooks → Add endpoint.** The URL is your API's public address plus the
+API prefix:
+
+```
+https://api.astro-decoded.com/api/v1/billing/webhook
+```
+
+The `/api/v1` is not optional. Every router in this application is mounted under
+`API_V1_PREFIX`, so an endpoint registered at `/v1/billing/webhook` or
+`/billing/webhook` returns 404 for every delivery — and because Stripe treats a 404 as a
+delivery failure and retries, the symptom is a growing queue of failed events rather than
+an obvious error.
+
+Subscribe it to these four events. Everything else is ignored:
+
+| Event | What it does here |
+| --- | --- |
+| `checkout.session.completed` | Grants the paid tier as soon as payment completes |
+| `customer.subscription.updated` | Follows the subscription's status |
+| `customer.subscription.deleted` | Returns the account to free |
+| `invoice.payment_failed` | Records `past_due` without cutting access |
+
+Stripe shows the **signing secret** once, when the endpoint is created. That is
+`STRIPE_WEBHOOK_SECRET`.
+
+### 3. Set the three values on Render
+
+**Environment → Add environment variable**, on the API service:
+
+| Variable | Where it comes from |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | Developers → API keys → Secret key |
+| `STRIPE_WEBHOOK_SECRET` | Shown once when the endpoint above was created |
+| `STRIPE_PRICE_ID_PAID` | The recurring price on your product (`price_…`) |
+
+All three are declared `sync: false` in `render.yaml`. Do not remove that — a synced
+secret is overwritten with an empty value on the next Blueprint sync, and the first
+symptom is every webhook failing signature verification with nothing in the diff to
+explain it.
+
+### 4. Check it end to end
+
+Stripe's dashboard has a **Send test webhook** button on the endpoint. A correctly
+configured deployment answers `200 {"received": true}`. The two failures worth
+recognising:
+
+- **400 `Stripe signature verification failed`** — `STRIPE_WEBHOOK_SECRET` does not match
+  this endpoint. Each endpoint has its own secret; copying one from a different endpoint
+  produces exactly this.
+- **503 `STRIPE_WEBHOOK_SECRET is not set`** — the variable never reached the service.
+  Check it is set on the API service rather than the web app.
+
+### What paying changes, and what it does not
+
+A subscription reveals the interpretive claim types — `traditional_interpretation`,
+`scholarly_interpretation` and `ai_hypothesis` — plus the executive summary that draws on
+them. It changes nothing about how those claims are labelled or how confident they are
+allowed to be: an AI hypothesis is still capped by policy and still marked as not
+evidence, on every plan.
+
+Free readers see a locked placeholder in place of each withheld claim, keeping its type,
+confidence and citations. That is deliberate: a report that silently omitted them would
+misrepresent what the analysis actually found.
+
+---
+
 ## The chart tools page
 
 `/tools` embeds third-party birth-chart and synastry calculators from Astro·Charts. It is
