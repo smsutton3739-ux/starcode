@@ -190,7 +190,7 @@ restart is picked up rather than lost.
 
 ```bash
 cd backend && pytest -q              # expect: 325 passed
-cd frontend && npm test              # expect: 22 passed
+cd frontend && npm test              # expect: 29 passed
 cd frontend && npm run typecheck     # expect: no output
 ```
 

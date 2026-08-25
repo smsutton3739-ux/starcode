@@ -406,7 +406,7 @@ These are design decisions, stated in the README and enforced in code:
 1. **No eclipse visibility from a named place.** ΔT uncertainty for ancient dates is tens
    of minutes, which moves the ground track by tens of degrees of longitude.
 2. **Planetary positions are approximations** (0.3–0.6° over five millennia).
-3. **The corpus is a demonstration set** of ~30 curated works. Absence means nothing.
+3. **The corpus is a demonstration set** — 14 works and 17 passages. Absence means nothing.
 4. **The default embedder is lexical** and says so. Swapping it requires re-seeding and
    re-calibrating `MIN_SCORE` and the `match_strength` bands in `knowledge/rag.py`.
 5. **Model-supplied citations are marked unverified** and never counted as evidence.
