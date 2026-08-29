@@ -31,6 +31,7 @@ mandatory `claim_type`, and the rules for each type are checked in code
 | `source_text` | Must carry the verbatim quotation |
 | `verified_history` | ≥1 citation, or it is downgraded |
 | `astronomical_calculation` | Must name its engine |
+| `astronomical_dating_candidate` | Must name its engine **and** carry `matched_criteria`/`unmatched_criteria`; confidence capped like `ai_hypothesis` |
 | `scholarly_interpretation` | ≥1 citation, or it is downgraded |
 | `textual_analysis` | — |
 | `traditional_interpretation` | Reported, never endorsed |
@@ -80,7 +81,7 @@ Redis and no API key are needed for almost any work.**
 
 ```bash
 # backend/
-pytest -q                          # 325 tests, ~21s, no services needed
+pytest -q                          # 435 tests, ~50s, no services needed
 pytest tests/test_astronomy.py -q  # one file
 pytest -k "eclipse" -q             # by name
 ruff check app tests scripts --fix
@@ -146,17 +147,19 @@ backend/
       lexicon.py        curated terms and patterns (recall floor for entities)
       report.py         claims → report structure
     astronomy/          timescales, ephemeris, events, catalogs, service — PURE, no I/O
+                        dating_search.py orchestrates service.py the other way round:
+                        a described sky in, ranked candidate dates out
     calendars/          core (Rata Die arithmetic), service (specs + caveats) — PURE
     knowledge/          corpus, embeddings, rag, seed
     api/v1/routers/     health, auth, analyses, exports, uploads, search, library,
                         reference (astronomy/calendars/corpus), admin
     services/           ingest, url_fetch, export, analysis_service, tagging
-    db/                 28 ORM models + 2 association tables (30 tables), session
+    db/                 30 ORM models + 2 association tables (32 tables), session
     core/               config, logging, security, rate_limit, middleware
     workers/            runner (background jobs), seed_cli
-  alembic/versions/     4 migrations
+  alembic/versions/     6 migrations
   scripts/              create_admin.py, import_dataset.py, entrypoint.sh
-  tests/                12 files, 325 tests collected
+  tests/                15 files, 435 tests collected
 frontend/
   app/                  App Router pages (/, /analysis/[id], /dashboard, /explore,
                         /tools, /login, /admin, /shared/[id], /about, /auth/callback)
@@ -191,6 +194,24 @@ orchestrator merges, so one agent cannot corrupt another's findings.
 | 7 | `interpretation` | yes | Traditional, scholarly and alternative readings |
 | 8 | `evidence` | yes | An audit of the other seven |
 
+### The dating pipeline
+
+`mode` in an analysis's options selects which pipeline runs (`pipeline_for()` in
+`orchestrator.py`). `analyze` is the default and is untouched by any of this. The four
+dating modes — `date`, `rectification`, `eschatological`, `historicizing` — run a shorter
+pipeline that drops the interpretation stage and ends with a dating agent, so the ordinary
+path's cost and latency are exactly what they were.
+
+`AstronomicalDatingAgent` (free) and `AdvancedDatingAgent` (the three paid modes) are the
+inverse of `AstronomyAgent`: given the phenomena the lexicon found, they search a span for
+dates whose real sky matches, and emit one `astronomical_dating_candidate` per candidate.
+Both are deterministic — no model is consulted anywhere in the mode.
+
+This is a *requested* mode rather than a pipeline step for the same reason the astronomy
+agent declines to correlate unasked: over a wide enough span something always matches.
+Every candidate therefore carries the criteria it failed, and a candidate resting only on
+common phenomena (an eclipse, a season) says so in its own notes.
+
 Invariants to preserve:
 
 - **Agents 4 and 5 must never call a language model.** Their output is arithmetic; routing
@@ -203,6 +224,11 @@ Invariants to preserve:
 - **Every agent sets `reasoning_summary`.** It is shown to the user in the explainability
   panel. Say what the method was and what its limits are — "extracted 12 entities" is
   useless.
+- **Eschatological and historicizing output may never be typed as evidence.** Enforced in
+  `coerce_claim()`, scoped to the dating agents by name: the astronomy agent still emits
+  real `astronomical_calculation` claims in those modes, because "an eclipse occurred on
+  this date" is true whatever mode asked. The mode comes from the analysis's own options,
+  never from the agent, so an agent cannot exempt itself.
 - **The astronomy agent declines to correlate when the text supplies no date.** Ancient
   texts use eclipse imagery constantly; matching a nearby eclipse to "the moon became as
   blood" produces a confident match every time and every one is meaningless. This
@@ -251,6 +277,14 @@ claim-type counts honest and is the same principle as the contract's visible dow
 exception to the separation above, so the operator can use the product on their own
 account. It is decided per request and writes nothing: no tier change, no Stripe
 customer, no billing state. Do not widen it into "roles imply tiers" anywhere else.
+
+`entitlements.py` also owns the **astronomical dating allowance**: five searches for the
+life of a free account (`FREE_DATING_SEARCHES`), counted as `COUNT(*)` over
+`AstronomicalDatingUsage` rows. Lifetime rather than monthly on purpose — a resetting
+quota needs something to run at the period boundary, and this deployment has no background
+worker by design, so a monthly limit would be one that silently never reset. Span caps:
+500 years free, 5,000 paid, applied by the API and clamped again in the agent. Admins are
+not metered and no usage row is written for them.
 
 Webhook handling is idempotent through a `ProcessedStripeEvent` ledger keyed by the
 Stripe event id — Stripe redelivers, and a replayed activation must not re-grant a tier
@@ -381,6 +415,8 @@ new runtime dependency must be declared in `pyproject.toml`, not merely present 
 | `tests/test_contracts.py` | **The epistemic contract — read as the specification** |
 | `tests/test_calendars.py` | Conversions against published dates; round trips |
 | `tests/test_astronomy.py` | Meeus examples, NASA values, historical anchor eclipses |
+| `tests/test_dating_search.py` | The inverse search, incl. rediscovering the 7 BCE triple conjunction |
+| `tests/test_dating_quota.py` | Who may run a dating search, how often, over how many years |
 | `tests/test_agents.py` | Lexicon, offline engine, retrieval, orchestrator |
 | `tests/test_api.py` | HTTP surface end to end |
 | `tests/test_ingest_security.py` | Passwords, tokens, upload safety, SSRF, rate limits |

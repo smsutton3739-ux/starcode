@@ -13,6 +13,7 @@ const ALL: ClaimType[] = [
   "source_text",
   "verified_history",
   "astronomical_calculation",
+  "astronomical_dating_candidate",
   "textual_analysis",
   "traditional_interpretation",
   "scholarly_interpretation",
@@ -36,6 +37,14 @@ describe("claim presentation", () => {
     expect(evidence.sort()).toEqual(
       ["astronomical_calculation", "source_text", "verified_history"].sort(),
     );
+  });
+
+  it("never treats a dating candidate as evidence, however exact its ephemeris", () => {
+    // The sky under a candidate is computed; the match between it and the text is not.
+    // Presenting the second with the weight of the first is the specific failure this
+    // whole product exists to prevent.
+    expect(claimStyle("astronomical_dating_candidate").isEvidence).toBe(false);
+    expect(claimStyle("astronomical_dating_candidate").label).toBe("Dating candidate");
   });
 
   it("never treats a hypothesis or a tradition as evidence", () => {

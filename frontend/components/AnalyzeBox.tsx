@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ApiRequestError,
   createAnalysis,
+  getAccessToken,
+  getDatingQuota,
   ingestUrl,
   uploadFile,
 } from "@/lib/api";
-import type { AnalysisOptions } from "@/lib/types";
+import type { AnalysisMode, AnalysisOptions, DatingQuota } from "@/lib/types";
 import { AdvancedSettings } from "./AdvancedSettings";
 
 const ACCEPTED = ".txt,.md,.pdf,.docx,.png,.jpg,.jpeg,.tiff,.webp";
@@ -36,6 +39,25 @@ export function AnalyzeBox() {
   const [options, setOptions] = useState<AnalysisOptions>({});
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const [signedIn, setSignedIn] = useState(false);
+  const [quota, setQuota] = useState<DatingQuota | null>(null);
+
+  // Read after mount, never during render: the token lives in localStorage, and touching
+  // it on the server would break the static render of the homepage.
+  useEffect(() => {
+    const token = getAccessToken();
+    setSignedIn(token !== null);
+    if (!token) return;
+    // A failure here is not worth surfacing — the allowance is a courtesy shown before
+    // submitting, and the request itself still returns a proper 402 with an explanation.
+    getDatingQuota()
+      .then(setQuota)
+      .catch(() => setQuota(null));
+  }, []);
+
+  const datingExhausted =
+    quota !== null && !quota.unlimited && (quota.remaining ?? 0) <= 0;
 
   const looksLikeUrl = URL_PATTERN.test(text.trim()) && !text.trim().includes(" ");
   const canSubmit = !busy && (attachment !== null || text.trim().length > 0);
@@ -80,25 +102,27 @@ export function AnalyzeBox() {
     [handleFile],
   );
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(
+    async (mode: AnalysisMode = "analyze") => {
     if (!canSubmit) return;
     setError(null);
     setBusy(true);
 
     try {
+      const withMode: AnalysisOptions = mode === "analyze" ? options : { ...options, mode };
       let payload: Parameters<typeof createAnalysis>[0];
 
       if (attachment) {
-        payload = { document_id: attachment.documentId, options };
+        payload = { document_id: attachment.documentId, options: withMode };
       } else if (looksLikeUrl) {
         setBusyLabel("Fetching the page…");
         const fetched = await ingestUrl(text.trim());
-        payload = { document_id: fetched.document_id, options };
+        payload = { document_id: fetched.document_id, options: withMode };
       } else {
-        payload = { text, options };
+        payload = { text, options: withMode };
       }
 
-      setBusyLabel("Starting analysis…");
+      setBusyLabel(mode === "analyze" ? "Starting analysis…" : "Searching the sky…");
       const created = await createAnalysis(payload);
       router.push(`/analysis/${created.id}`);
     } catch (cause) {
@@ -110,11 +134,20 @@ export function AnalyzeBox() {
             ? `${cause.message}`
             : cause.message || "Something went wrong. Try again.",
         );
+        // A refused dating search means the allowance is gone; reflect that immediately
+        // so the button stops inviting a second attempt that will also fail.
+        if (cause.status === 402 && mode !== "analyze") {
+          getDatingQuota()
+            .then(setQuota)
+            .catch(() => undefined);
+        }
       } else {
         setError("Something went wrong. Try again.");
       }
     }
-  }, [attachment, canSubmit, looksLikeUrl, options, router, text]);
+    },
+    [attachment, canSubmit, looksLikeUrl, options, router, text],
+  );
 
   return (
     <div className="mt-8">
@@ -149,7 +182,7 @@ export function AnalyzeBox() {
             // needs the modifier, so a stray Enter never fires an analysis early.
             if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
               event.preventDefault();
-              void submit();
+              void submit("analyze");
             }
           }}
           aria-describedby="analyze-help"
@@ -216,24 +249,78 @@ export function AnalyzeBox() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => void submit()}
-        disabled={!canSubmit}
-        className="mt-5 flex w-full items-center justify-center gap-3 rounded-xl bg-lapis-700 px-6 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-lapis-800 disabled:cursor-not-allowed disabled:bg-ink-300 dark:bg-lapis-600 dark:hover:bg-lapis-500 dark:disabled:bg-ink-700"
-      >
-        {busy ? (
+      {/* Two actions at the same visual level, because they answer two different
+          questions: "what is this text" and "when does its sky point to". Dating is not
+          a variant of analysis and burying it in advanced settings would say it was. */}
+      <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+        <button
+          type="button"
+          onClick={() => void submit("analyze")}
+          disabled={!canSubmit}
+          className="flex w-full items-center justify-center gap-3 rounded-xl bg-lapis-700 px-6 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-lapis-800 disabled:cursor-not-allowed disabled:bg-ink-300 dark:bg-lapis-600 dark:hover:bg-lapis-500 dark:disabled:bg-ink-700"
+        >
+          {busy ? (
+            <>
+              <span
+                className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                aria-hidden="true"
+              />
+              <span>{busyLabel || "Working…"}</span>
+            </>
+          ) : (
+            "ANALYZE"
+          )}
+        </button>
+
+        {datingExhausted ? (
+          // Once the allowance is gone the button stops being live rather than staying
+          // clickable and failing: an action that cannot succeed should not look like one.
+          <Link
+            href="/pricing"
+            className="flex w-full items-center justify-center rounded-xl border-2 border-gold-500 px-6 py-4 text-center text-lg font-semibold text-gold-800 transition-colors hover:bg-gold-50 dark:text-gold-300 dark:hover:bg-gold-950 sm:w-auto"
+          >
+            Unlock dating
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (!signedIn) {
+                // No anonymous path: the allowance is counted per account. Say so before
+                // the request rather than letting the server's 401 be the explanation.
+                router.push("/login?reason=dating");
+                return;
+              }
+              void submit(
+                options.mode && options.mode !== "analyze" ? options.mode : "date",
+              );
+            }}
+            disabled={!canSubmit}
+            className="flex w-full items-center justify-center rounded-xl border-2 border-lapis-700 px-6 py-4 text-lg font-semibold text-lapis-800 transition-colors hover:bg-lapis-50 disabled:cursor-not-allowed disabled:border-ink-300 disabled:text-ink-400 dark:border-lapis-500 dark:text-lapis-300 dark:hover:bg-lapis-950 dark:disabled:border-ink-700 dark:disabled:text-ink-600 sm:w-auto"
+          >
+            Date this text
+          </button>
+        )}
+      </div>
+
+      <p className="mt-2 text-center text-xs text-ink-500 dark:text-ink-400 sm:text-right">
+        {!signedIn ? (
+          <>Astronomical dating searches the sky for dates matching the text. Needs an account.</>
+        ) : quota === null ? (
+          <>Astronomical dating searches the sky for dates matching the text.</>
+        ) : quota.unlimited ? (
+          <>Astronomical dating: unlimited on your plan.</>
+        ) : datingExhausted ? (
           <>
-            <span
-              className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
-              aria-hidden="true"
-            />
-            <span>{busyLabel || "Working…"}</span>
+            You have used all {quota.limit} free dating searches on this account. The
+            allowance does not reset.
           </>
         ) : (
-          "ANALYZE"
+          <>
+            {quota.used} of {quota.limit} free dating searches used.
+          </>
         )}
-      </button>
+      </p>
 
       {error && (
         <div
@@ -264,7 +351,11 @@ export function AnalyzeBox() {
 
       {showAdvanced && (
         <div id="advanced-settings" className="mt-4 animate-rise">
-          <AdvancedSettings value={options} onChange={setOptions} />
+          <AdvancedSettings
+            value={options}
+            onChange={setOptions}
+            paidModesAvailable={quota?.paid_modes_available ?? false}
+          />
         </div>
       )}
     </div>

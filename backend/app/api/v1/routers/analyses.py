@@ -18,6 +18,7 @@ from app.api.deps import (
     paginate,
     rate_limiter,
     record_audit,
+    require_paid_tier,
 )
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -34,13 +35,68 @@ from app.schemas.analysis import (
     AnalyzeRequest,
 )
 from app.schemas.common import Message, Page
-from app.services import analysis_service
+from app.services import analysis_service, entitlements
 from app.services.entitlements import gate_claim_dicts, gate_report
 from app.services.ingest import IngestError, extract_from_text
 from app.services.url_fetch import FetchError, fetch_as_extraction
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/analyses", tags=["analyses"])
+
+
+def _authorise_dating_mode(db: DbSession, mode: str, user: User | None) -> int:
+    """Check a dating request and return the span cap it may search.
+
+    Kept in one function because three separate rules apply to the same request and the
+    order between them is the whole behaviour: an account is needed before a role can be
+    read, a role decides whether a tier matters, and a tier decides whether a count
+    matters. Split across the endpoint body they would drift.
+
+    Administrators pass every check here without a subscription and without spending an
+    allowance — the same bypass, and the same single implementation of it, that decides
+    whether a reader sees interpretive claims. See services/entitlements.py.
+    """
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Astronomical dating needs an account: the free allowance is counted per "
+                "account, so there is no anonymous path for it. Ordinary analysis still "
+                "works without signing in."
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if mode in entitlements.PAID_DATING_MODES:
+        # The same dependency that gates every other paid surface, called directly rather
+        # than reimplemented, so its 402 and its admin bypass apply here unchanged.
+        require_paid_tier(user)
+
+    if not entitlements.may_run_dating_search(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=(
+                f"You have used all {entitlements.FREE_DATING_SEARCHES} free astronomical "
+                "dating searches on this account. The allowance is for the life of the "
+                "account and does not reset; a paid plan removes the limit and widens the "
+                f"searchable range to {entitlements.PAID_DATING_SPAN_YEARS:,} years."
+            ),
+        )
+
+    return entitlements.dating_span_cap(user)
+
+
+@router.get(
+    "/dating-quota",
+    summary="How much of the free astronomical dating allowance is left",
+)
+def dating_quota(db: DbSession, user: CurrentUser) -> dict:
+    """Read the allowance before spending it.
+
+    Declared above `/{analysis_id}` because FastAPI matches routes in definition order
+    and this path would otherwise be read as an analysis id.
+    """
+    return entitlements.dating_quota(db, user)
 
 
 @router.post(
@@ -59,6 +115,13 @@ def create(
     """The one button. Everything the homepage does goes through here."""
     if user is None and not settings.ALLOW_ANONYMOUS_ANALYSIS:
         raise HTTPException(status_code=401, detail="Sign in to submit an analysis.")
+
+    mode = payload.options.mode
+    options = payload.options.model_dump()
+    if entitlements.is_dating_mode(mode):
+        # Authorised before anything is created or fetched: a request that cannot run
+        # should not leave a document, a URL fetch or an audit entry behind it.
+        options["dating_span_cap_years"] = _authorise_dating_mode(db, mode, user)
 
     document: Document | None = None
     source_url: str | None = None
@@ -111,8 +174,14 @@ def create(
         owner=user,
         title=payload.title,
         project_id=payload.project_id,
-        options=payload.options.model_dump(),
+        options=options,
     )
+
+    if entitlements.is_dating_mode(mode) and user is not None:
+        # Spent here, once the search is definitely going to run. A search that finds
+        # nothing still spends a use — the computation happened, and refunding empty
+        # results would reward retrying with ever-wider ranges.
+        entitlements.record_dating_search(db, user, analysis.id, mode)
 
     record_audit(
         db,
@@ -121,7 +190,11 @@ def create(
         target_type="analysis",
         target_id=analysis.id,
         request=request,
-        detail={"source_kind": document.source_kind.value, "chars": document.char_count},
+        detail={
+            "source_kind": document.source_kind.value,
+            "chars": document.char_count,
+            "mode": mode,
+        },
     )
     db.commit()
 

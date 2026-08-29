@@ -13,8 +13,8 @@ async function runAnalysis(page: Page, text = SAMPLE) {
   });
 }
 
-test.describe("the one-button promise", () => {
-  test("homepage shows exactly one box and one button", async ({ page }) => {
+test.describe("the one-box promise", () => {
+  test("homepage shows one box and the two things you can do with it", async ({ page }) => {
     await page.goto("/");
 
     // Matched on the part of the promise that names what you may paste, not the whole
@@ -27,6 +27,11 @@ test.describe("the one-button promise", () => {
     await expect(page.locator("#analyze-input")).toBeVisible();
     await expect(page.getByRole("button", { name: "ANALYZE" })).toBeVisible();
 
+    // Dating is a second action at the same level, not a setting. It answers a different
+    // question — when does this text's sky point to — and a control buried in a drawer
+    // would say it was a variant of analysis.
+    await expect(page.getByRole("button", { name: "Date this text" })).toBeVisible();
+
     // Advanced settings must not be visible until asked for.
     await expect(page.locator("#advanced-settings")).toHaveCount(0);
     await page.getByRole("button", { name: "Advanced settings" }).click();
@@ -38,6 +43,45 @@ test.describe("the one-button promise", () => {
     await expect(page.getByRole("button", { name: "ANALYZE" })).toBeDisabled();
     await page.fill("#analyze-input", "The moon became as blood.");
     await expect(page.getByRole("button", { name: "ANALYZE" })).toBeEnabled();
+  });
+
+  test("dating explains that it needs an account before it is attempted", async ({ page }) => {
+    /* The allowance is counted per account, so there is no anonymous path. A visitor
+       who presses the button must learn that from the page rather than from a 401 they
+       never see, and must be told ordinary analysis still needs nothing. */
+    await page.goto("/");
+    await expect(
+      page.getByText(/Astronomical dating searches the sky.*Needs an account/s),
+    ).toBeVisible();
+
+    await page.fill("#analyze-input", "The moon became as blood.");
+    await page.getByRole("button", { name: "Date this text" }).click();
+
+    await expect(page).toHaveURL(/\/login\?reason=dating/);
+    await expect(page.getByText(/Astronomical dating needs an account/)).toBeVisible();
+    await expect(page.getByText(/Ordinary analysis still works without signing in/)).toBeVisible();
+  });
+
+  test("both actions stay disabled until there is something to work on", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: "Date this text" })).toBeDisabled();
+    await page.fill("#analyze-input", "The moon became as blood.");
+    await expect(page.getByRole("button", { name: "Date this text" })).toBeEnabled();
+  });
+
+  test("the dating range and paid modes live in advanced settings", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Advanced settings" }).click();
+
+    await expect(page.getByRole("group", { name: "Dating search range" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Advanced dating modes" })).toBeVisible();
+
+    // Visible but locked for an account without a paid plan: hiding them would leave a
+    // reader unable to tell "we do not do this" from "we are not selling you this".
+    const eschatological = page.getByRole("radio", { name: /Eschatological calculation/ });
+    await expect(eschatological).toBeVisible();
+    await expect(eschatological).toBeDisabled();
+    await expect(page.getByText("Paid plan").first()).toBeVisible();
   });
 
   test("paste, press, read — with no account", async ({ page }) => {

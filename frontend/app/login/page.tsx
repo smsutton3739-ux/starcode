@@ -38,6 +38,15 @@ export default function LoginPage() {
   // Null until known, so the form is not rendered and then yanked away.
   const [canRegister, setCanRegister] = useState<boolean | null>(null);
   const [registrationNote, setRegistrationNote] = useState<string | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Read from window rather than useSearchParams: the latter forces this page into a
+    // Suspense boundary or dynamic rendering, and all that is wanted is one line of
+    // explanation for someone who arrived here from a button they pressed elsewhere.
+    const params = new URLSearchParams(window.location.search);
+    setReason(params.get("reason"));
+  }, []);
 
   useEffect(() => {
     authCapabilities()
@@ -160,6 +169,17 @@ export default function LoginPage() {
         An account saves your analyses and lets you search across them. You can analyse
         texts without one.
       </p>
+
+      {reason === "dating" && (
+        <p
+          className="mt-4 rounded-lg border border-lapis-300 bg-lapis-50 p-3 text-sm text-lapis-900 dark:border-lapis-700 dark:bg-lapis-950 dark:text-lapis-200"
+          role="status"
+        >
+          Astronomical dating needs an account — the free allowance of five searches is
+          counted per account, so there is no anonymous path for it. Ordinary analysis
+          still works without signing in.
+        </p>
+      )}
 
       {loading && (
         <p className="mt-6 text-sm text-ink-500 dark:text-ink-400" role="status">

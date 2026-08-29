@@ -42,7 +42,14 @@ from app.db.models.knowledge import (
     SourcePassage,
     SourceTradition,
 )
-from app.db.models.ops import AuditAction, AuditLog, Job, JobStatus, ProcessedStripeEvent
+from app.db.models.ops import (
+    AstronomicalDatingUsage,
+    AuditAction,
+    AuditLog,
+    Job,
+    JobStatus,
+    ProcessedStripeEvent,
+)
 from app.db.models.user import (
     Notification,
     OAuthIdentity,
@@ -61,6 +68,7 @@ __all__ = [
     "Role",
     "Tier",
     "ProcessedStripeEvent",
+    "AstronomicalDatingUsage",
     "OAuthIdentity",
     "UserSetting",
     "SystemSetting",

@@ -68,14 +68,16 @@ test.describe("sign-in with no available method", () => {
 test.describe("the paid surfaces are reachable", () => {
   test("pricing is linked from the homepage", async ({ page }) => {
     await page.goto("/");
-    // Header nav collapses on narrow viewports, so the footer link is what guarantees
-    // this is reachable at every width. Either satisfies the assertion.
-    await expect(page.locator('a[href="/pricing"]').first()).toBeVisible();
+    /* Header nav collapses on narrow viewports and the footer link is what carries this
+       at phone widths, so the assertion is on a *visible* link rather than the first one
+       in the DOM. `.first()` matched the collapsed header link and failed on mobile while
+       the page was perfectly usable — the test was wrong, not the page. */
+    await expect(page.locator('a[href="/pricing"]:visible').first()).toBeVisible();
   });
 
   test("following that link reaches the plan comparison", async ({ page }) => {
     await page.goto("/");
-    await page.locator('a[href="/pricing"]').first().click();
+    await page.locator('a[href="/pricing"]:visible').first().click();
     await expect(page).toHaveURL(/\/pricing$/);
     await expect(page.getByRole("heading", { name: /Free/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Paid/ })).toBeVisible();

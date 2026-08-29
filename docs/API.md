@@ -60,6 +60,14 @@ Submit something for analysis. Exactly one source field is required.
 | `project_id` | string | Optional |
 | `options` | object | All fields optional and defaulted |
 
+Options that select a mode:
+
+| Option | Type | Notes |
+| --- | --- | --- |
+| `mode` | string | `analyze` (default), `date`, `rectification`, `eschatological`, `historicizing`. Anything but `analyze` runs an astronomical dating search — see below |
+| `date_range_start` | int | Astronomical year number bounding a dating search. Year 0 is 1 BCE |
+| `date_range_end` | int | Send both or neither. A *narrowing* option: the span is clamped to your plan's limit, so a wider range gives a smaller search rather than an error |
+
 **`202 Accepted`**
 
 ```json
@@ -77,6 +85,41 @@ Submit something for analysis. Exactly one source field is required.
 
 Errors: `400` (a URL could not be fetched, or a document is unusable), `422`
 (no source, or more than one), `429` (rate limited — the body says when to retry).
+
+### Astronomical dating
+
+`mode` turns the same endpoint into a search in the opposite direction: instead of
+"here is a date, what was in the sky", it answers "here is a described sky, which dates
+fit". It is metered and needs an account.
+
+| Rule | Value |
+| --- | --- |
+| Anonymous requests | `401` — the allowance is per account, so there is no anonymous path |
+| Free tier | 5 searches **for the life of the account**; there is no reset. `402` after that |
+| Free tier search span | 500 years, clamped server-side |
+| Paid tier | Unlimited searches, 5,000-year span |
+| `rectification`, `eschatological`, `historicizing` | Paid only, no free allowance — `402` otherwise |
+| Administrators | Bypass the quota and every paid-mode gate, on any tier, and are not metered |
+
+Results arrive as `astronomical_dating_candidate` claims in a `dating_candidates`
+section. Each claim's `payload` carries `matched_criteria` and `unmatched_criteria` —
+required by the epistemic contract, because a proposed date with no misses shown cannot
+be argued with — plus the fit score, the engine, and the search's coverage.
+
+A search over a very wide span reports the window each scan actually covered rather than
+implying it read the whole range: eclipse and conjunction scans are separately budgeted,
+and a bounded search that hides its bounds turns a budget into a finding.
+
+### `GET /analyses/dating-quota`
+
+What is left of the account's dating allowance. Requires authentication.
+
+```json
+{ "used": 2, "limit": 5, "remaining": 3, "unlimited": false, "paid_modes_available": false }
+```
+
+`limit` and `remaining` are `null` when the account has no limit. Read this before
+submitting so a user sees the allowance while they still have a choice.
 
 ### `GET /analyses/{id}/status`
 

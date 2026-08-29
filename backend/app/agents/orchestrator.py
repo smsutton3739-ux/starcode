@@ -33,6 +33,8 @@ from app.agents.contracts import (
 from app.agents.provider import get_provider
 from app.agents.report import build_report
 from app.agents.specialists import (
+    AdvancedDatingAgent,
+    AstronomicalDatingAgent,
     AstronomyAgent,
     CalendarAgent,
     EntityAgent,
@@ -70,13 +72,62 @@ PIPELINE: list[tuple[type[BaseAgent], float]] = [
     (EvidenceAgent, 0.96),
 ]
 
+#: The dating modes run a different, shorter pipeline.
+#:
+#: Not the default pipeline plus one agent: the dating agent needs the detections and the
+#: era estimate from the stages before it and nothing after, so the interpretation stage
+#: — the most expensive of the eight — is dropped. That keeps the ordinary "Analyze"
+#: path's cost and latency exactly where they were, which is the point of making dating a
+#: separate mode rather than an extra step everyone pays for.
+DATING_PIPELINE: list[tuple[type[BaseAgent], float]] = [
+    (LanguageAgent, 0.10),
+    (SourceIdentificationAgent, 0.20),
+    (EntityAgent, 0.32),
+    (CalendarAgent, 0.44),
+    (AstronomyAgent, 0.56),
+    (HistoricalContextAgent, 0.68),
+    (AstronomicalDatingAgent, 0.90),
+    (EvidenceAgent, 0.96),
+]
+
+#: Same, with the paid modes' agent substituted for the free one.
+ADVANCED_DATING_PIPELINE: list[tuple[type[BaseAgent], float]] = [
+    (agent if agent is not AstronomicalDatingAgent else AdvancedDatingAgent, progress)
+    for agent, progress in DATING_PIPELINE
+]
+
+#: Which pipeline each analysis mode runs.
+#:
+#: An unknown mode falls back to the default pipeline rather than raising: options come
+#: from a client, and a typo should give someone an ordinary analysis, not an error page.
+PIPELINES_BY_MODE: dict[str, list[tuple[type[BaseAgent], float]]] = {
+    "analyze": PIPELINE,
+    "date": DATING_PIPELINE,
+    "rectification": ADVANCED_DATING_PIPELINE,
+    "eschatological": ADVANCED_DATING_PIPELINE,
+    "historicizing": ADVANCED_DATING_PIPELINE,
+}
+
+
+def pipeline_for(options: dict[str, Any] | None) -> list[tuple[type[BaseAgent], float]]:
+    """The agents to run for one analysis, chosen by its requested mode."""
+    mode = (options or {}).get("mode")
+    return PIPELINES_BY_MODE.get(mode if isinstance(mode, str) else "analyze", PIPELINE)
+
+
 ProgressCallback = Callable[[float, str], None]
 
 
 class Orchestrator:
-    def __init__(self, db: Session, *, agents: list[tuple[type[BaseAgent], float]] | None = None):
+    def __init__(
+        self,
+        db: Session,
+        *,
+        agents: list[tuple[type[BaseAgent], float]] | None = None,
+        options: dict[str, Any] | None = None,
+    ):
         self.db = db
-        self.pipeline = agents or PIPELINE
+        self.pipeline = agents or pipeline_for(options)
 
     def run(
         self,
@@ -354,21 +405,24 @@ class Orchestrator:
 def run_analysis(
     db: Session, analysis: Analysis, on_progress: ProgressCallback | None = None
 ) -> Analysis:
-    return Orchestrator(db).run(analysis, on_progress=on_progress)
+    return Orchestrator(db, options=analysis.options).run(analysis, on_progress=on_progress)
 
 
-def pipeline_description() -> list[dict[str, Any]]:
-    """Machine-readable description of the pipeline, surfaced in the UI and docs."""
+def pipeline_description(
+    pipeline: list[tuple[type[BaseAgent], float]] | None = None,
+) -> list[dict[str, Any]]:
+    """Machine-readable description of a pipeline, surfaced in the UI and docs."""
     return [
         {
             "name": agent_class.name,
             "description": agent_class.description,
             "critical": agent_class.critical,
             "prompt_version": agent_class.prompt_version,
-            "deterministic": agent_class in (CalendarAgent, AstronomyAgent),
+            "deterministic": agent_class
+            in (CalendarAgent, AstronomyAgent, AstronomicalDatingAgent, AdvancedDatingAgent),
             "progress_after": progress,
         }
-        for agent_class, progress in PIPELINE
+        for agent_class, progress in (pipeline or PIPELINE)
     ]
 
 
@@ -376,7 +430,11 @@ __all__ = [
     "Orchestrator",
     "run_analysis",
     "pipeline_description",
+    "pipeline_for",
     "PIPELINE",
+    "DATING_PIPELINE",
+    "ADVANCED_DATING_PIPELINE",
+    "PIPELINES_BY_MODE",
     "SECTION_ORDER",
     "SECTION_TITLES",
 ]

@@ -18,6 +18,7 @@ import type {
   AnalysisStatusResponse,
   AnalysisSummary,
   BillingStatus,
+  DatingQuota,
   ApiError,
   SearchHit,
   UploadResult,
@@ -533,4 +534,14 @@ export async function createPortalSession(): Promise<string> {
 
 export function getBillingStatus(): Promise<BillingStatus> {
   return request<BillingStatus>("/billing/status");
+}
+
+/**
+ * The account's remaining dating allowance.
+ *
+ * Read before a search is submitted, so someone sees the limit while they still have a
+ * choice rather than meeting a 402 after writing out a passage.
+ */
+export function getDatingQuota(): Promise<DatingQuota> {
+  return request<DatingQuota>("/analyses/dating-quota");
 }

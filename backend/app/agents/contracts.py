@@ -33,6 +33,7 @@ class Section(str, Enum):
     SOURCE_IDENTIFICATION = "source_identification"
     HISTORICAL_CONTEXT = "historical_context"
     ASTRONOMICAL_REFERENCES = "astronomical_references"
+    DATING_CANDIDATES = "dating_candidates"
     CALENDAR_CONVERSION = "calendar_conversion"
     TIMELINE = "timeline"
     KEY_ENTITIES = "key_entities"
@@ -56,6 +57,7 @@ SECTION_TITLES: dict[Section, str] = {
     Section.SOURCE_IDENTIFICATION: "Source Identification",
     Section.HISTORICAL_CONTEXT: "Historical Context",
     Section.ASTRONOMICAL_REFERENCES: "Astronomical References",
+    Section.DATING_CANDIDATES: "Candidate Dates",
     Section.CALENDAR_CONVERSION: "Calendar Conversion",
     Section.TIMELINE: "Timeline",
     Section.KEY_ENTITIES: "Key Entities",
@@ -96,6 +98,16 @@ CLAIM_TYPE_PRESENTATION: dict[ClaimType, dict[str, str]] = {
             "and reported with the accuracy of the algorithm that produced it."
         ),
         "tone": "calculated",
+    },
+    ClaimType.ASTRONOMICAL_DATING_CANDIDATE: {
+        "label": "Dating candidate",
+        "short": "Possible date",
+        "description": (
+            "A date whose computed sky matches what the text describes. The sky is "
+            "calculated; the match to the text is a proposal, listed with the criteria "
+            "it meets and the ones it does not, so you can judge it yourself."
+        ),
+        "tone": "speculative",
     },
     ClaimType.TEXTUAL_ANALYSIS: {
         "label": "Textual analysis",
@@ -144,7 +156,53 @@ REQUIRES_CITATION: frozenset[ClaimType] = frozenset(
 )
 
 #: Claim types that must name the engine and algorithm that produced them.
-REQUIRES_ENGINE: frozenset[ClaimType] = frozenset({ClaimType.ASTRONOMICAL_CALCULATION})
+REQUIRES_ENGINE: frozenset[ClaimType] = frozenset(
+    {ClaimType.ASTRONOMICAL_CALCULATION, ClaimType.ASTRONOMICAL_DATING_CANDIDATE}
+)
+
+#: Claim types that must show their working as structured data, not prose.
+#:
+#: A proposed date is only worth anything alongside what it was proposed *on*. "The sky
+#: matches" is unfalsifiable; "matches the solar eclipse and the season, does not match
+#: the named conjunction" can be checked, argued with, and rejected by a reader. The
+#: payload keys below are therefore a requirement of the type rather than a convention,
+#: and a candidate that cannot show them is not a candidate.
+REQUIRES_MATCH_EVIDENCE: frozenset[ClaimType] = frozenset({ClaimType.ASTRONOMICAL_DATING_CANDIDATE})
+
+#: Types whose confidence is capped, and why.
+#:
+#: `ai_hypothesis` is capped because a model wrote it. A dating candidate is capped for a
+#: different reason worth stating: the ephemeris underneath it is exact, and that
+#: exactness is precisely what makes an unbounded confidence dishonest. Computing that a
+#: total eclipse crossed Anatolia on 28 May 585 BCE is arithmetic; concluding that *this
+#: text* describes it is not, however precise the arithmetic was.
+CONFIDENCE_CAPPED: frozenset[ClaimType] = frozenset(
+    {ClaimType.AI_HYPOTHESIS, ClaimType.ASTRONOMICAL_DATING_CANDIDATE}
+)
+
+#: Dating modes whose output may not be typed as evidence.
+#:
+#: Eschatological Calculation and Historicizing both take material that names no date and
+#: propose one for it. That is a legitimate thing to offer and an illegitimate thing to
+#: assert, and the difference has to survive an agent — or a model behind one — deciding
+#: its own reasoning was solid enough to call history.
+RESTRICTED_DATING_MODES: frozenset[str] = frozenset({"eschatological", "historicizing"})
+
+#: The types those modes may never produce. Both are evidence-grade: one says the
+#: historical record establishes this, the other says a calculation does. An interpretive
+#: link between a symbolic passage and a date is neither.
+FORBIDDEN_IN_RESTRICTED_MODES: frozenset[ClaimType] = frozenset(
+    {ClaimType.VERIFIED_HISTORY, ClaimType.ASTRONOMICAL_CALCULATION}
+)
+
+#: Agents the restriction applies to.
+#:
+#: Scoped rather than blanket, deliberately. The astronomy agent still runs in these
+#: modes and still emits real `astronomical_calculation` claims — "a total solar eclipse
+#: occurred on this date" is true whatever mode asked the question, and downgrading it
+#: would make the report less honest, not more. What is restricted is the agent drawing
+#: the line from the text to the date.
+DATING_AGENT_NAMES: frozenset[str] = frozenset({"astronomical_dating", "advanced_dating"})
 
 #: Types that constitute *evidence*. Everything else is commentary, however plausible.
 EVIDENCE_TYPES: frozenset[ClaimType] = frozenset(
@@ -262,6 +320,29 @@ class ClaimDraft:
         }
 
 
+#: Payload keys carrying a dating candidate's working.
+MATCHED_KEY = "matched_criteria"
+UNMATCHED_KEY = "unmatched_criteria"
+
+
+def _has_match_evidence(claim: ClaimDraft) -> bool:
+    payload = claim.payload or {}
+    matched = payload.get(MATCHED_KEY)
+    unmatched = payload.get(UNMATCHED_KEY)
+    return isinstance(matched, list) and bool(matched) and isinstance(unmatched, list)
+
+
+def asserts_a_future_event(statement: str) -> bool:
+    """Whether this phrasing states something yet to happen as settled.
+
+    Exposed rather than inlined because two layers need the same answer: validation
+    rejects such a claim, and :func:`coerce_claim` downgrades one. The patterns catch
+    assertion, not subject matter — a text *about* the end of the world is ordinary
+    material here, and saying when it will happen is not.
+    """
+    return any(pattern.search(statement) for pattern in _PREDICTION_PATTERNS)
+
+
 def validate_claim(claim: ClaimDraft, *, strict: bool = True) -> list[str]:
     """Check a claim against the contract.
 
@@ -290,25 +371,28 @@ def validate_claim(claim: ClaimDraft, *, strict: bool = True) -> list[str]:
     if claim.claim_type == ClaimType.SOURCE_TEXT and not claim.quoted_text:
         problems.append("claim_type 'source_text' must carry the quoted text")
 
-    if claim.claim_type == ClaimType.AI_HYPOTHESIS:
+    if claim.claim_type in REQUIRES_MATCH_EVIDENCE and not _has_match_evidence(claim):
+        problems.append(
+            f"claim_type '{claim.claim_type.value}' must record which criteria matched and "
+            f"which did not, as '{MATCHED_KEY}' and '{UNMATCHED_KEY}' in payload, with at "
+            "least one match"
+        )
+
+    if claim.claim_type in CONFIDENCE_CAPPED:
         if claim.confidence > settings.AI_HYPOTHESIS_CONFIDENCE_CAP:
             problems.append(
-                f"ai_hypothesis confidence {claim.confidence:.2f} exceeds the cap "
+                f"{claim.claim_type.value} confidence {claim.confidence:.2f} exceeds the cap "
                 f"{settings.AI_HYPOTHESIS_CONFIDENCE_CAP}"
             )
-        for pattern in _PREDICTION_PATTERNS:
-            if pattern.search(claim.statement):
-                problems.append(
-                    "hypothesis asserts a future event as settled; rephrase as a possibility"
-                )
-                break
+        if asserts_a_future_event(claim.statement):
+            problems.append("claim asserts a future event as settled; rephrase as a possibility")
 
     if strict and problems:
         raise ContractViolation("; ".join(problems), claim)
     return problems
 
 
-def coerce_claim(claim: ClaimDraft) -> ClaimDraft:
+def coerce_claim(claim: ClaimDraft, *, mode: str | None = None) -> ClaimDraft:
     """Repair a claim into a lawful form rather than discarding it.
 
     Preferred over rejection in the pipeline: a model that returns an uncited historical
@@ -316,8 +400,24 @@ def coerce_claim(claim: ClaimDraft) -> ClaimDraft:
     dropping it loses information; silently promoting it would be the exact failure the
     platform exists to prevent. Downgrading is the honest third option, and the
     downgrade itself is recorded in `payload` so it is visible in the audit trail.
+
+    ``mode`` is the analysis mode the claim was produced under, read from the analysis's
+    own options rather than from anything an agent set, so an agent cannot exempt itself
+    from the restrictions that apply to the mode it is running in.
     """
     downgrades: list[str] = []
+
+    # First, because it decides which of the rules below the claim then has to satisfy.
+    if (
+        mode in RESTRICTED_DATING_MODES
+        and claim.produced_by in DATING_AGENT_NAMES
+        and claim.claim_type in FORBIDDEN_IN_RESTRICTED_MODES
+    ):
+        downgrades.append(
+            f"{claim.claim_type.value} → ai_hypothesis (the {mode} mode links a text to a "
+            "date interpretively; that link may not be typed as evidence)"
+        )
+        claim.claim_type = ClaimType.AI_HYPOTHESIS
 
     if claim.claim_type in REQUIRES_CITATION and not claim.citations:
         downgrades.append(f"{claim.claim_type.value} → ai_hypothesis (no citation supplied)")
@@ -331,11 +431,30 @@ def coerce_claim(claim: ClaimDraft) -> ClaimDraft:
         downgrades.append("source_text → textual_analysis (no verbatim quotation)")
         claim.claim_type = ClaimType.TEXTUAL_ANALYSIS
 
-    if claim.claim_type == ClaimType.AI_HYPOTHESIS:
+    if claim.claim_type in REQUIRES_MATCH_EVIDENCE and not _has_match_evidence(claim):
+        downgrades.append(
+            f"{claim.claim_type.value} → ai_hypothesis (no matched/unmatched criteria "
+            "recorded, so the proposal cannot be audited)"
+        )
+        claim.claim_type = ClaimType.AI_HYPOTHESIS
+
+    if claim.claim_type in CONFIDENCE_CAPPED:
         cap = settings.AI_HYPOTHESIS_CONFIDENCE_CAP
         if claim.confidence > cap:
             downgrades.append(f"confidence {claim.confidence:.2f} clamped to cap {cap}")
             claim.confidence = cap
+
+        # Until now this rule existed only in `validate_claim`, which the pipeline never
+        # calls — so a hypothesis phrased as a forecast was rejected in tests and shipped
+        # in production. Downgrading here closes that, and the eschatological dating mode
+        # is what made it urgent: it exists to say what applying a framework yields, and
+        # the distance between that and a prediction is the whole product.
+        if asserts_a_future_event(claim.statement):
+            downgrades.append(
+                f"{claim.claim_type.value} → uncertain (states a future event as settled; "
+                "the platform does not predict)"
+            )
+            claim.claim_type = ClaimType.UNCERTAIN
 
     claim.confidence = max(0.0, min(1.0, claim.confidence))
 
@@ -391,6 +510,10 @@ def summarize_confidence(claims: list[ClaimDraft]) -> dict:
         ClaimType.ASTRONOMICAL_CALCULATION: 1.0,
         ClaimType.VERIFIED_HISTORY: 1.0,
         ClaimType.TEXTUAL_ANALYSIS: 0.7,
+        # Below textual analysis, above a bare hypothesis: the sky facts under a
+        # candidate are exact and its criteria breakdown is checkable, but the match to
+        # the text is still a proposal.
+        ClaimType.ASTRONOMICAL_DATING_CANDIDATE: 0.25,
         ClaimType.SCHOLARLY_INTERPRETATION: 0.6,
         ClaimType.TRADITIONAL_INTERPRETATION: 0.3,
         ClaimType.AI_HYPOTHESIS: 0.15,
@@ -483,6 +606,14 @@ __all__ = [
     "CLAIM_TYPE_PRESENTATION",
     "REQUIRES_CITATION",
     "REQUIRES_ENGINE",
+    "REQUIRES_MATCH_EVIDENCE",
+    "CONFIDENCE_CAPPED",
+    "RESTRICTED_DATING_MODES",
+    "FORBIDDEN_IN_RESTRICTED_MODES",
+    "DATING_AGENT_NAMES",
+    "MATCHED_KEY",
+    "UNMATCHED_KEY",
+    "asserts_a_future_event",
     "EVIDENCE_TYPES",
     "ContractViolation",
     "CitationDraft",

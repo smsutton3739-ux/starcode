@@ -21,6 +21,10 @@ manuscript, which is put through OCR automatically.
 Analysis usually takes under a minute. The progress panel names each stage as it runs, so
 you can see what is happening rather than watching a spinner.
 
+Beside **Analyze** there is a second button, **Date this text**, which asks a different
+question: which dates have a sky matching what this text describes. It needs an account
+and is limited on the free plan — see [Astronomical dating](#astronomical-dating).
+
 ### Without an account
 
 Analyses run without signing in. The catch is worth understanding before you rely on it:
@@ -46,6 +50,7 @@ decoration — it is the single most important thing on the page.
 | ❝ **Source text** | Quoted verbatim from what you submitted | Yes — it is your own text |
 | ✓ **Verified history** | Attested in the historical record, with a citation | Largely — check the citation |
 | ∑ **Calculation** | Computed by the astronomy or calendar engine | Yes, within its stated accuracy |
+| ◷ **Dating candidate** | A date whose computed sky matches what the text describes | The sky, yes. The match to your text is a proposal — read its misses |
 | ❡ **Text analysis** | An observation about the text itself | Usually |
 | ☽ **Tradition holds** | What a religious or cultural tradition has held | As a report of that tradition, yes. As a fact about the world, no |
 | § **Scholars argue** | A position argued in academic literature | As a report of scholarship, yes |
@@ -181,6 +186,61 @@ calculations, and offers the correlation separately as a hypothesis at low confi
 
 ---
 
+## Astronomical dating
+
+The button beside **Analyze** runs the search the other way round. Instead of "here is a
+date, what was in the sky", it asks "here is a described sky, which dates fit" — and
+returns a ranked list of candidates rather than an answer.
+
+You need an account for it. The free allowance is **five searches for the life of the
+account**; it does not reset, and a paid plan removes the limit.
+
+### How to read the results
+
+Each candidate shows the date, a fit score, and — the part that matters — **the criteria
+it failed as well as the ones it met**. A date that matches an eclipse but not the
+conjunction the text describes is still listed, with the miss stated, because a proposal
+you cannot argue with is worth nothing.
+
+Some criteria are marked **not checkable** rather than unmatched. "Three days of
+darkness" is the usual one: no astronomical mechanism produces it — a total solar eclipse
+lasts minutes — so no date can match it and none is credited with doing so. Multi-day
+darkness has historical causes, such as volcanic dust veils; that is a question for the
+record, not the ephemeris.
+
+A candidate resting only on common phenomena says so. Eclipses occur four to seven times
+a year somewhere on Earth, so "an eclipse near this date" is true of most dates, and the
+report tells you when that is all a candidate has.
+
+### Narrow the range
+
+The single biggest improvement you can make is telling it roughly when. Advanced settings
+take an earliest and latest year — in astronomical numbering, where year 0 is 1 BCE, so
+587 BCE is −586. A search over a few centuries is far more meaningful than one over five
+millennia, because a wide enough search finds a match for anything.
+
+If a very wide range is searched, the report says which window each scan actually covered
+rather than implying it read the whole span.
+
+### The paid modes
+
+Three variants of the same search, on a paid plan:
+
+- **Rectification** — the same search at a tighter tolerance, aimed at the narrowest
+  window the evidence supports rather than a single best date. It reports the time in
+  Universal Time and states the ΔT limit on that precision.
+- **Eschatological calculation** — the search applied to prophetic material. Every result
+  names the interpretive framework that produced it and says what applying that framework
+  yields. It is not a forecast, and the platform will not present it as one.
+- **Historicizing** — proposes concrete historical groundings for symbolic material,
+  offered for assessment rather than asserted.
+
+None of these can produce a claim typed as verified history or as a calculation for the
+link between a text and a date. That is enforced in code, not in wording: a claim that
+tries is visibly downgraded and the downgrade is recorded.
+
+---
+
 ## Working with scanned documents
 
 Upload a photograph or scan and it goes through OCR automatically.
@@ -247,6 +307,8 @@ opening if you want to:
 - **Change the Maya correlation constant.**
 - **Choose an output language.**
 - **Set the detail level** — brief, standard or exhaustive.
+- **Narrow the dating search range**, and choose an advanced dating mode. Both only
+  affect the dating searches; see [Astronomical dating](#astronomical-dating).
 
 ---
 
@@ -258,7 +320,8 @@ opening if you want to:
   attributed; a prediction is never presented as a fact about what will happen.
 - **It will not settle a religious question.** It describes traditions accurately, without
   endorsement and without mockery.
-- **It will not pretend to know a date it cannot establish.**
+- **It will not pretend to know a date it cannot establish.** Astronomical dating returns
+  candidates with their failures attached, never a date it says is the answer.
 
 If you want a tool that confidently tells you which ancient text predicted which modern
 event, this is not it — and the reason is that no honest tool can.

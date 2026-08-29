@@ -485,10 +485,27 @@ class TestReferenceEndpoints:
         assert "demonstration corpus" in payload["disclosure"]
 
     def test_claim_type_vocabulary_is_published(self, client):
+        """Every type the contract can produce is published, with its evidence status.
+
+        Asserted against the enum rather than a count: the client renders a badge, a
+        border and a label per type from this endpoint, so a type added to the contract
+        and not published here reaches a reader as an unstyled claim with no explanation
+        of what kind of statement it is.
+        """
+        from app.db.models.analysis import ClaimType
+
         payload = client.get("/api/v1/corpus/claim-types").json()
-        assert len(payload["claim_types"]) == 8
+        published = {c["value"] for c in payload["claim_types"]}
+        assert published == {t.value for t in ClaimType}
+
         hypothesis = next(c for c in payload["claim_types"] if c["value"] == "ai_hypothesis")
         assert hypothesis["is_evidence"] is False
+
+        # A proposed date is a proposal, whatever the precision of the sky behind it.
+        candidate = next(
+            c for c in payload["claim_types"] if c["value"] == "astronomical_dating_candidate"
+        )
+        assert candidate["is_evidence"] is False
 
     def test_pipeline_is_described(self, client):
         payload = client.get("/api/v1/corpus/pipeline").json()

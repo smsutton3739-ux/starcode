@@ -25,6 +25,31 @@ class AnalysisOptions(BaseModel):
     detail_level: Literal["standard", "brief", "exhaustive"] = "standard"
     model_override: str | None = Field(default=None, max_length=80)
 
+    mode: Literal["analyze", "date", "rectification", "eschatological", "historicizing"] = "analyze"
+    """Which pipeline to run. `analyze` is the ordinary report and the default for every
+    request that does not ask otherwise, so the main path is untouched by this field's
+    existence. The four others run an astronomical dating search; all of them require an
+    account, and the last three require a paid plan."""
+
+    date_range_start: int | None = Field(default=None, ge=-3000, le=3000)
+    date_range_end: int | None = Field(default=None, ge=-3000, le=3000)
+    """Astronomical year numbers bounding a dating search — year 0 is 1 BCE, matching the
+    convention used throughout the engine. A *narrowing* option only: the server clamps
+    the span to the caller's plan whatever is asked for here, so a wider range produces a
+    narrower search rather than an error."""
+
+    @model_validator(mode="after")
+    def _date_range_is_a_range(self) -> AnalysisOptions:
+        start, end = self.date_range_start, self.date_range_end
+        if (start is None) != (end is None):
+            raise ValueError(
+                "Give both date_range_start and date_range_end, or neither. A half-open "
+                "range has no defensible other end: the engine would have to invent one."
+            )
+        if start is not None and end is not None and end < start:
+            raise ValueError("date_range_end must not precede date_range_start.")
+        return self
+
     @field_validator("output_language")
     @classmethod
     def _valid_language(cls, v: str) -> str:

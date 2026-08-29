@@ -128,10 +128,40 @@ class ProcessedStripeEvent(Timestamped, Base):
     event_type: Mapped[str] = mapped_column(String(80), nullable=False)
 
 
+class AstronomicalDatingUsage(UUIDPrimaryKey, Timestamped, Base):
+    """One row per astronomical dating search a user runs.
+
+    A log, not a counter, and deliberately so. The free allowance is five searches for
+    the life of the account, which a `COUNT(*)` answers exactly — no period arithmetic,
+    no month boundary to get wrong, and nothing that needs a scheduled job to reset it.
+    That last point is not incidental: this deployment runs with no background worker and
+    no Redis on purpose (see docs/GO_LIVE.md), so a quota that required a reset job would
+    be a quota that silently never reset.
+
+    Keeping the rows rather than a number also means the usage is auditable — which
+    analysis each search produced, and when — so a support question about someone's
+    allowance has an answer.
+    """
+
+    __tablename__ = "astronomical_dating_usage"
+    __table_args__ = (Index("ix_dating_usage_user_created", "user_id", "created_at"),)
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    analysis_id: Mapped[str | None] = mapped_column(
+        ForeignKey("analyses.id", ondelete="SET NULL"), index=True
+    )
+    mode: Mapped[str] = mapped_column(String(40), nullable=False, default="date")
+    """Which dating mode was run. Paid modes are logged too — they are unmetered, but
+    knowing what the feature is actually used for is worth the column."""
+
+
 __all__ = [
     "AuditAction",
     "AuditLog",
     "JobStatus",
     "Job",
     "ProcessedStripeEvent",
+    "AstronomicalDatingUsage",
 ]

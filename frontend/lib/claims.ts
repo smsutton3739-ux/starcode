@@ -58,6 +58,20 @@ export const CLAIM_STYLES: Record<ClaimType, ClaimStyle> = {
     icon: "∑",
     isEvidence: true,
   },
+  astronomical_dating_candidate: {
+    label: "Dating candidate",
+    short: "Possible date",
+    description:
+      "A date whose computed sky matches what the text describes. The sky is calculated; the match to the text is a proposal, listed with the criteria it meets and the ones it does not.",
+    // Deliberately not the calculation blue. The arithmetic under a candidate is exact
+    // and the conclusion drawn from it is not, and the badge has to carry the second of
+    // those, not the first.
+    badge:
+      "bg-lapis-50 text-lapis-900 border-lapis-400 dark:bg-lapis-950 dark:text-lapis-200 dark:border-lapis-600",
+    border: "border-l-terra-500",
+    icon: "◷",
+    isEvidence: false,
+  },
   textual_analysis: {
     label: "Text analysis",
     short: "Text analysis",
@@ -142,6 +156,7 @@ export const SECTION_ORDER = [
   "source_identification",
   "historical_context",
   "astronomical_references",
+  "dating_candidates",
   "calendar_conversion",
   "timeline",
   "key_entities",

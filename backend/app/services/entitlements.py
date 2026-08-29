@@ -25,7 +25,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
 from app.agents.contracts import ClaimType
+from app.db.models.ops import AstronomicalDatingUsage
 from app.db.models.user import Role, Tier, User
 
 #: Claim types withheld from the free tier.
@@ -79,6 +83,110 @@ def unlocks_interpretation(user: User | None) -> bool:
     if user is not None and user.role is Role.ADMIN:
         return True
     return tier_of(user).unlocks_interpretation
+
+
+# ======================================================================================
+# Astronomical dating: quota and search span
+# ======================================================================================
+
+#: Astronomical dating searches a free account may run, for the life of the account.
+#:
+#: Lifetime rather than monthly, and that is the whole design. A resetting quota needs a
+#: period boundary, arithmetic to decide which side of it a request falls on, and — for a
+#: rolling window — something to run when it expires. This deployment has no background
+#: worker by design, so the honest options were a lifetime count or a quota that quietly
+#: never reset. `COUNT(*)` for a user answers this one exactly.
+FREE_DATING_SEARCHES = 5
+
+#: Years a free account may search in one dating run.
+FREE_DATING_SPAN_YEARS = 500
+
+#: Years a paid account may search in one dating run.
+#:
+#: The ephemeris is defensible from 3000 BCE to 3000 CE — six millennia — so this is a
+#: limit on cost, not on the engine's reach. The scans inside a search are separately
+#: budgeted and report the window they actually covered, because a five-millennium
+#: request is not one call to the engine but hundreds; see astronomy/dating_search.py.
+PAID_DATING_SPAN_YEARS = 5000
+
+#: The modes that are paid-only, with no free allowance at all.
+PAID_DATING_MODES: frozenset[str] = frozenset({"rectification", "eschatological", "historicizing"})
+
+#: Every mode that runs a dating search, free or paid.
+DATING_MODES: frozenset[str] = frozenset({"date"}) | PAID_DATING_MODES
+
+
+def is_dating_mode(mode: str | None) -> bool:
+    return mode in DATING_MODES
+
+
+def dating_span_cap(user: User | None) -> int:
+    """How many years of history one search may cover, for this account.
+
+    Routed through `unlocks_interpretation` rather than reading the tier, so the admin
+    bypass reaches this too: the site's operator gets the paid span for the same reason
+    they get the paid claims.
+    """
+    return PAID_DATING_SPAN_YEARS if unlocks_interpretation(user) else FREE_DATING_SPAN_YEARS
+
+
+def dating_searches_used(db: Session, user: User) -> int:
+    """Dating searches this account has ever run."""
+    return int(
+        db.execute(
+            select(func.count())
+            .select_from(AstronomicalDatingUsage)
+            .where(AstronomicalDatingUsage.user_id == user.id)
+        ).scalar_one()
+    )
+
+
+def dating_quota(db: Session, user: User) -> dict[str, Any]:
+    """What to tell a client about this account's dating allowance.
+
+    `limit` is null for an account with no limit, which is the shape the UI keys on:
+    a number means show "n of m used", null means show nothing.
+    """
+    if unlocks_interpretation(user):
+        return {
+            "used": dating_searches_used(db, user),
+            "limit": None,
+            "remaining": None,
+            "unlimited": True,
+            "paid_modes_available": True,
+        }
+    used = dating_searches_used(db, user)
+    return {
+        "used": used,
+        "limit": FREE_DATING_SEARCHES,
+        "remaining": max(0, FREE_DATING_SEARCHES - used),
+        "unlimited": False,
+        "paid_modes_available": False,
+    }
+
+
+def may_run_dating_search(db: Session, user: User) -> bool:
+    """Whether this account has an allowance left. Paid and admin accounts always do."""
+    if unlocks_interpretation(user):
+        return True
+    return dating_searches_used(db, user) < FREE_DATING_SEARCHES
+
+
+def record_dating_search(db: Session, user: User, analysis_id: str | None, mode: str) -> None:
+    """Spend one use.
+
+    An attempt that returns no candidates still spends one — the search ran, and refunding
+    empty results would turn the quota into an incentive to retry with ever-wider spans.
+
+    Written for paying accounts as well as free ones, because the row is also the record
+    of what the feature is used for and only its *count* is ever compared to a limit.
+    Administrators are the exception: nothing meters them, so a row for the operator's own
+    account could never change an outcome, and leaving it out keeps the ledger an honest
+    picture of what customers do rather than one inflated by the owner testing the feature.
+    """
+    if user.role is Role.ADMIN:
+        return
+    db.add(AstronomicalDatingUsage(user_id=user.id, analysis_id=analysis_id, mode=mode))
 
 
 def _lock_claim_dict(claim: dict[str, Any]) -> dict[str, Any]:
@@ -230,6 +338,17 @@ def gate_report(report: Any, user: User | None) -> Any:
 
 
 __all__ = [
+    "FREE_DATING_SEARCHES",
+    "FREE_DATING_SPAN_YEARS",
+    "PAID_DATING_SPAN_YEARS",
+    "PAID_DATING_MODES",
+    "DATING_MODES",
+    "is_dating_mode",
+    "dating_span_cap",
+    "dating_searches_used",
+    "dating_quota",
+    "may_run_dating_search",
+    "record_dating_search",
     "LOCKED_CLAIM_TYPES",
     "LOCKED_STATEMENT",
     "LOCKED_FLAG",

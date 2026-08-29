@@ -6,6 +6,7 @@ import { Timeline } from "./Timeline";
 import { EntityTable } from "./EntityTable";
 import { ConfidencePanel } from "./ConfidencePanel";
 import { ReasoningTrace } from "./ReasoningTrace";
+import { DatingCandidates } from "./DatingCandidates";
 import { claimStyle } from "@/lib/claims";
 import type { AnalysisDetail, ClaimType, ReportSection } from "@/lib/types";
 
@@ -171,6 +172,14 @@ function SectionBlock({
   const data = (section.data ?? {}) as Record<string, unknown>;
   const anchor = `section-${section.key}`;
 
+  // Candidate dates are a ranked comparison rather than a list of statements, so the
+  // section renders through its own component and the claim cards below are suppressed
+  // for it — showing both would print every candidate twice.
+  const isDatingSection = section.key === "dating_candidates";
+  const cardClaims = isDatingSection
+    ? claims.filter((claim) => claim.claim_type !== "astronomical_dating_candidate")
+    : claims;
+
   const hasStructuredContent =
     section.key === "timeline" ||
     section.key === "key_entities" ||
@@ -215,9 +224,11 @@ function SectionBlock({
         <FurtherReading items={(data.items as FurtherReadingItem[]) ?? []} />
       )}
 
-      {claims.length > 0 && (
+      {isDatingSection && <DatingCandidates claims={claims} />}
+
+      {cardClaims.length > 0 && (
         <div className="mt-4 space-y-3">
-          {claims.map((claim, index) => (
+          {cardClaims.map((claim, index) => (
             // Claims embedded in a stored report have no database id yet — the report is
             // assembled before they are persisted — so the key is positional. The array
             // is fixed for a given report version, so this is stable.

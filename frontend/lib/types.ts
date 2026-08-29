@@ -10,6 +10,7 @@ export type ClaimType =
   | "source_text"
   | "verified_history"
   | "astronomical_calculation"
+  | "astronomical_dating_candidate"
   | "textual_analysis"
   | "traditional_interpretation"
   | "scholarly_interpretation"
@@ -226,6 +227,26 @@ export interface AnalysisStatusResponse {
   failed_stages: string[];
 }
 
+/**
+ * Which pipeline an analysis runs.
+ *
+ * `analyze` is the ordinary report and the default everywhere. The rest run an
+ * astronomical dating search: `date` is the free one (five per account, ever), and the
+ * other three are paid.
+ */
+export type AnalysisMode =
+  | "analyze"
+  | "date"
+  | "rectification"
+  | "eschatological"
+  | "historicizing";
+
+export const PAID_DATING_MODES: AnalysisMode[] = [
+  "rectification",
+  "eschatological",
+  "historicizing",
+];
+
 export interface AnalysisOptions {
   output_language?: string;
   include_traditional_interpretations?: boolean;
@@ -234,6 +255,60 @@ export interface AnalysisOptions {
   astronomical_search_window_years?: number;
   maya_correlation?: number;
   detail_level?: "standard" | "brief" | "exhaustive";
+  mode?: AnalysisMode;
+  /**
+   * Astronomical year numbers bounding a dating search — year 0 is 1 BCE, matching the
+   * engine. A narrowing option only: the server clamps to the plan's limit, so asking
+   * for more produces a smaller search rather than an error. Send both or neither.
+   */
+  date_range_start?: number | null;
+  date_range_end?: number | null;
+}
+
+/** What is left of an account's astronomical dating allowance. */
+export interface DatingQuota {
+  used: number;
+  /** null for an account with no limit — the UI shows nothing rather than "n of ∞". */
+  limit: number | null;
+  remaining: number | null;
+  unlimited: boolean;
+  paid_modes_available: boolean;
+}
+
+/** One criterion, checked against one candidate date. */
+export interface CriterionOutcome {
+  criterion: string;
+  matched: boolean;
+  strength: number;
+  detail: string;
+  /** False when no engine can decide it either way — listed, never scored. */
+  searchable: boolean;
+  evidence: Record<string, unknown>;
+}
+
+/**
+ * The payload a dating-candidate claim carries.
+ *
+ * The matched and unmatched lists are required by the backend contract, not a
+ * convention: a proposed date with no misses shown cannot be argued with, and a
+ * candidate that cannot be argued with is worthless.
+ */
+export interface DateCandidatePayload {
+  year: number;
+  month: number;
+  day: number;
+  hour_ut: number | null;
+  gregorian_label: string;
+  fit: number;
+  anchor: string;
+  recurrences: number;
+  engine: string;
+  uncertainty_note: string;
+  notes: string[];
+  matched_criteria: CriterionOutcome[];
+  unmatched_criteria: CriterionOutcome[];
+  mode?: AnalysisMode;
+  framework?: string;
 }
 
 export interface ApiError {

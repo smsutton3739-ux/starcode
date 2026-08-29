@@ -105,7 +105,14 @@ class BaseAgent(ABC):
                 result.duration_ms = int((time.perf_counter() - start) * 1000)
                 result.provider = result.provider or self.provider.name
                 result.model = result.model or self.provider.model
-                result.claims = [coerce_claim(c) for c in result.claims]
+                # The mode comes from the analysis's own options, not from anything the
+                # agent set on itself, so an agent running under a restricted dating mode
+                # cannot opt out of that mode's restrictions.
+                mode = ctx.options.get("mode")
+                result.claims = [
+                    coerce_claim(c, mode=mode if isinstance(mode, str) else None)
+                    for c in result.claims
+                ]
                 logger.info(
                     "agent.completed",
                     agent=self.name,

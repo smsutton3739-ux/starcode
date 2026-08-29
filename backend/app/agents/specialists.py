@@ -8,11 +8,14 @@ routing it through a model would only add a way for it to be wrong.
 from __future__ import annotations
 
 import json
+import re
 
 from app.agents.base import SHARED_SYSTEM_RULES, AgentResult, AnalysisContext, BaseAgent
-from app.agents.contracts import CitationDraft, ClaimType, Section
+from app.agents.contracts import CitationDraft, ClaimDraft, ClaimType, Section
+from app.astronomy import dating_search
 from app.astronomy import service as astro
 from app.calendars import service as cal
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.knowledge.rag import retrieve
 
@@ -1470,6 +1473,470 @@ Reply with JSON:
         return result
 
 
+# ======================================================================================
+# 9. Astronomical dating (search mode — not part of the default pipeline)
+# ======================================================================================
+
+#: The window searched when nothing in the text or the request narrows it.
+#:
+#: Chosen from what this platform is for rather than from the ephemeris: the curated
+#: corpus spans roughly 1700 BCE to the sixteenth century, and the great majority of the
+#: material — Near Eastern, biblical, classical and late-antique — falls inside this
+#: range. It is a default, it is stated as one in the report, and the advanced settings
+#: exist so a user who knows the era can replace it with something far better.
+DEFAULT_DATING_ERA = (-800, 200)
+
+#: Phrasings that claim total obscuration rather than dimming.
+_TOTALITY_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        r"\btotal(?:ly)?\s+(?:eclipse|dark|obscur)",
+        r"\bblack as sackcloth\b",
+        r"\bthe sun (?:was|became) (?:wholly |utterly |completely )?(?:black|dark)",
+        r"\bcomplete darkness\b",
+        r"\bday (?:became|turned to) night\b",
+    )
+]
+
+_DARKNESS_DAYS = re.compile(
+    r"\b(?:darkness|dark)\b[^.]{0,60}?\b(one|two|three|four|five|\d+)\s+days?\b"
+    r"|\b(one|two|three|four|five|\d+)\s+days?\s+of\s+(?:thick\s+)?darkness\b",
+    re.IGNORECASE,
+)
+
+_WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+
+_SEASON_WORDS = {
+    "spring": ("spring", "springtime", "the month of abib", "barley harvest"),
+    "summer": ("summer", "summertime", "wheat harvest"),
+    "autumn": ("autumn", "fall of the year", "harvest home", "ingathering"),
+    "winter": ("winter", "wintertime", "the rainy season"),
+}
+
+#: Which paid mode each option value selects, and how it changes the search.
+#:
+#: One agent covers all three rather than three classes covering one each. They are the
+#: same search with a different tolerance and a different frame around the answer — three
+#: classes would be three copies of the same twenty lines differing in two strings and a
+#: keyword argument, and the contract's restriction keys on the agent's *name*, so every
+#: extra name is another place the hard-block can be forgotten.
+DATING_MODES: dict[str, dict[str, str]] = {
+    "date": {
+        "label": "Astronomical dating",
+        "purpose": ("find dates whose real sky matches the phenomena this text describes"),
+    },
+    "rectification": {
+        "label": "Rectification",
+        "purpose": (
+            "narrow the match to the tightest window the evidence actually supports, "
+            "rather than name a single best date"
+        ),
+    },
+    "eschatological": {
+        "label": "Eschatological calculation",
+        "purpose": (
+            "apply the search to prophetic material, reporting what each interpretive "
+            "framework yields rather than what will happen"
+        ),
+    },
+    "historicizing": {
+        "label": "Historicizing",
+        "purpose": (
+            "propose concrete historical groundings for symbolic material, offered for "
+            "assessment rather than asserted"
+        ),
+    },
+}
+
+
+def build_dating_criteria(references: list[dict], text: str) -> dating_search.DatingCriteria:
+    """Turn what the lexicon found into a structured description of the described sky.
+
+    Deliberately reuses the references the entity and astronomy agents already extracted
+    rather than re-reading the text for celestial mentions: two extractors would drift,
+    and the candidate dates must rest on the same detections the rest of the report shows.
+    """
+    lowered = text.lower()
+
+    eclipse_kinds = {
+        "solar" if r.get("event_type") == "solar_eclipse" else "lunar"
+        for r in references
+        if r.get("event_type") in ("solar_eclipse", "lunar_eclipse")
+    }
+    eclipse = None
+    if eclipse_kinds:
+        eclipse = {
+            "kind": eclipse_kinds.pop() if len(eclipse_kinds) == 1 else "either",
+            "totality_claimed": any(p.search(text) for p in _TOTALITY_PATTERNS),
+        }
+
+    bodies = [r["body"] for r in references if r.get("category") == "planet" and r.get("body")]
+    # Order-preserving de-duplication: the order the planets are named in is the order
+    # they appear in the report, and a set would scramble it between runs.
+    bodies = list(dict.fromkeys(bodies))
+    signs = [r["term"] for r in references if r.get("category") == "zodiac_sign"]
+    conjunction = (
+        {
+            "bodies": bodies,
+            "zodiac_sign": signs[0] if signs else None,
+            "repetitions": _repetitions_described(text),
+        }
+        if len(bodies) >= 2
+        else None
+    )
+
+    phases = [
+        r["phase"] for r in references if r.get("category") == "moon_phase" and r.get("phase")
+    ]
+
+    darkness = None
+    match = _DARKNESS_DAYS.search(text)
+    if match:
+        raw = match.group(1) or match.group(2) or ""
+        darkness = float(_WORD_NUMBERS.get(raw.lower(), raw)) if raw else None
+
+    season = next(
+        (name for name, words in _SEASON_WORDS.items() if any(w in lowered for w in words)),
+        None,
+    )
+
+    return dating_search.DatingCriteria(
+        eclipse=eclipse,
+        conjunction=conjunction,
+        moon_phase=phases[0] if phases else None,
+        comet_mentioned=any(r.get("category") == "comet" for r in references),
+        unusual_darkness_days=darkness,
+        season_hint=season,
+    )
+
+
+#: Phrasings that say a configuration happened more than once.
+#:
+#: Read from the text rather than assumed, because it is the single most discriminating
+#: thing such a passage can say: two planets meet often, and meet three times in a year
+#: rarely. A text that troubles to say "and a third time" is describing a triple
+#: conjunction, and the search should be told so.
+_REPETITION_PATTERNS: list[tuple[re.Pattern[str], int]] = [
+    (re.compile(r"\b(?:triple|thrice|a third time|three times|third occasion)\b", re.I), 3),
+    (re.compile(r"\b(?:twice|a second time|two times|again)\b", re.I), 2),
+]
+
+
+def _repetitions_described(text: str) -> int | None:
+    """How many passes the text claims, if it claims a number at all."""
+    for pattern, count in _REPETITION_PATTERNS:
+        if pattern.search(text):
+            return count
+    return None
+
+
+_YEAR_IN_PROSE = re.compile(r"\b(\d{1,4})\s*(BCE|BC|CE|AD)\b", re.IGNORECASE)
+
+
+def _years_from_prose(text: str) -> list[int]:
+    """Astronomical year numbers named in a period description.
+
+    The historical-context agent returns its period as prose ("late sixth century BCE,
+    c. 540-520 BCE"), so the years have to be read back out of it. Only explicit
+    era-marked years are taken — a bare number in that sentence is as likely to be a
+    chapter, a regnal year or a page reference.
+    """
+    years = []
+    for value, era in _YEAR_IN_PROSE.findall(text or ""):
+        year = int(value)
+        # Astronomical numbering: 1 BCE is year 0, so 587 BCE is -586.
+        years.append(-(year - 1) if era.upper() in ("BCE", "BC") else year)
+    return [y for y in years if -3000 <= y <= 3000]
+
+
+class AstronomicalDatingAgent(BaseAgent):
+    """Search a span of years for dates whose sky matches what the text describes.
+
+    The inverse of what :class:`AstronomyAgent` does, and it exists as a separate,
+    explicitly-requested mode for exactly the reason that agent declines to correlate on
+    its own: given a wide enough span, *something* in the sky matches any description.
+    That makes this a tool a user points at a question, not a step that runs on every
+    submission — and every answer it gives is a candidate with its misses attached.
+
+    Deterministic throughout. No language model is consulted: the phenomena come from the
+    lexicon, the sky comes from the ephemeris, and the ranking is arithmetic over the two.
+    """
+
+    name = "astronomical_dating"
+    description = "astronomical dating search"
+    #: Paid modes reuse this class; see DATING_MODES.
+    default_mode = "date"
+
+    def run(self, ctx: AnalysisContext) -> AgentResult:
+        from app.agents import offline_engine
+
+        mode = self.mode_for(ctx)
+        spec = DATING_MODES[mode]
+        result = AgentResult(
+            agent_name=self.name, provider="deterministic", model=astro.ENGINE_NAME
+        )
+
+        references = ctx.astronomy.get("references")
+        if references is None:
+            # The astronomy agent normally fills this in. If it failed, the detection is
+            # cheap and deterministic, so redo it rather than losing the whole mode.
+            references = offline_engine.detect_astronomical(ctx.working_text)[
+                "astronomical_references"
+            ]
+
+        criteria = build_dating_criteria(references, ctx.working_text)
+        if criteria.is_empty:
+            result.claims.append(
+                self.make_claim(
+                    section=Section.DATING_CANDIDATES,
+                    claim_type=ClaimType.UNCERTAIN,
+                    statement=(
+                        "This text describes no astronomical phenomenon specific enough to "
+                        "date it, so no candidate dates are offered."
+                    ),
+                    reasoning=(
+                        "Dating works by matching a described sky against a computed one. "
+                        "Without a phenomenon to match — an eclipse, a conjunction of named "
+                        "planets, a moon phase, a comet — every date in the range fits "
+                        "equally, and a ranked list of them would be a list of "
+                        "coincidences presented as findings."
+                    ),
+                    confidence=0.9,
+                    confidence_basis="No datable phenomenon detected in the text.",
+                )
+            )
+            result.reasoning_summary = (
+                "No astronomical phenomena specific enough to search on were found, so no "
+                "dates were proposed. Detecting eclipse or portent *imagery* is not the "
+                "same as having something to match: the search needs a phenomenon the "
+                "ephemeris can compute."
+            )
+            result.data = {"mode": mode, "criteria": criteria.to_dict(), "candidates": []}
+            return result
+
+        start_year, end_year, span_basis = self.span_for(ctx)
+        precision: dating_search.Precision = "hour" if mode == "rectification" else "date"
+
+        coverage = dating_search.plan_search(criteria, start_year, end_year)
+        candidates = dating_search.search_candidate_dates(
+            criteria, start_year, end_year, max_results=10, precision=precision
+        )
+
+        result.claims.append(self._method_claim(criteria, coverage, span_basis, spec))
+        for ordering, candidate in enumerate(candidates):
+            result.claims.append(self._candidate_claim(candidate, mode, ordering))
+
+        if not candidates:
+            result.claims.append(
+                self.make_claim(
+                    section=Section.DATING_CANDIDATES,
+                    claim_type=ClaimType.UNCERTAIN,
+                    statement=(
+                        "No date in the searched range produces a sky matching this description."
+                    ),
+                    reasoning=(
+                        "A negative result, and a real one as far as it goes: within "
+                        f"{dating_search.span_label(*coverage.requested)} the engine found "
+                        "no date meeting the criteria. It is not evidence that the text "
+                        "describes nothing real — the range may be wrong, the imagery may "
+                        "be figurative, or the phenomenon may be one this engine does not "
+                        "model."
+                    ),
+                    confidence=0.6,
+                    confidence_basis="Exhaustive within the searched window; see its coverage.",
+                    payload={"coverage": coverage.to_dict()},
+                )
+            )
+
+        result.data = {
+            "mode": mode,
+            "criteria": criteria.to_dict(),
+            "coverage": coverage.to_dict(),
+            "span_basis": span_basis,
+            "precision": precision,
+            "candidates": [c.to_dict() for c in candidates],
+        }
+        ctx.astronomy["dating"] = result.data
+
+        result.reasoning_summary = (
+            f"{spec['label']}: searched {dating_search.span_label(*coverage.requested)} for "
+            f"dates matching {'; '.join(criteria.describe())}. The span came from "
+            f"{span_basis}. Ranked {len(candidates)} candidate date(s) by the weighted "
+            "fraction of criteria each satisfies, and recorded against every one the "
+            "criteria it failed as well as those it met. The sky is computed; the match to "
+            "the text is a proposal, and a wide enough search always finds one."
+            + (" " + " ".join(coverage.notes) if coverage.notes else "")
+        )
+        return result
+
+    # ---- mode and span ------------------------------------------------------
+
+    def mode_for(self, ctx: AnalysisContext) -> str:
+        mode = ctx.options.get("mode")
+        return mode if mode in DATING_MODES else self.default_mode
+
+    def span_for(self, ctx: AnalysisContext) -> tuple[int, int, str]:
+        """The years to search, and a plain-language account of where they came from.
+
+        The cap is set by the API from the caller's tier and injected into options; it is
+        applied last and unconditionally, so a wider request narrows rather than fails.
+        """
+        cap = int(ctx.options.get("dating_span_cap_years") or 500)
+
+        requested = (ctx.options.get("date_range_start"), ctx.options.get("date_range_end"))
+        if requested[0] is not None and requested[1] is not None:
+            return self._clamp(int(requested[0]), int(requested[1]), cap, "the range you set")
+
+        anchors = self._era_anchors(ctx)
+        if anchors:
+            centre = sum(a[0] for a in anchors) // len(anchors)
+            half = min(cap, 400) // 2
+            return self._clamp(
+                centre - half,
+                centre + half,
+                cap,
+                f"{anchors[0][1]} ({dating_search.year_label(centre)})",
+            )
+
+        return self._clamp(
+            *DEFAULT_DATING_ERA,
+            cap,
+            "the platform's default window, because nothing in the text or the request "
+            "fixed an era — narrow it in advanced settings for a much better search",
+        )
+
+    @staticmethod
+    def _clamp(start: int, end: int, cap: int, basis: str) -> tuple[int, int, str]:
+        start, end = min(start, end), max(start, end)
+        if end - start + 1 > cap:
+            centre = (start + end) // 2
+            half = cap // 2
+            start, end = centre - half, centre - half + cap - 1
+            basis += f", clamped to the {cap}-year limit for your plan"
+        start = max(start, -3000)
+        end = min(end, 3000)
+        return start, end, basis
+
+    @staticmethod
+    def _era_anchors(ctx: AnalysisContext) -> list[tuple[int, str]]:
+        """Years the rest of the pipeline already established, best evidence first."""
+        anchors: list[tuple[int, str]] = []
+
+        for conversion in ctx.calendar.get("conversions", []):
+            year = conversion.get("astronomical_year")
+            if year is not None and -3000 <= year <= 3000:
+                anchors.append((int(year), f"a date the text itself gives, {conversion['input']}"))
+        if anchors:
+            return anchors
+
+        period = " ".join(str(ctx.history.get(key) or "") for key in ("period", "setting"))
+        years = _years_from_prose(period)
+        if years:
+            return [
+                (y, "the period the historical-context agent placed this text in") for y in years
+            ]
+
+        match = ctx.source_identification.get("match") or {}
+        earliest = match.get("composition_earliest_year")
+        latest = match.get("composition_latest_year")
+        if isinstance(earliest, int) and isinstance(latest, int):
+            return [
+                (earliest, "the composition window of the corpus work this text matches"),
+                (latest, "the composition window of the corpus work this text matches"),
+            ]
+        return []
+
+    # ---- claims -------------------------------------------------------------
+
+    def _method_claim(self, criteria, coverage, span_basis: str, spec: dict) -> ClaimDraft:
+        return self.make_claim(
+            section=Section.DATING_CANDIDATES,
+            claim_type=ClaimType.TEXTUAL_ANALYSIS,
+            statement=(
+                f"{spec['label']} searched {dating_search.span_label(*coverage.requested)} "
+                f"for dates matching: {'; '.join(criteria.describe())}."
+            ),
+            reasoning=(
+                f"The purpose of this mode is to {spec['purpose']}. The range came from "
+                f"{span_basis}. "
+                + (
+                    " ".join(coverage.notes)
+                    if coverage.notes
+                    else "The whole requested range was searched."
+                )
+            ),
+            confidence=0.9,
+            confidence_basis="Describes the search performed, not its conclusions.",
+            payload={"criteria": criteria.to_dict(), "coverage": coverage.to_dict()},
+        )
+
+    def _candidate_claim(self, candidate, mode: str, ordering: int) -> ClaimDraft:
+        payload = candidate.to_dict()
+        payload["mode"] = mode
+
+        statement = (
+            f"{candidate.gregorian_label} is a candidate: its sky matches "
+            f"{len(candidate.matched)} of {len(candidate.outcomes)} criteria "
+            f"(fit {candidate.fit:.0%})."
+        )
+        if mode in ("eschatological", "historicizing"):
+            # The framework is named in the statement itself, not only in the payload,
+            # because the statement is what gets quoted, exported and screenshotted.
+            statement = (
+                f"Applying this mode's method — {DATING_MODES[mode]['purpose']} — yields "
+                f"{candidate.gregorian_label} as a candidate, matching "
+                f"{len(candidate.matched)} of {len(candidate.outcomes)} criteria "
+                f"(fit {candidate.fit:.0%}). This is what the method yields, not a "
+                "statement that the text refers to this date."
+            )
+            payload["framework"] = DATING_MODES[mode]["label"]
+            payload["is_platform_prediction"] = False
+
+        misses = [o.criterion for o in candidate.unmatched] or ["none"]
+        return self.make_claim(
+            section=Section.DATING_CANDIDATES,
+            claim_type=ClaimType.ASTRONOMICAL_DATING_CANDIDATE,
+            statement=statement,
+            reasoning=(
+                "Matched: "
+                + "; ".join(o.detail for o in candidate.matched)
+                + (
+                    " | Not matched: " + "; ".join(o.detail for o in candidate.unmatched)
+                    if candidate.unmatched
+                    else ""
+                )
+                + " | The sky here is computed and reproducible. That this text describes "
+                "it is a proposal — the criteria it fails are listed so the proposal can "
+                "be argued with."
+            ),
+            confidence=candidate.fit * settings.AI_HYPOTHESIS_CONFIDENCE_CAP,
+            confidence_basis=(
+                f"Weighted fraction of criteria satisfied ({candidate.fit:.0%}); "
+                f"unmatched: {', '.join(misses)}. Capped because a text-to-sky match is "
+                "interpretive however exact the ephemeris is."
+            ),
+            engine=astro.ENGINE_NAME,
+            algorithm_reference=candidate.uncertainty_note[:300],
+            ordering=ordering,
+            payload=payload,
+        )
+
+
+class AdvancedDatingAgent(AstronomicalDatingAgent):
+    """The three paid dating modes.
+
+    A subclass rather than a copy: the search, the criteria extraction and the claim
+    shapes are identical, and the modes differ only in tolerance and framing. It carries
+    its own name because the contract's restriction on what the eschatological and
+    historicizing modes may assert is keyed on the agent name, and because a reader of the
+    trace should be able to see which of the two ran.
+    """
+
+    name = "advanced_dating"
+    description = "rectification, eschatological and historicizing dating"
+    default_mode = "rectification"
+
+
 ALL_AGENTS: list[type[BaseAgent]] = [
     LanguageAgent,
     SourceIdentificationAgent,
@@ -1479,6 +1946,8 @@ ALL_AGENTS: list[type[BaseAgent]] = [
     HistoricalContextAgent,
     InterpretationAgent,
     EvidenceAgent,
+    AstronomicalDatingAgent,
+    AdvancedDatingAgent,
 ]
 
 __all__ = [
@@ -1490,5 +1959,10 @@ __all__ = [
     "HistoricalContextAgent",
     "InterpretationAgent",
     "EvidenceAgent",
+    "AstronomicalDatingAgent",
+    "AdvancedDatingAgent",
+    "DATING_MODES",
+    "DEFAULT_DATING_ERA",
+    "build_dating_criteria",
     "ALL_AGENTS",
 ]

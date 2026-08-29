@@ -24,6 +24,7 @@ type, and the rules for each type are checked in code before anything reaches a 
 | `source_text` | Quoted verbatim from your input | ✅ |
 | `verified_history` | Attested in the historical record — **requires a citation to exist** | ✅ |
 | `astronomical_calculation` | Computed by the ephemeris/calendar engines — **must name its engine** | ✅ |
+| `astronomical_dating_candidate` | A date proposed because its computed sky matches the text — **must name its engine and list the criteria it failed**; confidence capped | — |
 | `textual_analysis` | An observation about the text itself | — |
 | `traditional_interpretation` | What a tradition has held. Reported, not endorsed | — |
 | `scholarly_interpretation` | A position argued in academia — **requires a citation** | — |

@@ -51,6 +51,14 @@ class ClaimType(str, enum.Enum):
     SOURCE_TEXT = "source_text"
     VERIFIED_HISTORY = "verified_history"
     ASTRONOMICAL_CALCULATION = "astronomical_calculation"
+    ASTRONOMICAL_DATING_CANDIDATE = "astronomical_dating_candidate"
+    """A date proposed *because* the sky on it matches what a text describes.
+
+    Distinct from `astronomical_calculation`, which runs the other way: given a date,
+    here is what was demonstrably in the sky. That is arithmetic. This is a match between
+    a text and that arithmetic, and the match is always interpretive however exact the
+    ephemeris underneath it — so it is confidence-capped and must carry the criteria it
+    matched *and* the ones it did not."""
     TEXTUAL_ANALYSIS = "textual_analysis"
     TRADITIONAL_INTERPRETATION = "traditional_interpretation"
     SCHOLARLY_INTERPRETATION = "scholarly_interpretation"
