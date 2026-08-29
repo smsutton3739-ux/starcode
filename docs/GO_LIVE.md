@@ -395,6 +395,18 @@ OAUTH_REDIRECT_BASE=https://api.astro-decoded.com
 The full public API URL, including `https://` and with no trailing slash. Path 1 needs
 nothing here — the production compose overlay derives it from `API_DOMAIN`.
 
+**`FRONTEND_BASE_URL` matters just as much, and fails later.** It is where the callback
+sends the browser once the provider has approved, and it defaults to
+`http://localhost:3000`. Unset, sign-in genuinely succeeds — the account is created and
+the tokens are issued — and then the browser is redirected to a machine that is not
+serving anything, so the user sees `ERR_CONNECTION_REFUSED` and reasonably concludes the
+site is broken. It is listed among the three values to paste when the service is created,
+but it is easy to miss because nothing needs it until the first OAuth sign-in:
+
+```
+FRONTEND_BASE_URL=https://www.astro-decoded.com
+```
+
 `render.yaml` deliberately leaves this variable out rather than deriving it from the
 service, because Render's own `fromService` host property yields a bare hostname with no
 scheme *and* the `onrender.com` name rather than your custom domain — two different ways
@@ -417,7 +429,8 @@ Then sign in for real, once. The failures worth recognising:
 | What you see | What it means |
 | --- | --- |
 | `redirect_uri_mismatch` | The URI registered with the provider and the one built from `OAUTH_REDIRECT_BASE` differ. Compare them character by character — `http` vs `https` and a trailing slash both count. |
-| Sign-in returns to the site but you are not signed in | `FRONTEND_BASE_URL` does not match the site's real origin, so the callback redirected somewhere the browser did not keep the token. |
+| `localhost refused to connect` / `ERR_CONNECTION_REFUSED` **after** approving on Google's page | `FRONTEND_BASE_URL` is unset, so it fell back to its default of `http://localhost:3000` and the callback redirected your browser there. Sign-in itself worked — the account was created and tokens were issued — only the final hop pointed at a machine that is not serving anything. Set it to the site's public origin. |
+| Sign-in returns to the site but you are not signed in | `FRONTEND_BASE_URL` is set but does not match the site's real origin, so the token landed on a page the browser treats as a different site. |
 | Works, then fails intermittently | More than one API instance. See the constraint below. |
 
 One constraint while you have OAuth on: **run a single API instance.** The one-time value
