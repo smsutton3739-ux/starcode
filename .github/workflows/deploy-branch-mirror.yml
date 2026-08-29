@@ -1,0 +1,82 @@
+# Keep the branch Vercel deploys to production in step with `main`.
+#
+# Vercel's production branch for this project is
+# `claude/ancient-text-analysis-platform-vz2p15`, not `main`. That is a setting in
+# the Vercel dashboard, not in this repository, and until it is changed a push to
+# `main` builds only as a *preview*: the build succeeds, the deployment is marked
+# READY, and astro-decoded.com keeps serving whatever was published last.
+#
+# That failure is silent, which is what makes it worth a workflow. It has already
+# happened twice — the administrator-override change and the astronomical dating
+# feature both merged to `main`, deployed green, and never reached the site. Nothing
+# reported an error either time; the site simply did not change.
+#
+# So this mirrors `main` onto that branch on every push. The two then point at the
+# same commit, and Vercel publishes what `main` says.
+#
+# DELETE THIS FILE once the Vercel production branch is set to `main`. It is a
+# workaround for a dashboard setting, not something this repository should need,
+# and leaving it in place afterwards would mean two branches racing to deploy the
+# same commit.
+
+name: Mirror main to the Vercel production branch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only the push below needs write access; nothing else in this workflow does.
+permissions:
+  contents: write
+
+concurrency:
+  # Never let two mirror pushes overlap. Cancelling in progress is safe here
+  # because each run pushes whatever `main` currently is, so a later run's result
+  # is always the one wanted.
+  group: mirror-production-branch
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    name: Fast-forward the production branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history, because a shallow clone cannot prove the push is a
+          # fast-forward and git would reject it.
+          fetch-depth: 0
+
+      - name: Push main to the production branch
+        env:
+          PRODUCTION_BRANCH: claude/ancient-text-analysis-platform-vz2p15
+        run: |
+          set -euo pipefail
+
+          git fetch origin "$PRODUCTION_BRANCH" || {
+            echo "::error::Branch $PRODUCTION_BRANCH no longer exists on the remote."
+            echo "If the Vercel production branch has been changed to main, delete"
+            echo "this workflow — it has nothing left to do."
+            exit 1
+          }
+
+          # Equality is checked first: `--is-ancestor` is also true when the two
+          # commits are the same, so the other order would report a push it never
+          # made on every run that had nothing to do.
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$PRODUCTION_BRANCH")" ]; then
+            echo "$PRODUCTION_BRANCH already matches main. Nothing to do."
+          elif git merge-base --is-ancestor "origin/$PRODUCTION_BRANCH" HEAD; then
+            # A plain fast-forward: the production branch is behind main and shares
+            # its history, so no commit is lost and nothing is rewritten.
+            git push origin "HEAD:$PRODUCTION_BRANCH"
+            echo "Fast-forwarded $PRODUCTION_BRANCH to $(git rev-parse --short HEAD)."
+          else
+            # Someone pushed to the production branch directly. Force-pushing here
+            # would discard their commit, so this stops and says so instead — the
+            # site keeps serving what it has, which is the safe failure.
+            echo "::error::$PRODUCTION_BRANCH has commits that main does not."
+            echo "Refusing to force-push. Merge it into main, then re-run this workflow."
+            git log --oneline "HEAD..origin/$PRODUCTION_BRANCH"
+            exit 1
+          fi

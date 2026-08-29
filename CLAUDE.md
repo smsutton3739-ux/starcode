@@ -449,6 +449,13 @@ with session_scope() as db:
 
 ### Traps that have already cost time
 
+- **Vercel deploys production from `claude/ancient-text-analysis-platform-vz2p15`,
+  not `main`.** A push to `main` builds as a *preview*: green, READY, and invisible on
+  astro-decoded.com. It has silently swallowed two merges. Until the production branch
+  is changed in the Vercel dashboard, `.github/workflows/deploy-branch-mirror.yml`
+  fast-forwards that branch on every push to `main`; delete the workflow once the
+  setting is fixed. Render deploys from `main` correctly, so a backend change can go
+  live while the frontend does not.
 - **Vercel must have the Next.js Framework Preset pinned** (`frontend/vercel.json`).
   Without it Vercel picks `middleware.ts` up with its framework-agnostic builder and every
   request 500s with `MIDDLEWARE_INVOCATION_FAILED` — against a `middleware.js` path
