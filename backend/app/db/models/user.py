@@ -43,6 +43,28 @@ _ROLE_RANK = {
 }
 
 
+class Tier(str, enum.Enum):
+    """What a user has paid for. Deliberately orthogonal to `Role`.
+
+    `Role` answers "what is this person allowed to administer"; `Tier` answers "what has
+    this person paid for". Conflating them would mean an administrator could not be
+    billed and a paying customer would drift upward in privilege — so they are separate
+    columns, compared separately, and neither is derived from the other.
+
+    Unordered on purpose: `byok` is not "more" than `paid`, it is a different
+    arrangement, so there is no `at_least` here to misuse.
+    """
+
+    FREE = "free"
+    PAID = "paid"
+    BYOK = "byok"
+
+    @property
+    def unlocks_interpretation(self) -> bool:
+        """Whether this tier sees interpretive claims rather than locked placeholders."""
+        return self in (Tier.PAID, Tier.BYOK)
+
+
 class User(UUIDPrimaryKey, Timestamped, Base):
     __tablename__ = "users"
 
@@ -59,6 +81,35 @@ class User(UUIDPrimaryKey, Timestamped, Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # ---- Billing ------------------------------------------------------------
+    # Kept on `users` rather than in a one-to-one Subscription table: these four fields
+    # are read on nearly every authenticated request (tier gating runs on the analysis
+    # read path), so a join or a lazy load here would be on the hot path for no gain.
+    # Stripe is the system of record for billing *history* — invoices, proration, past
+    # subscriptions — so there is nothing for a local table to append to.
+    tier: Mapped[Tier] = mapped_column(
+        Enum(Tier, native_enum=False, length=20),
+        default=Tier.FREE,
+        # Declared here as well as in the migration so `alembic check` sees the model and
+        # the schema agree. The database-level default is what let the column be added
+        # NOT NULL to a table that already had users; spelled as the member *name*,
+        # because Enum(native_enum=False) persists names rather than values.
+        server_default="FREE",
+        nullable=False,
+    )
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), index=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), index=True)
+
+    # Stripe's own status string, stored verbatim (active, past_due, canceled,
+    # incomplete, trialing, unpaid, …). Not re-encoded into a local enum: Stripe adds
+    # statuses, and a local enum would silently reject an unrecognised one at exactly
+    # the moment a webhook is trying to tell us something new about a paying customer.
+    subscription_status: Mapped[str | None] = mapped_column(String(40))
+
+    # Display only — the last four characters of a BYOK key, so the UI can show which
+    # key is in use. The key itself is never stored; see services/billing.py.
+    byok_anthropic_key_last4: Mapped[str | None] = mapped_column(String(4))
 
     # Denormalised counters used by the admin usage dashboard.
     analyses_count: Mapped[int] = mapped_column(default=0, nullable=False)
@@ -159,6 +210,7 @@ class Notification(UUIDPrimaryKey, Timestamped, Base):
 
 __all__ = [
     "Role",
+    "Tier",
     "User",
     "OAuthIdentity",
     "UserSetting",

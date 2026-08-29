@@ -42,12 +42,13 @@ from app.db.models.knowledge import (
     SourcePassage,
     SourceTradition,
 )
-from app.db.models.ops import AuditAction, AuditLog, Job, JobStatus
+from app.db.models.ops import AuditAction, AuditLog, Job, JobStatus, ProcessedStripeEvent
 from app.db.models.user import (
     Notification,
     OAuthIdentity,
     Role,
     SystemSetting,
+    Tier,
     User,
     UserSetting,
 )
@@ -58,6 +59,8 @@ __all__ = [
     # user
     "User",
     "Role",
+    "Tier",
+    "ProcessedStripeEvent",
     "OAuthIdentity",
     "UserSetting",
     "SystemSetting",

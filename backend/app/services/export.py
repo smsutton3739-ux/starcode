@@ -16,6 +16,7 @@ from typing import Any
 
 from app.agents.contracts import CLAIM_TYPE_PRESENTATION
 from app.db.models.analysis import Analysis, ClaimType
+from app.services.entitlements import gate_orm_claims, gate_report_sections
 
 EXPORT_FORMATS = ["pdf", "docx", "csv", "markdown", "json"]
 
@@ -47,23 +48,46 @@ class ExportError(RuntimeError):
     pass
 
 
-def _report_of(analysis: Analysis) -> Any:
+def _report_of(analysis: Analysis, viewer: Any = None) -> Any:
     if not analysis.reports:
         raise ExportError(
             "This analysis has no report yet. Wait for it to finish before exporting."
         )
-    return max(analysis.reports, key=lambda r: r.version)
+    report = max(analysis.reports, key=lambda r: r.version)
+    return _GatedReport(report, viewer)
+
+
+class _GatedReport:
+    """The report as one reader may read it.
+
+    Exports were the path that made a shared gate necessary rather than optional: every
+    format here reads the ORM rows directly, so a rule applied only in the API serialiser
+    would have been bypassed by asking for the same analysis as a CSV.
+    """
+
+    __slots__ = ("_report", "_viewer")
+
+    def __init__(self, report: Any, viewer: Any) -> None:
+        self._report = report
+        self._viewer = viewer
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._report, name)
+
+    @property
+    def sections(self) -> Any:
+        return gate_report_sections(self._report.sections, self._viewer)
 
 
 def _label(claim_type: ClaimType) -> str:
     return CLAIM_TYPE_PRESENTATION[claim_type]["label"]
 
 
-def _sorted_claims(analysis: Analysis) -> list:
-    return sorted(analysis.claims, key=lambda c: c.ordering)
+def _sorted_claims(analysis: Analysis, viewer: Any = None) -> list:
+    return gate_orm_claims(sorted(analysis.claims, key=lambda c: c.ordering), viewer)
 
 
-def export_analysis(analysis: Analysis, fmt: str) -> tuple[bytes, str, str]:
+def export_analysis(analysis: Analysis, fmt: str, viewer: Any = None) -> tuple[bytes, str, str]:
     """Returns (content, mime_type, filename)."""
     if fmt not in EXPORT_FORMATS:
         raise ExportError(
@@ -87,7 +111,7 @@ def export_analysis(analysis: Analysis, fmt: str) -> tuple[bytes, str, str]:
         "docx": _build_docx,
     }[fmt]
 
-    return builder(analysis), MIME_TYPES[fmt], filename
+    return builder(analysis, viewer), MIME_TYPES[fmt], filename
 
 
 # --------------------------------------------------------------------------------------
@@ -95,8 +119,8 @@ def export_analysis(analysis: Analysis, fmt: str) -> tuple[bytes, str, str]:
 # --------------------------------------------------------------------------------------
 
 
-def _build_markdown(analysis: Analysis) -> bytes:
-    report = _report_of(analysis)
+def _build_markdown(analysis: Analysis, viewer: Any = None) -> bytes:
+    report = _report_of(analysis, viewer)
     out: list[str] = []
 
     out.append(f"# {analysis.title}\n")
@@ -184,8 +208,8 @@ def _build_markdown(analysis: Analysis) -> bytes:
 # --------------------------------------------------------------------------------------
 
 
-def _build_json(analysis: Analysis) -> bytes:
-    report = _report_of(analysis)
+def _build_json(analysis: Analysis, viewer: Any = None) -> bytes:
+    report = _report_of(analysis, viewer)
     payload = {
         "analysis": {
             "id": analysis.id,
@@ -228,7 +252,7 @@ def _build_json(analysis: Analysis) -> bytes:
                 "quoted_text": c.quoted_text,
                 "payload": c.payload,
             }
-            for c in _sorted_claims(analysis)
+            for c in _sorted_claims(analysis, viewer)
         ],
         "entities": [
             {
@@ -261,7 +285,7 @@ def _build_json(analysis: Analysis) -> bytes:
 # --------------------------------------------------------------------------------------
 
 
-def _build_csv(analysis: Analysis) -> bytes:
+def _build_csv(analysis: Analysis, viewer: Any = None) -> bytes:
     buffer = io.StringIO()
     writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
     writer.writerow(
@@ -290,7 +314,7 @@ def _build_csv(analysis: Analysis) -> bytes:
                 reference.citation_text + ("" if reference.verified else " [unverified]")
             )
 
-    for claim in _sorted_claims(analysis):
+    for claim in _sorted_claims(analysis, viewer):
         writer.writerow(
             [
                 claim.section,
@@ -319,7 +343,7 @@ def _build_csv(analysis: Analysis) -> bytes:
 # --------------------------------------------------------------------------------------
 
 
-def _build_pdf(analysis: Analysis) -> bytes:
+def _build_pdf(analysis: Analysis, viewer: Any = None) -> bytes:
     try:
         from reportlab.lib import colors
         from reportlab.lib.enums import TA_JUSTIFY
@@ -340,7 +364,7 @@ def _build_pdf(analysis: Analysis) -> bytes:
 
     from xml.sax.saxutils import escape
 
-    report = _report_of(analysis)
+    report = _report_of(analysis, viewer)
     buffer = io.BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -541,7 +565,7 @@ def _build_pdf(analysis: Analysis) -> bytes:
 # --------------------------------------------------------------------------------------
 
 
-def _build_docx(analysis: Analysis) -> bytes:
+def _build_docx(analysis: Analysis, viewer: Any = None) -> bytes:
     try:
         import docx
         from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -549,7 +573,7 @@ def _build_docx(analysis: Analysis) -> bytes:
     except ImportError as exc:  # pragma: no cover
         raise ExportError("DOCX export requires python-docx, which is not installed.") from exc
 
-    report = _report_of(analysis)
+    report = _report_of(analysis, viewer)
     document = docx.Document()
 
     document.core_properties.title = analysis.title

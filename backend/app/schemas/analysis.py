@@ -102,6 +102,12 @@ class ClaimOut(ORMModel):
     references: list[CitationOut] = Field(default_factory=list)
     presentation: dict[str, str] | None = None
 
+    # True when the reader's tier withholds this claim's content. The claim is still
+    # present with its type, section, ordering and confidence intact — only the readable
+    # fields are replaced — so a client can show what is being withheld rather than
+    # rendering a shorter report that looks like the analysis simply found less.
+    locked: bool = False
+
 
 class EntityOut(ORMModel):
     id: str

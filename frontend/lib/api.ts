@@ -17,6 +17,7 @@ import type {
   AnalysisOptions,
   AnalysisStatusResponse,
   AnalysisSummary,
+  BillingStatus,
   ApiError,
   SearchHit,
   UploadResult,
@@ -508,4 +509,28 @@ export function createShare(
 
 export function health(): Promise<Record<string, unknown>> {
   return request("/health", { anonymous: true });
+}
+
+// ---- billing ---------------------------------------------------------------------
+
+/**
+ * Start a Stripe Checkout session and return the URL to send the browser to.
+ *
+ * The redirect is left to the caller rather than performed here: a function that
+ * navigates as a side effect cannot be used from a page that wants to show an error
+ * inline, which is exactly what a 503 from an unconfigured deployment needs.
+ */
+export async function createCheckoutSession(): Promise<string> {
+  const { url } = await request<{ url: string }>("/billing/checkout", { method: "POST" });
+  return url;
+}
+
+/** A Stripe Billing Portal URL, for cancelling or changing the plan. */
+export async function createPortalSession(): Promise<string> {
+  const { url } = await request<{ url: string }>("/billing/portal", { method: "POST" });
+  return url;
+}
+
+export function getBillingStatus(): Promise<BillingStatus> {
+  return request<BillingStatus>("/billing/status");
 }

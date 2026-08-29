@@ -30,6 +30,9 @@ class AuditAction(str, enum.Enum):
     USER_DEACTIVATED = "user_deactivated"
     PROMPT_UPDATED = "prompt_updated"
     DATASET_UPDATED = "dataset_updated"
+    BILLING_CHECKOUT_STARTED = "billing_checkout_started"
+    BILLING_PORTAL_OPENED = "billing_portal_opened"
+    BILLING_SUBSCRIPTION_CHANGED = "billing_subscription_changed"
     RATE_LIMITED = "rate_limited"
     ADMIN_ACTION = "admin_action"
     SECURITY_EVENT = "security_event"
@@ -105,4 +108,30 @@ class Job(UUIDPrimaryKey, Timestamped, Base):
     target_id: Mapped[str | None] = mapped_column(String(64), index=True)
 
 
-__all__ = ["AuditAction", "AuditLog", "JobStatus", "Job"]
+class ProcessedStripeEvent(Timestamped, Base):
+    """Stripe event ids already applied, so a replay is a no-op.
+
+    Stripe retries a webhook until it gets a 2xx, and it does not promise exactly-once
+    delivery — a network blip between our commit and our response produces a second
+    delivery of an event we have already applied. Without this, a replayed
+    `customer.subscription.deleted` could downgrade an account that had since
+    re-subscribed.
+
+    The event id is the primary key, so the uniqueness is enforced by the database
+    rather than by a check-then-write that two concurrent deliveries could both pass.
+    """
+
+    __tablename__ = "processed_stripe_events"
+
+    # Stripe event ids look like evt_1P... — their own identifier is the natural key.
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+
+
+__all__ = [
+    "AuditAction",
+    "AuditLog",
+    "JobStatus",
+    "Job",
+    "ProcessedStripeEvent",
+]

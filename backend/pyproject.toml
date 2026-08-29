@@ -37,6 +37,11 @@ dependencies = [
     "pytesseract>=0.3.13",
     "selectolax>=0.3.21",
     "reportlab>=4.2.5",
+    # Billing. Declared rather than imported opportunistically: the clean-install import
+    # check in CI walks every module, and app/services/billing.py imports this lazily
+    # only so that a deployment without Stripe credentials still boots — the package
+    # itself must be present.
+    "stripe>=11.1.0,<13",
     "structlog>=24.4.0",
     "tenacity>=9.0.0",
 ]

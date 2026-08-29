@@ -67,6 +67,10 @@ export interface Claim {
   payload: Record<string, unknown>;
   references?: Citation[];
   presentation?: ClaimPresentation | null;
+  /** True when the reader's tier withholds this claim's content. The type, section,
+   *  confidence and citations are still present — only the readable fields are
+   *  replaced — so the UI can show what is being withheld rather than hiding it. */
+  locked?: boolean;
 }
 
 export interface Entity {
@@ -270,4 +274,19 @@ export interface User {
   is_active: boolean;
   analyses_count: number;
   created_at: string;
+}
+
+/** ---- Billing ------------------------------------------------------------------ */
+
+export type Tier = "free" | "paid" | "byok";
+
+export interface BillingStatus {
+  tier: Tier;
+  /** Stripe's own status string, passed through rather than re-encoded. */
+  subscription_status: string | null;
+  has_subscription: boolean;
+  can_manage: boolean;
+  billing_enabled: boolean;
+  unlocks_interpretation: boolean;
+  byok_key_last4: string | null;
 }

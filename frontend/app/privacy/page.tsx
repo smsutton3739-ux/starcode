@@ -81,6 +81,27 @@ export default function PrivacyPage() {
           be searched.
         </p>
 
+        <h2 className="mt-10 font-display text-2xl">If you subscribe</h2>
+        <p>
+          Payments are processed by <strong>Stripe</strong>. Your card number never reaches
+          this service and is never stored here — you enter it on a page Stripe hosts, and
+          they hold it. What we keep is the minimum needed to know what you have paid for:
+          your Stripe customer and subscription identifiers, your plan, and the
+          subscription&rsquo;s current status (active, past due, cancelled and so on).
+        </p>
+        <p>
+          Stripe receives your email address so it can attach the subscription to you and
+          send receipts, and it collects whatever billing details it needs to take a
+          payment. What Stripe does with that is governed by their privacy policy, not
+          ours.
+        </p>
+        <p>
+          Cancelling is self-service through Stripe&rsquo;s billing portal, reachable from
+          your billing page. Cancelling ends the subscription; it does not delete your
+          account or your analyses, which is deliberate — losing your saved work because a
+          card expired would be a poor trade.
+        </p>
+
         <h2 className="mt-10 font-display text-2xl">Security and abuse records</h2>
         <p>
           We keep an append-only record of actions that change data or read someone

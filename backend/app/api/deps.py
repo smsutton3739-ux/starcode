@@ -77,9 +77,33 @@ require_researcher = _require(Role.RESEARCHER)
 require_moderator = _require(Role.MODERATOR)
 require_admin = _require(Role.ADMIN)
 
+
+def require_paid_tier(user: Annotated[User, Depends(get_current_user)]) -> User:
+    """Gate an endpoint on what the account has paid for, not on what it may administer.
+
+    402 rather than 403: the request is well-formed and the caller is who they say they
+    are — the only thing missing is a subscription, and 402 is the code that says so.
+    A 403 here would read as "you are not allowed", which sends a paying-capable customer
+    to support instead of to the pricing page.
+
+    Deliberately independent of `Role`. An administrator on the free tier gets a 402 from
+    this, and a paying viewer does not, because the two axes answer different questions.
+    """
+    if not user.tier.unlocks_interpretation:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=(
+                "This feature is part of a paid plan. Your account is on the "
+                f"{user.tier.value} tier."
+            ),
+        )
+    return user
+
+
 CurrentUser = Annotated[User, Depends(get_current_user)]
 OptionalUser = Annotated[User | None, Depends(get_current_user_optional)]
 AdminUser = Annotated[User, Depends(require_admin)]
+PaidUser = Annotated[User, Depends(require_paid_tier)]
 ModeratorUser = Annotated[User, Depends(require_moderator)]
 
 
@@ -241,6 +265,8 @@ def get_owned_or_shared_analysis(
 __all__ = [
     "DbSession",
     "CurrentUser",
+    "PaidUser",
+    "require_paid_tier",
     "OptionalUser",
     "AdminUser",
     "ModeratorUser",

@@ -24,6 +24,7 @@ from app.core.logging import get_logger
 from app.db.models.analysis import Analysis, AnalysisStatus, ClaimType
 from app.db.models.content import Document, Tag
 from app.db.models.ops import AuditAction
+from app.db.models.user import User
 from app.schemas.analysis import (
     AnalysisCreated,
     AnalysisDetail,
@@ -34,6 +35,7 @@ from app.schemas.analysis import (
 )
 from app.schemas.common import Message, Page
 from app.services import analysis_service
+from app.services.entitlements import gate_claim_dicts, gate_report
 from app.services.ingest import IngestError, extract_from_text
 from app.services.url_fetch import FetchError, fetch_as_extraction
 
@@ -196,10 +198,16 @@ def get_detail(
     )
     db.commit()
 
-    return _serialize_detail(analysis)
+    return _serialize_detail(analysis, user)
 
 
-def _serialize_detail(analysis: Analysis) -> AnalysisDetail:
+def _serialize_detail(analysis: Analysis, viewer: User | None = None) -> AnalysisDetail:
+    """Serialise an analysis for one reader.
+
+    `viewer` decides which interpretive claims are readable. It defaults to None — the
+    free tier — so a new call site that forgets to pass it withholds too much rather than
+    too little.
+    """
     references_by_claim: dict[str, list] = {}
     for reference in analysis.references:
         if reference.claim_id:
@@ -234,6 +242,8 @@ def _serialize_detail(analysis: Analysis) -> AnalysisDetail:
             "presentation": CLAIM_TYPE_PRESENTATION[claim.claim_type],
         }
         claims.append(item)
+
+    claims = gate_claim_dicts(claims, viewer)
 
     report = max(analysis.reports, key=lambda r: r.version) if analysis.reports else None
 
@@ -285,7 +295,7 @@ def _serialize_detail(analysis: Analysis) -> AnalysisDetail:
                 }
                 for entity in analysis.entities
             ],
-            "report": report,
+            "report": gate_report(report, viewer),
             "agent_runs": sorted(analysis.agent_runs, key=lambda r: r.sequence),
         }
     )
