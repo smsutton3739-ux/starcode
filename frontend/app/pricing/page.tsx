@@ -17,6 +17,10 @@ export const metadata = {
 
 type Plan = {
   name: string;
+  /** Display only. The figure customers are actually charged lives in Stripe, on the
+   *  price named by STRIPE_PRICE_ID_PAID — these two can drift apart, and a page that
+   *  advertises one number while the checkout bills another is the worst place for that
+   *  to happen. Change one, check the other. */
   price: string;
   cadence?: string;
   summary: string;
@@ -30,7 +34,7 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     name: "Free",
-    price: "£0",
+    price: "$0",
     summary:
       "Everything the platform can compute rather than infer. No account needed to start.",
     includes: [
@@ -50,7 +54,7 @@ const PLANS: Plan[] = [
   },
   {
     name: "Paid",
-    price: "£9",
+    price: "$9",
     cadence: "/month",
     summary:
       "Adds the interpretive sections: what traditions have held, what scholars argue, and where the analysis is willing to conjecture.",
@@ -66,7 +70,7 @@ const PLANS: Plan[] = [
   },
   {
     name: "Bring your own key",
-    price: "£0",
+    price: "$0",
     summary:
       "Supply your own Anthropic API key and pay Anthropic directly for the model calls.",
     includes: [
