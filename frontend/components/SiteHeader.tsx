@@ -12,6 +12,7 @@ const NAV = [
   { href: "/dashboard", label: "My analyses" },
   { href: "/explore", label: "Explore" },
   { href: "/about", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export function SiteHeader() {
@@ -102,6 +103,14 @@ export function SiteHeader() {
                     onClick={() => setMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/billing"
+                    role="menuitem"
+                    className="block rounded px-3 py-2 hover:bg-ink-100 dark:hover:bg-ink-800"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Billing
                   </Link>
                   {user.role === "admin" && (
                     <Link

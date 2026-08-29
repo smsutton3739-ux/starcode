@@ -56,3 +56,28 @@ test.describe("sign-in with no available method", () => {
     });
   }
 });
+
+/**
+ * Navigation to the paid surfaces.
+ *
+ * Both pages were built, deployed and configured end to end while being reachable only
+ * by typing the URL — nothing linked to them, so nobody could subscribe by using the
+ * site. Tests covered what each page rendered and never that a visitor could arrive at
+ * one, which is the gap this closes.
+ */
+test.describe("the paid surfaces are reachable", () => {
+  test("pricing is linked from the homepage", async ({ page }) => {
+    await page.goto("/");
+    // Header nav collapses on narrow viewports, so the footer link is what guarantees
+    // this is reachable at every width. Either satisfies the assertion.
+    await expect(page.locator('a[href="/pricing"]').first()).toBeVisible();
+  });
+
+  test("following that link reaches the plan comparison", async ({ page }) => {
+    await page.goto("/");
+    await page.locator('a[href="/pricing"]').first().click();
+    await expect(page).toHaveURL(/\/pricing$/);
+    await expect(page.getByRole("heading", { name: /Free/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Paid/ })).toBeVisible();
+  });
+});

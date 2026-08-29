@@ -26,6 +26,9 @@ export function SiteFooter() {
             <Link href="/about#limitations" className="hover:underline">
               Known limitations
             </Link>
+            <Link href="/pricing" className="hover:underline">
+              Pricing
+            </Link>
             <Link href="/privacy" className="hover:underline">
               Privacy
             </Link>

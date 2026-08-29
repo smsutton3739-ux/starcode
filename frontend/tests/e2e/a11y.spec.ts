@@ -28,6 +28,7 @@ test.describe("static pages", () => {
     // Google will not publish an OAuth consent screen without a live privacy policy URL.
     ["privacy", "/privacy"],
     ["terms", "/terms"],
+    ["pricing", "/pricing"],
   ] as const) {
     test(`${name} has no WCAG A/AA violations`, async ({ page }) => {
       await page.goto(path);
