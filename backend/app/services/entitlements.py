@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.agents.contracts import ClaimType
-from app.db.models.user import Tier, User
+from app.db.models.user import Role, Tier, User
 
 #: Claim types withheld from the free tier.
 #:
@@ -59,6 +59,25 @@ def tier_of(user: User | None) -> Tier:
 
 
 def unlocks_interpretation(user: User | None) -> bool:
+    """Whether this reader sees interpretive claims rather than locked placeholders.
+
+    The single place that question is answered. `require_paid_tier` in api/deps.py
+    delegates here rather than repeating the rule, so an endpoint gated by the dependency
+    and a claim gated by the serialiser can never disagree about who has access.
+
+    Administrators pass unconditionally, whatever their tier. This is a deliberate,
+    narrow exception to the rule that tier and role are orthogonal — stated as such
+    rather than hidden, because the rest of this codebase depends on that separation
+    holding. It exists so the operator of the site can use the whole product on their own
+    account without buying a subscription from themselves.
+
+    The exception is exactly this wide: ADMIN bypasses *paid-tier* checks. It grants no
+    tier, writes nothing to the database, and changes no billing state — an admin who
+    subscribes is still an ordinary paying customer in Stripe and in `users.tier`. It is
+    not a licence to answer other tier questions with a role, or vice versa.
+    """
+    if user is not None and user.role is Role.ADMIN:
+        return True
     return tier_of(user).unlocks_interpretation
 
 

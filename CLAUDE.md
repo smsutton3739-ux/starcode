@@ -226,6 +226,44 @@ refusal in `agents/offline_engine.py` — otherwise the offline path silently de
 
 ---
 
+## Tiers, entitlements and billing
+
+Two orthogonal axes, and confusing them is the easiest way to break this:
+
+- **`Role`** (`VIEWER < USER < RESEARCHER < MODERATOR < ADMIN`) — what an account may
+  *administer*. Checked with `require_admin` and friends in `api/deps.py`.
+- **`Tier`** (`free`, `paid`, `byok`) — what an account has *paid for*. Set only by the
+  Stripe webhook in `services/billing.py`.
+
+`services/entitlements.py` is the single place the paid question is answered. Its
+docstring is the specification; `unlocks_interpretation()` is the one function, and
+`require_paid_tier` in `api/deps.py` delegates to it rather than repeating the rule.
+Never inline a `user.tier` check anywhere else — three separate code paths deliver claim
+text to a reader (the claim list, the embedded report structure, and five export formats,
+which read the ORM directly and bypass the router's serialiser entirely) and they must
+agree. `tests/test_billing.py` asserts each path independently for that reason.
+
+Locking is **not** deletion. A withheld claim keeps its id, type, section, ordering,
+confidence and references; only the readable fields are replaced. This keeps the
+claim-type counts honest and is the same principle as the contract's visible downgrade.
+
+**Administrators bypass paid-tier checks**, whatever their tier — the deliberate, narrow
+exception to the separation above, so the operator can use the product on their own
+account. It is decided per request and writes nothing: no tier change, no Stripe
+customer, no billing state. Do not widen it into "roles imply tiers" anywhere else.
+
+Webhook handling is idempotent through a `ProcessedStripeEvent` ledger keyed by the
+Stripe event id — Stripe redelivers, and a replayed activation must not re-grant a tier
+the customer has since cancelled. The signature is verified before anything is written.
+
+BYOK is a **stub** — the tier exists and the pricing page says "coming soon", but no key
+is accepted anywhere yet. When it is implemented: a user-supplied Anthropic key is never
+written to any table. It is accepted per request and only its last four characters are
+persisted (`users.byok_anthropic_key_last4`), so a reader can tell which key is in use.
+Persisting the full key as a shortcut is not an option.
+
+---
+
 ## Conventions
 
 **Comments explain *why*.** The code says what it does. A comment earns its place by

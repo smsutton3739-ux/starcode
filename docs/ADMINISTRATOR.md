@@ -63,6 +63,23 @@ Two guards you will meet:
 - **Moderators can read any analysis.** That is a real privacy power. Grant it
   deliberately, and note that every such read is audited.
 
+### Roles and billing tiers are separate — with one exception
+
+A **role** says what an account may administer. A **tier** (`free`, `paid`, `byok`) says
+what it has paid for. They are independent: a `researcher` on the free tier sees locked
+interpretations, and a paying `viewer` does not.
+
+The single exception is `admin`, which sees every paid feature whatever its tier, so the
+operator of the site does not have to buy a subscription from themselves. The bypass is
+decided per request in `unlocks_interpretation()`
+([`backend/app/services/entitlements.py`](../backend/app/services/entitlements.py)) and
+writes nothing: an admin's `tier` stays `free`, no Stripe customer is created, and the
+account never appears as a paying subscriber in billing figures. An admin who *does*
+subscribe is an ordinary customer in both Stripe and `users.tier`.
+
+Grant `admin` on that basis. It is not only "can administer" — it is also "reads
+everything the paid plan sells".
+
 ```bash
 curl -X PATCH "$API/admin/users/$USER_ID/role" \
   -H "Authorization: Bearer $TOKEN" \

@@ -256,20 +256,58 @@ class TestPaidTierDependency:
             require_paid_tier(user)
         assert excinfo.value.status_code == 402
 
-    def test_tier_and_role_stay_independent(self, db, user_factory):
-        """An admin on the free tier is still gated; a paying viewer is not."""
+    def test_role_does_not_substitute_for_a_subscription(self, db, user_factory):
+        """Every role below ADMIN is gated on tier alone, in both directions.
+
+        ADMIN is the one deliberate exception (covered below). Everything else must keep
+        the two axes separate: elevation is not payment, and payment is not elevation.
+        """
         from fastapi import HTTPException
 
         from app.api.deps import require_paid_tier
 
-        admin = user_factory(role=Role.ADMIN)
-        with pytest.raises(HTTPException):
-            require_paid_tier(admin)
+        for role in (Role.VIEWER, Role.USER, Role.RESEARCHER, Role.MODERATOR):
+            elevated = user_factory(role=role)
+            assert elevated.tier is Tier.FREE
+            with pytest.raises(HTTPException, match="paid plan"):
+                require_paid_tier(elevated)
 
+        # …and a paying VIEWER — the lowest role there is — passes.
         viewer = user_factory(role=Role.VIEWER)
         viewer.tier = Tier.PAID
         db.commit()
         assert require_paid_tier(viewer) is viewer
+
+    def test_an_admin_passes_without_a_subscription(self, db, user_factory):
+        """The operator of the site does not buy a subscription from themselves.
+
+        This is the narrow exception to tier/role orthogonality, asserted here so that a
+        future tidy-up that "restores consistency" by deleting the bypass fails loudly
+        rather than quietly locking the owner out of their own product.
+        """
+        from app.api.deps import require_paid_tier
+
+        admin = user_factory(role=Role.ADMIN)
+        assert admin.tier is Tier.FREE
+        assert require_paid_tier(admin) is admin
+
+    def test_the_bypass_grants_no_tier_and_writes_nothing(self, db, user_factory):
+        """Access is decided per request; it never mutates billing state.
+
+        If the bypass wrote `tier = PAID`, an admin would appear in the database as a
+        paying customer with no Stripe subscription behind them, and a later webhook —
+        or any report on paid accounts — would be reading a lie.
+        """
+        from app.api.deps import require_paid_tier
+
+        admin = user_factory(role=Role.ADMIN)
+        require_paid_tier(admin)
+        db.refresh(admin)
+
+        assert admin.tier is Tier.FREE
+        assert admin.stripe_customer_id is None
+        assert admin.stripe_subscription_id is None
+        assert admin.subscription_status is None
 
 
 class TestWhatEachTierReads:
@@ -336,6 +374,21 @@ class TestWhatEachTierReads:
         user.tier = tier
         db.commit()
         gated = gate_claim_dicts(self._claims(), user)
+        assert all(c["statement"].startswith("SECRET-") for c in gated)
+        assert not any(c["locked"] for c in gated)
+
+    def test_an_admin_on_the_free_tier_reads_the_interpretations(self, db, user_factory):
+        """The bypass has to reach the delivery path, not just the route dependency.
+
+        `require_paid_tier` gates no endpoint today — it exists for future paid routes —
+        so an admin override applied only there would pass its own test while every
+        report still rendered "Interpretation locked" for the site's owner. This asserts
+        the thing the owner actually experiences.
+        """
+        admin = user_factory(role=Role.ADMIN)
+        assert admin.tier is Tier.FREE
+
+        gated = gate_claim_dicts(self._claims(), admin)
         assert all(c["statement"].startswith("SECRET-") for c in gated)
         assert not any(c["locked"] for c in gated)
 
@@ -496,6 +549,17 @@ class TestThroughTheRealApi:
     def test_a_paid_user_receives_the_real_statements(self, client, auth_headers):
         headers, user = auth_headers()
         self._set_tier(user.id, Tier.PAID)
+
+        analysis_id = self._run(client, headers)
+        detail = client.get(f"/api/v1/analyses/{analysis_id}", headers=headers).json()
+
+        assert not any(c["locked"] for c in detail["claims"])
+        assert all(c["statement"] != LOCKED_STATEMENT for c in detail["claims"])
+
+    def test_an_admin_receives_the_real_statements_without_paying(self, client, auth_headers):
+        """The owner's own account, over HTTP, with no subscription anywhere behind it."""
+        headers, user = auth_headers(Role.ADMIN)
+        assert user.tier is Tier.FREE
 
         analysis_id = self._run(client, headers)
         detail = client.get(f"/api/v1/analyses/{analysis_id}", headers=headers).json()

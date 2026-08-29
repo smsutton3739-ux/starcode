@@ -16,6 +16,7 @@ from app.core.security import AuthError, decode_token, hash_ip
 from app.db.models.ops import AuditAction, AuditLog
 from app.db.models.user import Role, User
 from app.db.session import get_db
+from app.services import entitlements
 
 logger = get_logger(__name__)
 
@@ -86,10 +87,17 @@ def require_paid_tier(user: Annotated[User, Depends(get_current_user)]) -> User:
     A 403 here would read as "you are not allowed", which sends a paying-capable customer
     to support instead of to the pricing page.
 
-    Deliberately independent of `Role`. An administrator on the free tier gets a 402 from
-    this, and a paying viewer does not, because the two axes answer different questions.
+    The decision itself lives in `services.entitlements.unlocks_interpretation` — which
+    also carries the ADMIN bypass documented there — rather than being repeated here.
+    A route gated by this dependency and a claim gated by the serialiser must never
+    disagree about who has access, and one shared function is the only way to guarantee
+    that as either side changes.
+
+    Tier and role remain orthogonal everywhere else: a paying VIEWER passes this, a
+    RESEARCHER on the free tier does not. ADMIN is the single, deliberate exception, so
+    the operator of the site can use the product on their own account.
     """
-    if not user.tier.unlocks_interpretation:
+    if not entitlements.unlocks_interpretation(user):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=(
