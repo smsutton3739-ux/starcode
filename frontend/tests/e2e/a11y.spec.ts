@@ -24,6 +24,10 @@ test.describe("static pages", () => {
     ["about", "/about"],
     ["explore", "/explore"],
     ["login", "/login"],
+    // Reachable, accessible policy pages are a launch requirement, not decoration:
+    // Google will not publish an OAuth consent screen without a live privacy policy URL.
+    ["privacy", "/privacy"],
+    ["terms", "/terms"],
   ] as const) {
     test(`${name} has no WCAG A/AA violations`, async ({ page }) => {
       await page.goto(path);

@@ -380,6 +380,46 @@ Then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` and/or `GITHUB_CLIENT_ID` /
 `GITHUB_CLIENT_SECRET` on the API and restart it. The sign-in page picks them up on its
 own — it asks the API what it supports rather than assuming.
 
+**On Path 2, set `OAUTH_REDIRECT_BASE` as well.** This is the one step that is easy to
+miss and fails in a way that does not name itself. The application builds the callback it
+sends to the provider as `OAUTH_REDIRECT_BASE` + `/api/v1/auth/oauth/<provider>/callback`,
+and that value defaults to `http://localhost:8000`. Leave it unset on Render and the
+provider is handed `http://localhost:8000/api/v1/auth/oauth/google/callback`, which is not
+the URI you registered, so every sign-in ends at `redirect_uri_mismatch` with nothing
+pointing at the cause. On Render:
+
+```
+OAUTH_REDIRECT_BASE=https://api.astro-decoded.com
+```
+
+The full public API URL, including `https://` and with no trailing slash. Path 1 needs
+nothing here — the production compose overlay derives it from `API_DOMAIN`.
+
+`render.yaml` deliberately leaves this variable out rather than deriving it from the
+service, because Render's own `fromService` host property yields a bare hostname with no
+scheme *and* the `onrender.com` name rather than your custom domain — two different ways
+to produce the same unexplained mismatch.
+
+### Checking it worked
+
+Ask the API what it thinks it offers:
+
+```bash
+curl -s https://api.astro-decoded.com/api/v1/auth/oauth/providers
+```
+
+`"configured": true` against a provider means its client id and secret both arrived. If
+it still says `false`, the variables did not reach the service — check they are set on the
+API service rather than on the web app.
+
+Then sign in for real, once. The failures worth recognising:
+
+| What you see | What it means |
+| --- | --- |
+| `redirect_uri_mismatch` | The URI registered with the provider and the one built from `OAUTH_REDIRECT_BASE` differ. Compare them character by character — `http` vs `https` and a trailing slash both count. |
+| Sign-in returns to the site but you are not signed in | `FRONTEND_BASE_URL` does not match the site's real origin, so the callback redirected somewhere the browser did not keep the token. |
+| Works, then fails intermittently | More than one API instance. See the constraint below. |
+
 One constraint while you have OAuth on: **run a single API instance.** The one-time value
 that ties a sign-in request to its callback is held in that process's memory, so with two
 instances behind a load balancer roughly half of all sign-ins fail. Path 1 is a single
