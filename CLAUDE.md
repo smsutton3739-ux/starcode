@@ -474,6 +474,42 @@ with session_scope() as db:
 
 ---
 
+## What a production analysis costs
+
+Worth knowing before changing anything in `agents/`, because the money and the latency
+have different shapes.
+
+`AI_PROVIDER=auto` with a key set means every analysis makes **six** model calls — the
+six agents that are not `calendar` or `astronomy` — on `AI_MODEL`, currently
+`claude-opus-5`. Anonymous visitors can trigger this: analysis needs no account by
+design, and the only limit is `RATE_LIMIT_ANONYMOUS_PER_HOUR` (10 per IP).
+
+**The output side is the expensive one.** Input is a few thousand tokens per call
+(`ctx.excerpt()` plus a ~700-token system prompt) at the input rate; output is billed at
+five times that, and Opus runs adaptive thinking by default — `provider.py` passes no
+`thinking` parameter, and thinking tokens bill as output. So a cost change that only
+touches input barely moves the total.
+
+Two consequences, both measured rather than assumed:
+
+- **Prompt caching is not worth adding here.** The per-agent system prompts are ~670–790
+  tokens and `SHARED_SYSTEM_RULES` is ~549, against a 512-token minimum cacheable prefix
+  on Opus 5 — close enough to the line that a shared-prefix block may silently never
+  cache. At best it saves one or two cents an analysis on the cheap half of the bill,
+  and with the 5-minute TTL it is a small net loss when analyses arrive further apart
+  than that.
+- **The levers that would actually move it are quality decisions**, so they belong to
+  the operator, not to a passing refactor: `AI_FAST_MODEL` is configured as Haiku and
+  **no agent uses it** (the mechanical agents — language, entities — are the obvious
+  candidates); `output_config: {effort: ...}` trades thinking depth for spend within
+  Opus; `AI_PROVIDER=offline` costs nothing at all and keeps extraction, calendars and
+  the whole astronomy engine working.
+
+Set a spend limit in the Anthropic console. Nothing in this repository caps what a
+month of traffic can cost.
+
+---
+
 ## Performance notes
 
 An offline analysis of a short text completes in ~100 ms; with a model, latency is
