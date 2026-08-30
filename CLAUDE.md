@@ -449,13 +449,17 @@ with session_scope() as db:
 
 ### Traps that have already cost time
 
-- **Vercel deploys production from `claude/ancient-text-analysis-platform-vz2p15`,
-  not `main`.** A push to `main` builds as a *preview*: green, READY, and invisible on
-  astro-decoded.com. It has silently swallowed two merges. Until the production branch
-  is changed in the Vercel dashboard, `.github/workflows/deploy-branch-mirror.yml`
-  fast-forwards that branch on every push to `main`; delete the workflow once the
-  setting is fixed. Render deploys from `main` correctly, so a backend change can go
-  live while the frontend does not.
+- **Vercel's production branch is a dashboard setting, and it was wrong for two
+  releases.** It pointed at `claude/ancient-text-analysis-platform-vz2p15` while `main`
+  was the default branch, so a merge to `main` built as a *preview*: green, READY, and
+  invisible on astro-decoded.com. It swallowed the billing admin override and the
+  astronomical dating feature before anyone noticed, and neither reported an error,
+  because nothing had failed. Render deploys from `main` correctly, so the backend went
+  live while the frontend did not — the API gained endpoints no deployed client could
+  call. **Now set to `main`** (Settings → Environments → Production → Branch Tracking;
+  it is not on the Git settings page). If the site ever stops tracking `main` again,
+  check `target` on the newest deployment: `"production"` is right, `null` means it
+  built as a preview and the setting has drifted.
 - **Vercel must have the Next.js Framework Preset pinned** (`frontend/vercel.json`).
   Without it Vercel picks `middleware.ts` up with its framework-agnostic builder and every
   request 500s with `MIDDLEWARE_INVOCATION_FAILED` — against a `middleware.js` path
