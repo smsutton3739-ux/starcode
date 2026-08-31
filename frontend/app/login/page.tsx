@@ -39,6 +39,10 @@ export default function LoginPage() {
   const [canRegister, setCanRegister] = useState<boolean | null>(null);
   const [registrationNote, setRegistrationNote] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
+  // Distinct from "checked, and there is nothing" — see the effect below.
+  const [unreachable, setUnreachable] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     // Read from window rather than useSearchParams: the latter forces this page into a
@@ -49,21 +53,47 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    authCapabilities()
-      .then((data) => {
-        setProviders(data.providers);
-        setCanRegister(data.password_registration_enabled);
-        setRegistrationNote(data.note);
-        if (!data.password_registration_enabled) setMode("login");
-      })
-      .catch(() => {
-        // The capabilities call failing is not the same as "nothing is available" — the
-        // API may simply be asleep. The form stays reachable so an existing account can
-        // still sign in rather than being told, wrongly, that sign-in does not exist.
-        setProviders([]);
-        setCanRegister(false);
-      });
-  }, []);
+    // "I could not ask" is not "there is nothing to offer", and this page used to
+    // conflate them: a failed capabilities call set canRegister=false, which is exactly
+    // the condition that renders "New accounts are not available yet" — so a visitor was
+    // told sign-in did not exist when the truth was that the server had not answered.
+    //
+    // It fails routinely rather than rarely. The API runs on an instance that sleeps
+    // after about fifteen minutes idle and takes the better part of a minute to wake, so
+    // the first visitor after a quiet spell is the one who gets told, wrongly, that
+    // there is no way in. Hence the retries: three attempts over roughly forty seconds
+    // covers a cold start, and only after all of them do we admit we could not reach it.
+    let cancelled = false;
+    const delays = [0, 4000, 12000, 24000];
+
+    (async () => {
+      setChecking(true);
+      for (let i = 0; i < delays.length; i += 1) {
+        if (cancelled) return;
+        if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
+        try {
+          const data = await authCapabilities();
+          if (cancelled) return;
+          setProviders(data.providers);
+          setCanRegister(data.password_registration_enabled);
+          setRegistrationNote(data.note);
+          if (!data.password_registration_enabled) setMode("login");
+          setUnreachable(false);
+          setChecking(false);
+          return;
+        } catch {
+          // Keep trying; the last failure falls through to the unreachable state.
+        }
+      }
+      if (cancelled) return;
+      setUnreachable(true);
+      setChecking(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -86,11 +116,14 @@ export default function LoginPage() {
   };
 
   const configured = providers.filter((provider) => provider.configured);
-  const loading = canRegister === null;
+  const loading = checking;
 
   // Nobody can create an account here: no provider to sign in with, and password
-  // registration refused by the API.
-  const noWayIn = !loading && configured.length === 0 && canRegister === false;
+  // registration refused by the API. Requires having actually heard from the API —
+  // `unreachable` is handled separately, because a server that did not answer tells you
+  // nothing about what it offers.
+  const noWayIn =
+    !loading && !unreachable && configured.length === 0 && canRegister === false;
 
   const credentialsForm = (
     <form onSubmit={submit} className="space-y-4">
@@ -183,8 +216,33 @@ export default function LoginPage() {
 
       {loading && (
         <p className="mt-6 text-sm text-ink-500 dark:text-ink-400" role="status">
-          Checking which sign-in methods are available…
+          Checking which sign-in methods are available… The server sleeps when idle, so
+          this can take up to a minute.
         </p>
+      )}
+
+      {!loading && unreachable && (
+        <div
+          className="mt-6 rounded-lg border border-gold-300 bg-gold-50/70 p-4 dark:border-gold-700 dark:bg-gold-950/30"
+          role="status"
+        >
+          <p className="flex items-center gap-2 font-medium text-gold-900 dark:text-gold-200">
+            <span aria-hidden="true">ⓘ</span>
+            Could not reach the server
+          </p>
+          <p className="mt-2 text-sm text-ink-700 dark:text-ink-300">
+            This is almost always the API waking from sleep rather than anything being
+            wrong. Sign-in options cannot be listed until it answers — so none are shown
+            below, and that is not a statement that none exist.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAttempt((n) => n + 1)}
+            className="btn-secondary mt-4"
+          >
+            Try again
+          </button>
+        </div>
       )}
 
       {!loading && noWayIn && (
