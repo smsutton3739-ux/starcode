@@ -61,7 +61,7 @@ export default async function ToolsPage() {
         </h2>
         <p className="mt-2 text-sm text-gold-900 dark:text-gold-200">
           Computing where the planets were at a moment in time is astronomy, and Starcode
-          does it too — see{" "}
+          does it too. See{" "}
           <Link href="/explore" className="underline underline-offset-4">
             Astronomy &amp; calendars
           </Link>
@@ -119,7 +119,7 @@ export default async function ToolsPage() {
         <strong className="font-semibold">Disclosure:</strong> these embeds carry an
         affiliate identifier, so Starcode may earn a commission if you go on to buy
         something from Astro·Charts. It costs you nothing extra, and it does not influence
-        anything Starcode reports — the analysis engine has no knowledge of this page.
+        anything Starcode reports. The analysis engine has no knowledge of this page.
         Whatever you enter into these charts goes to Astro·Charts, under their privacy
         policy and not Starcode&rsquo;s.
       </p>

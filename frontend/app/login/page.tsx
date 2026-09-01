@@ -164,7 +164,7 @@ export default function LoginPage() {
         />
         {mode === "register" && (
           <span id="password-help" className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
-            At least 12 characters. Length matters far more than symbols — a memorable
+            At least 12 characters. Length matters far more than symbols. A memorable
             phrase beats a short scramble.
           </span>
         )}
@@ -208,7 +208,7 @@ export default function LoginPage() {
           className="mt-4 rounded-lg border border-lapis-300 bg-lapis-50 p-3 text-sm text-lapis-900 dark:border-lapis-700 dark:bg-lapis-950 dark:text-lapis-200"
           role="status"
         >
-          Astronomical dating needs an account — the free allowance of five searches is
+          Astronomical dating needs an account. The free allowance of five searches is
           counted per account, so there is no anonymous path for it. Ordinary analysis
           still works without signing in.
         </p>
@@ -232,8 +232,8 @@ export default function LoginPage() {
           </p>
           <p className="mt-2 text-sm text-ink-700 dark:text-ink-300">
             This is almost always the API waking from sleep rather than anything being
-            wrong. Sign-in options cannot be listed until it answers — so none are shown
-            below, and that is not a statement that none exist.
+            wrong. Sign-in options cannot be listed until it answers, so none are shown
+            below. Their absence here does not mean none exist.
           </p>
           <button
             type="button"
@@ -257,7 +257,7 @@ export default function LoginPage() {
             <p className="mt-2 text-sm text-ink-700 dark:text-ink-300">
               This deployment has no sign-in provider configured, and password accounts are
               switched off because there is no way to reset a forgotten password. Nothing is
-              broken and nothing is missing from the analysis itself — an account only saves
+              broken and nothing is missing from the analysis itself. An account only saves
               your work and lets you search across it.
             </p>
           </div>

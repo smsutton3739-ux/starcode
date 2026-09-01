@@ -25,7 +25,7 @@ const STATUS_NOTES: Record<string, string> = {
   active: "Your subscription is active.",
   trialing: "You are in a trial period.",
   past_due:
-    "A payment failed and Stripe is retrying your card. Access continues for now — update your card in the portal to avoid losing it.",
+    "A payment failed and Stripe is retrying your card. Access continues for now. Update your card in the portal to avoid losing it.",
   canceled: "This subscription has been cancelled.",
   unpaid: "Payment retries were exhausted, so the subscription lapsed.",
   incomplete: "Checkout was started but never completed.",
@@ -122,8 +122,8 @@ export default function BillingPage() {
 
             <p className="mt-3 text-sm text-ink-600 dark:text-ink-300">
               {status.unlocks_interpretation
-                ? "Interpretive claims — traditional readings, scholarly positions and AI hypotheses — are visible on your reports."
-                : "Interpretive claims are locked on your reports. Everything computed — astronomy, calendars, entities, citations — is unaffected."}
+                ? "Interpretive claims are visible on your reports: traditional readings, scholarly positions and AI hypotheses."
+                : "Interpretive claims are locked on your reports. Everything computed is unaffected: astronomy, calendars, entities, citations."}
             </p>
 
             {status.byok_key_last4 && (

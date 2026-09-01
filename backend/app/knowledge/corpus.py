@@ -111,12 +111,12 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
         "region": "Mesopotamia",
         "description": (
             "The principal Mesopotamian celestial omen series. Its structure is 'if X in the "
-            "sky, then Y on earth' — omens read as warnings to be averted, not fixed fates."
+            "sky, then Y on earth'. Omens were read as warnings to be averted, not fixed fates."
         ),
         "canonical_citation": "Enūma Anu Enlil, Neo-Assyrian recension, British Museum collection.",
         "reliability": "scholarly_consensus",
         "is_primary_source": True,
-        "license": "Text public domain; modern translations under copyright — quote sparingly",
+        "license": "Text public domain; modern translations under copyright, so quote sparingly",
     },
     {
         "slug": "babylonian-astronomical-diaries",
@@ -156,8 +156,8 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
         "region": "Roman Egypt",
         "description": (
             "Ptolemy's geocentric synthesis, including a star catalogue and a list of "
-            "eclipse observations reaching back to the 8th century BCE — the bridge by which "
-            "Babylonian records entered Greek and later European astronomy."
+            "eclipse observations reaching back to the 8th century BCE. It is the bridge by "
+            "which Babylonian records entered Greek and later European astronomy."
         ),
         "canonical_citation": "Ptolemy, Almagest; trans. G. J. Toomer (Duckworth, 1984).",
         "reliability": "high_primary",
@@ -180,7 +180,7 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
         "region": "Yucatán",
         "description": (
             "One of four surviving Maya codices. Contains the Venus table, eclipse tables and "
-            "ritual almanacs — some of the most accurate pre-telescopic astronomy anywhere."
+            "ritual almanacs, some of the most accurate pre-telescopic astronomy anywhere."
         ),
         "canonical_citation": (
             "Codex Dresdensis, Sächsische Landesbibliothek Dresden, Mscr.Dresd.R.310."
@@ -224,8 +224,8 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
         "region": "Han China",
         "description": (
             "Systematic account of Chinese celestial divisions and portent interpretation, "
-            "and the model for the astronomical treatises of every later dynastic history — "
-            "the reason Chinese records of comets and guest stars are so continuous."
+            "and the model for the astronomical treatises of every later dynastic history. "
+            "It is the reason Chinese records of comets and guest stars are so continuous."
         ),
         "canonical_citation": "Sima Qian, Shiji, ch. 27.",
         "reliability": "high_primary",
@@ -262,7 +262,7 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
         "dating_note": (
             "First edition 1555; expanded editions to 1568. The publication history is "
             "genuinely messy, and some quatrains circulating today appear in no 16th-century "
-            "edition — provenance should be checked before any quatrain is interpreted."
+            "edition, so provenance should be checked before any quatrain is interpreted."
         ),
         "region": "France",
         "description": (
@@ -333,7 +333,7 @@ HISTORICAL_SOURCES: list[dict[str, Any]] = [
             "Records 21 years of Venus risings and settings under Ammisaduqa of Babylon. "
             "Because Venus phenomena repeat, the observations fit several possible absolute "
             "dates, producing the 'high', 'middle', 'low' and 'ultra-low' Mesopotamian "
-            "chronologies — which differ by up to 150 years. This single tablet is why the "
+            "chronologies, which differ by up to 150 years. This single tablet is why the "
             "absolute chronology of the ancient Near East remains unsettled."
         ),
         "region": "Babylon",
@@ -436,7 +436,7 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
             "The falling-stars simile is a reasonable description of an intense meteor storm, "
             "and the 1833 Leonid storm was widely read this way at the time. That an image "
             "matches an observable phenomenon does not establish that the text predicted a "
-            "particular occurrence of it — the imagery is also standard in earlier Jewish "
+            "particular occurrence of it. The imagery is also standard in earlier Jewish "
             "apocalyptic (Isaiah 34:4)."
         ),
     },
@@ -454,7 +454,7 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
         "prophetic_content": True,
         "notes": (
             "Widely mapped onto the constellation Virgo with the Sun in Virgo and the Moon "
-            "at her feet — a configuration that recurs, by the geometry involved, roughly "
+            "at her feet, a configuration that recurs, by the geometry involved, roughly "
             "once a year and can be found in many years with minor variations. The "
             "arrangement is astronomically checkable; the identification of the woman with "
             "Virgo is a scholarly and traditional reading, and claims that a specific "
@@ -476,8 +476,8 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
         "prophetic_content": True,
         "notes": (
             "Papyrus 115 and Codex Ephraemi read 616, not 666. Both numbers work as gematria "
-            "for 'Nero Caesar' — 666 from the Hebrew transliteration of the Greek form, 616 "
-            "from the Latin form — which is the most commonly held scholarly explanation. "
+            "for 'Nero Caesar': 666 from the Hebrew transliteration of the Greek form, 616 "
+            "from the Latin form. That is the most commonly held scholarly explanation. "
             "Any analysis of this verse that does not mention the 616 variant is incomplete."
         ),
     },
@@ -536,7 +536,7 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
         "astronomical_content": True,
         "prophetic_content": True,
         "notes": (
-            "Mesopotamian eclipse omens were conditional warnings, not fixed predictions — "
+            "Mesopotamian eclipse omens were conditional warnings, not fixed predictions, "
             "which is why the substitute-king ritual existed: a stand-in occupied the throne "
             "for the danger period and was disposed of afterwards. This is direct evidence "
             "that the culture producing these texts understood omens as avertable. Reading "
@@ -632,8 +632,8 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
         "notes": (
             "Chinese 'broom star' (huixing) records are the single most valuable historical "
             "comet dataset, because portent-watching was an official state function and "
-            "records were kept continuously for two millennia. The interpretive frame — "
-            "comets signalling dynastic change — is what motivated the record-keeping, and "
+            "records were kept continuously for two millennia. The interpretive frame, that "
+            "comets signalled dynastic change, is what motivated the record-keeping, and "
             "also what makes the records occasionally suspect near political transitions."
         ),
     },
@@ -651,7 +651,7 @@ SOURCE_PASSAGES: list[dict[str, Any]] = [
         "notes": (
             "The observations are precise; the problem is that Venus phenomena recur on an "
             "8-year cycle, so the pattern fits multiple absolute dates. This is a clean "
-            "example of good data underdetermining a conclusion — the resulting high, middle "
+            "example of good data underdetermining a conclusion. The resulting high, middle "
             "and low chronologies differ by up to 150 years and the question is still open."
         ),
     },
@@ -792,7 +792,7 @@ RECORDED_ASTRONOMICAL_EVENTS: list[dict[str, Any]] = [
         "description": (
             "Song dynasty records describe a star visible in daylight for 23 days and at "
             "night for nearly two years. Its remnant is the Crab Nebula. Conspicuously absent "
-            "from European records — a useful caution about arguments from silence."
+            "from European records, a useful caution about arguments from silence."
         ),
         "source_slug": "shiji-tianguan-shu",
         "visibility_regions": ["China", "Japan", "Arab world", "North America"],

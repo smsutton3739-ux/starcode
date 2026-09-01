@@ -286,8 +286,8 @@ def extract_from_pdf(data: bytes, filename: str) -> ExtractionResult:
             ocr_applied = True
             warnings.append(
                 "This PDF contained little or no embedded text, so OCR was used. "
-                "OCR of historical documents makes systematic errors — confusing similar "
-                "letterforms, dropping diacritics, and misreading marginalia — so verify "
+                "OCR of historical documents makes systematic errors, confusing similar "
+                "letterforms, dropping diacritics and misreading marginalia. Verify "
                 "any critical reading against the original."
             )
         else:
@@ -406,7 +406,7 @@ def extract_from_image(data: bytes, filename: str, mime_type: str) -> Extraction
 
     warnings = [
         "This text was produced by OCR. Optical recognition of historical manuscripts is "
-        "error-prone in specific, predictable ways — similar letterforms are confused, "
+        "error-prone in specific, predictable ways. Similar letterforms are confused, "
         "diacritics and abbreviation marks are dropped, and marginalia can be interleaved "
         "with the main text. Treat the transcription as a draft and verify anything the "
         "analysis turns on."

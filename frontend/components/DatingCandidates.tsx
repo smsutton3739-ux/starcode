@@ -147,7 +147,7 @@ function CandidateRow({
 
         {payload.framework && (
           <p className="mt-3 rounded border border-gold-300 bg-gold-50 p-2 text-xs text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200">
-            Produced by {payload.framework}. This is what applying that method yields — not
+            Produced by {payload.framework}. This is what applying that method yields. It is not
             a statement that the text refers to this date, and not a prediction.
           </p>
         )}
@@ -177,7 +177,7 @@ function CandidateRow({
               <dt className="font-medium">
                 {criterionLabel(outcome.criterion)}{" "}
                 <span className="font-normal text-ink-500 dark:text-ink-400">
-                  {outcome.matched ? "— matched" : outcome.searchable ? "— not matched" : "— not checkable"}
+                  {outcome.matched ? "(matched)" : outcome.searchable ? "(not matched)" : "(not checkable)"}
                 </span>
               </dt>
               <dd className="text-ink-700 dark:text-ink-300">{outcome.detail}</dd>

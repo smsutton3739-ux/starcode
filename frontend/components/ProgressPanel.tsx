@@ -93,7 +93,7 @@ export function ProgressPanel({ status }: { status: AnalysisStatusResponse | nul
       </ol>
 
       <p className="mt-8 text-xs text-ink-500 dark:text-ink-400">
-        This usually takes under a minute. You can leave this page open — it will update
+        This usually takes under a minute. You can leave this page open and it will update
         on its own.
       </p>
     </div>

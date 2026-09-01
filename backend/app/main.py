@@ -30,7 +30,7 @@ prophecies.
 
 **The rule this API is built around:** every statement carries an explicit `claim_type`,
 and the distinction between evidence and interpretation is enforced in code, not left to
-tone. A claim requiring a citation cannot be stored without one — it is downgraded to an
+tone. A claim requiring a citation cannot be stored without one; it is downgraded to an
 AI hypothesis instead. Confidence for AI hypotheses is capped by policy.
 
 Call `GET /api/v1/corpus/claim-types` for the vocabulary and how to render it.

@@ -121,7 +121,7 @@ export function ReportView({ analysis }: { analysis: AnalysisDetail }) {
         {evidenceOnly && (
           <p className="mt-3 text-xs text-ink-600 dark:text-ink-400">
             Showing only quotations, calculations and cited history. Interpretations and
-            hypotheses are hidden — they are still part of the analysis.
+            hypotheses are hidden, but they are still part of the analysis.
           </p>
         )}
       </div>
@@ -286,7 +286,7 @@ function ReferenceList({ references }: { references: ReferenceItem[] }) {
       {unverified.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-terra-700 dark:text-terra-400">
-            Unverified — check before citing
+            Unverified: check before citing
           </h3>
           <p className="mt-1 text-xs text-ink-600 dark:text-ink-400">
             These came from the language model rather than the curated corpus. Language

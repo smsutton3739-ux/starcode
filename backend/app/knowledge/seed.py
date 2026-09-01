@@ -132,7 +132,7 @@ def _upsert_recorded_events(db: Session, source_ids: dict[str, str]) -> int:
         ).scalar_one_or_none()
         target = existing or AstronomicalEvent(designation=comet.designation)
         target.event_type = "comet"
-        target.label = f"{comet.name} — {comet.perihelion_note}"
+        target.label = f"{comet.name}: {comet.perihelion_note}"
         target.year = comet.year
         target.is_computed = comet.evidence in ("computed_return", "both")
         target.computation_engine = comet.source
@@ -209,7 +209,7 @@ def _build_index(db: Session, source_ids: dict[str, str]) -> int:
             db,
             kind="source_passage",
             source_key=row["source_slug"],
-            title=f"{source['title']} — {row['reference_label']}",
+            title=f"{source['title']}, {row['reference_label']}",
             content=row["translation"],
             citation=citation,
             tradition=source.get("tradition"),

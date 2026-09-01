@@ -41,7 +41,7 @@ export default function AnalysisPage() {
       setError(
         cause instanceof ApiRequestError
           ? cause.status === 404
-            ? "This analysis could not be found. If you submitted it without an account, it can only be opened from the browser you used — the retrieval token is stored there and nowhere else."
+            ? "This analysis could not be found. If you submitted it without an account, it can only be opened from the browser you used. The retrieval token is stored there and nowhere else."
             : cause.message
           : "Could not load this analysis.",
       );
@@ -177,7 +177,7 @@ export default function AnalysisPage() {
         {analysis.document?.ocr_applied && (
           <div className="mt-4 rounded-lg border border-gold-300 bg-gold-50 p-4 text-sm text-gold-900 dark:border-gold-700 dark:bg-gold-950 dark:text-gold-200">
             <strong>This text came from OCR.</strong> Optical recognition of historical
-            documents makes predictable errors — similar letterforms are confused,
+            documents makes predictable errors: similar letterforms are confused,
             diacritics are dropped, marginalia get interleaved. Verify anything the
             analysis turns on against the original.
             {analysis.document.ocr_confidence != null && (

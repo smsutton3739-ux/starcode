@@ -305,7 +305,7 @@ def nearest_new_moon(jd_tt: float) -> CelestialEvent:
         "New Moon",
         best,
         f"{MEEUS}, ch. 49",
-        "Astronomical conjunction, not first crescent visibility — many ancient calendars "
+        "Astronomical conjunction, not first crescent visibility. Many ancient calendars "
         "began the month one to two days later, at the first sighting.",
         {"phase": "New Moon"},
     )
@@ -328,7 +328,7 @@ def _eclipse_accuracy_note(year: int) -> str:
     base = (
         "Computed from the Moon's argument of latitude at syzygy (Meeus ch. 54). "
         "No ground track is integrated, so this establishes that an eclipse occurred, "
-        "when, and of what type — not who could see it."
+        "when, and of what type, but not who could see it."
     )
     if year >= 1600:
         return base + " Date and magnitude match modern catalogues to within ~0.005."
@@ -339,8 +339,8 @@ def _eclipse_accuracy_note(year: int) -> str:
             "Five Millennium Canon before being used as evidence."
         )
     return (
-        base + " For dates BCE the day itself is dependable — the method reproduces the "
-        "classical anchor eclipses exactly — but magnitude and γ carry meaningfully larger "
+        base + " For dates BCE the day itself is dependable, and the method reproduces the "
+        "classical anchor eclipses exactly. Magnitude and γ carry meaningfully larger "
         "error, and ΔT uncertainty of tens of minutes means visibility from any named "
         "location must be verified separately."
     )

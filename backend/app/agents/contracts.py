@@ -112,7 +112,7 @@ CLAIM_TYPE_PRESENTATION: dict[ClaimType, dict[str, str]] = {
     ClaimType.TEXTUAL_ANALYSIS: {
         "label": "Textual analysis",
         "short": "Text analysis",
-        "description": "An observation about the text itself — its language, structure or vocabulary.",
+        "description": "An observation about the text itself: its language, structure or vocabulary.",
         "tone": "analytical",
     },
     ClaimType.TRADITIONAL_INTERPRETATION: {
@@ -528,7 +528,7 @@ def summarize_confidence(claims: list[ClaimDraft]) -> dict:
 
     if evidence_count == 0:
         rationale = (
-            "This analysis rests on no verifiable evidence claims — it is entirely "
+            "This analysis rests on no verifiable evidence claims. It is entirely "
             "interpretation and conjecture. Treat the overall figure as a measure of "
             "internal coherence, not of truth."
         )

@@ -13,7 +13,7 @@ const KIND_STYLE: Record<string, { dot: string; label: string }> = {
 const CERTAINTY_NOTE: Record<string, string> = {
   calculated: "Computed, not inferred.",
   attested: "Attested in the historical record.",
-  approximate: "Approximate — a conventional range, not a fixed date.",
+  approximate: "Approximate: a conventional range, not a fixed date.",
   disputed: "Disputed among scholars.",
 };
 

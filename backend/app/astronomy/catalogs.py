@@ -283,7 +283,7 @@ COMET_APPARITIONS: list[CometRecord] = [
         "both",
         [
             "Chinese records",
-            "Cassius Dio, Roman History 54.29 — a comet before the death of Agrippa",
+            "Cassius Dio, Roman History 54.29: a comet before the death of Agrippa",
         ],
         YEOMANS_REFERENCE,
     ),
@@ -294,7 +294,7 @@ COMET_APPARITIONS: list[CometRecord] = [
         "Perihelion 25 January 66 CE",
         "both",
         [
-            "Josephus, The Jewish War 6.289 — 'a star resembling a sword' over "
+            "Josephus, The Jewish War 6.289: 'a star resembling a sword' over "
             "Jerusalem; the identification with Halley is a scholarly inference, "
             "not something Josephus states"
         ],
@@ -387,7 +387,7 @@ COMET_APPARITIONS: list[CometRecord] = [
         837,
         "Perihelion 28 February 837 CE",
         "both",
-        ["Approached to about 0.03 au — the closest recorded Halley apparition"],
+        ["Approached to about 0.03 au, the closest recorded Halley apparition"],
         YEOMANS_REFERENCE,
     ),
     CometRecord(
@@ -583,7 +583,7 @@ HISTORICAL_SUPERNOVAE = [
         "designation": "SN 185",
         "year": 185,
         "constellation": "Circinus/Centaurus",
-        "record": "Book of Later Han — a 'guest star' visible about eight months",
+        "record": "Book of Later Han: a 'guest star' visible about eight months",
         "modern_remnant": "RCW 86",
         "evidence": "historical_record",
     },
@@ -624,7 +624,7 @@ HISTORICAL_SUPERNOVAE = [
         "designation": "SN 1572",
         "year": 1572,
         "constellation": "Cassiopeia",
-        "record": "Tycho Brahe, De nova stella — evidence against the immutability of the heavens",
+        "record": "Tycho Brahe, De nova stella: evidence against the immutability of the heavens",
         "modern_remnant": "Tycho's SNR",
         "evidence": "both",
     },

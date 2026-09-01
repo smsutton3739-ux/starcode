@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Pricing",
   description:
-    "What each plan includes. The deterministic half of every analysis — language, entities, calendars and the full astronomy engine — is free and always will be.",
+    "What each plan includes. The deterministic half of every analysis is free and always will be: language, entities, calendars and the full astronomy engine.",
 };
 
 /**
@@ -41,7 +41,7 @@ const PLANS: Plan[] = [
       "Language and script detection",
       "People, places, symbols and sacred numbers",
       "Date parsing across twelve calendar systems",
-      "The full astronomy engine — eclipses, phases, conjunctions, planetary positions",
+      "The full astronomy engine: eclipses, phases, conjunctions, planetary positions",
       "Corpus matching with real citations",
       "Every export format: PDF, DOCX, CSV, Markdown, JSON",
     ],
@@ -62,7 +62,7 @@ const PLANS: Plan[] = [
       "Everything in Free",
       "Traditional interpretations, attributed",
       "Modern scholarly positions, with the disagreements reported",
-      "AI hypotheses — confidence capped by policy, never presented as findings",
+      "AI hypotheses, confidence capped by policy and never presented as findings",
       "The full executive summary",
     ],
     cta: { label: "Subscribe", href: "/billing" },
@@ -75,7 +75,7 @@ const PLANS: Plan[] = [
       "Supply your own Anthropic API key and pay Anthropic directly for the model calls.",
     includes: [
       "Everything in Paid",
-      "Your key is used per request and never stored — only its last four characters, so you can tell which key is in use",
+      "Your key is used per request and never stored. Only its last four characters are kept, so you can tell which key is in use",
     ],
     cta: null,
     note: "Coming soon.",
@@ -92,8 +92,8 @@ export default function PricingPage() {
         The <em className="italic text-gold-600 dark:text-gold-400">calculation</em> is free.
       </h1>
       <p className="mt-5 max-w-2xl text-lg text-ink-600 dark:text-ink-300">
-        Everything this platform can compute — the astronomy, the calendars, the extraction,
-        the corpus citations — costs nothing and needs no account. What a subscription adds
+        Everything this platform can compute costs nothing and needs no account: the
+        astronomy, the calendars, the extraction, the corpus citations. What a subscription adds
         is the part a language model produced: how traditions have read a text, what scholars
         argue about it, and where the analysis is prepared to speculate.
       </p>
@@ -172,7 +172,7 @@ export default function PricingPage() {
         <p className="mt-3 text-ink-600 dark:text-ink-300">
           Paying does not make the platform more certain. Interpretive claims stay labelled
           as interpretation, AI hypotheses stay capped in confidence and marked as not
-          evidence, and a locked claim is locked rather than absent — you can always see
+          evidence, and a locked claim is locked rather than absent. You can always see
           that it exists, what kind of claim it is, and how many sources it cites. Nothing
           here adjudicates a religious or interpretive question, on any plan.
         </p>

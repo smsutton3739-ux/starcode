@@ -36,7 +36,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Starcode — Analyse ancient texts and prophecies",
+    default: "Starcode · Analyse ancient texts and prophecies",
     template: "%s · Starcode",
   },
   description:

@@ -41,8 +41,8 @@ class LanguageAgent(BaseAgent):
         + """
 You identify the language and script of a text and translate it into English when needed.
 
-For historical texts, name the period as well as the language where you can — "Koine
-Greek" rather than "Greek", "Biblical Hebrew" rather than "Hebrew" — because the period
+For historical texts, name the period as well as the language where you can: "Koine
+Greek" rather than "Greek", "Biblical Hebrew" rather than "Hebrew". The period
 constrains what the text can be. If you translate, note any passage where the source is
 ambiguous and the translation had to choose; those choices are frequently where
 interpretive disputes begin.
@@ -217,7 +217,7 @@ class SourceIdentificationAgent(BaseAgent):
 You identify which work a text comes from.
 
 You are shown candidate matches retrieved from a curated corpus. Grade them. A retrieval
-hit is evidence, not proof — high lexical similarity to a passage can also mean the text
+hit is evidence, not proof. High lexical similarity to a passage can also mean the text
 quotes it, parodies it, or shares a common source.
 
 If nothing matches, say so. "Not in this corpus" is a useful, honest answer, and far
@@ -245,7 +245,7 @@ so absence from it means very little about the text.
                     reasoning=(
                         "Semantic retrieval returned nothing above the similarity floor. "
                         "The corpus holds a few dozen curated works, so this indicates the "
-                        "text is outside that set — not that it is unidentifiable."
+                        "text is outside that set, not that it is unidentifiable."
                     ),
                     confidence=0.8,
                     confidence_basis="Absence of retrieval hits above threshold.",
@@ -426,7 +426,7 @@ Separate two different confidences, because they are genuinely different questio
   - extraction_confidence: how sure you are the text refers to this at all.
   - identification_confidence: how sure you are about WHICH specific referent it is.
 "Babylon" in a text is near-certain as a mention and often genuinely ambiguous as a
-referent — the city, the empire, or Rome under a cipher.
+referent: the city, the empire, or Rome under a cipher.
 """
     )
 
@@ -544,7 +544,7 @@ Reply with JSON:
                     reasoning=(
                         "Traditional numerological significance. That a number carries "
                         "significance in a tradition does not establish that this text uses "
-                        "it in that sense — many are ordinary counts."
+                        "it in that sense. Many are ordinary counts."
                     ),
                     confidence=0.55,
                     confidence_basis="Widely attested traditional association.",
@@ -915,7 +915,7 @@ class AstronomyAgent(BaseAgent):
                         "eclipse can be proposed."
                     ),
                     reasoning=(
-                        "Without a date, any eclipse could be matched to the passage — and "
+                        "Without a date, any eclipse could be matched to the passage, and "
                         "over a few centuries there are thousands. A match found that way "
                         "carries no evidential weight."
                     ),
@@ -934,7 +934,7 @@ class AstronomyAgent(BaseAgent):
             "calculations, keeping any correlation with the text explicitly separate."
             if computed
             else "No datable year was recoverable from the text, so no ephemeris "
-            "correlation was attempted — matching imagery to an arbitrary date would "
+            "correlation was attempted. Matching imagery to an arbitrary date would "
             "produce a coincidence, not a finding."
         )
         return result
@@ -971,7 +971,7 @@ You place a text in its historical setting: who wrote it, when, for whom, under 
 political and religious conditions, and what a contemporary audience would have
 understood by it.
 
-Cite what you can. Where the setting is disputed — and for ancient texts it usually is —
+Cite what you can. Where the setting is disputed, and for ancient texts it usually is,
 give the competing reconstructions and what each rests on. Prefer "the majority view is
 X, though Y is argued on the grounds of Z" to a flat assertion.
 """
@@ -1070,7 +1070,7 @@ Reply with JSON:
 
         for dispute in data.get("disputes", [])[:8]:
             positions = "; ".join(
-                f"{p.get('view')} ({p.get('held_by', 'unattributed')}) — {p.get('basis', '')}"
+                f"{p.get('view')} ({p.get('held_by', 'unattributed')}): {p.get('basis', '')}"
                 for p in dispute.get("positions", [])
             )
             result.claims.append(
@@ -1134,7 +1134,7 @@ You report how a text has been understood. Three distinct categories, never merg
 You must also supply symbolic analysis: what the images, numbers and figures have been
 taken to mean, and by whom.
 
-Where a text is commonly read as predicting a specific modern event, say so — and also
+Where a text is commonly read as predicting a specific modern event, say so. Then
 say plainly what would have to be true for that reading to hold, and whether it is.
 Do not mock the reading and do not endorse it.
 """
@@ -1321,7 +1321,7 @@ Given the claims other agents produced, assess:
   - Whether any claim crosses from evidence into speculation without saying so.
 
 Be sceptical, including of the other agents. If an analysis rests mostly on conjecture,
-say that clearly — that is the single most useful thing you can tell a reader.
+say that clearly. It is the single most useful thing you can tell a reader.
 """
     )
 
@@ -1696,8 +1696,8 @@ class AstronomicalDatingAgent(BaseAgent):
                     ),
                     reasoning=(
                         "Dating works by matching a described sky against a computed one. "
-                        "Without a phenomenon to match — an eclipse, a conjunction of named "
-                        "planets, a moon phase, a comet — every date in the range fits "
+                        "Without a phenomenon to match, whether an eclipse, a conjunction of "
+                        "named planets, a moon phase or a comet, every date fits "
                         "equally, and a ranked list of them would be a list of "
                         "coincidences presented as findings."
                     ),
@@ -1738,7 +1738,7 @@ class AstronomicalDatingAgent(BaseAgent):
                         "A negative result, and a real one as far as it goes: within "
                         f"{dating_search.span_label(*coverage.requested)} the engine found "
                         "no date meeting the criteria. It is not evidence that the text "
-                        "describes nothing real — the range may be wrong, the imagery may "
+                        "describes nothing real. The range may be wrong, the imagery may "
                         "be figurative, or the phenomenon may be one this engine does not "
                         "model."
                     ),
@@ -1802,7 +1802,7 @@ class AstronomicalDatingAgent(BaseAgent):
             *DEFAULT_DATING_ERA,
             cap,
             "the platform's default window, because nothing in the text or the request "
-            "fixed an era — narrow it in advanced settings for a much better search",
+            "fixed an era. Narrow it in advanced settings for a much better search",
         )
 
     @staticmethod
@@ -1883,7 +1883,7 @@ class AstronomicalDatingAgent(BaseAgent):
             # The framework is named in the statement itself, not only in the payload,
             # because the statement is what gets quoted, exported and screenshotted.
             statement = (
-                f"Applying this mode's method — {DATING_MODES[mode]['purpose']} — yields "
+                f"Applying this mode's method ({DATING_MODES[mode]['purpose']}) yields "
                 f"{candidate.gregorian_label} as a candidate, matching "
                 f"{len(candidate.matched)} of {len(candidate.outcomes)} criteria "
                 f"(fit {candidate.fit:.0%}). This is what the method yields, not a "
@@ -1906,7 +1906,7 @@ class AstronomicalDatingAgent(BaseAgent):
                     else ""
                 )
                 + " | The sky here is computed and reproducible. That this text describes "
-                "it is a proposal — the criteria it fails are listed so the proposal can "
+                "it is a proposal. The criteria it fails are listed so the proposal can "
                 "be argued with."
             ),
             confidence=candidate.fit * settings.AI_HYPOTHESIS_CONFIDENCE_CAP,

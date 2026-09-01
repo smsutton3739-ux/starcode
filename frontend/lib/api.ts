@@ -270,7 +270,7 @@ export async function pollAnalysis(
       throw new ApiRequestError(0, {
         error: "timeout",
         detail:
-          "The analysis is taking unusually long. It is still running on the server — reload this page later to check.",
+          "The analysis is taking unusually long. It is still running on the server, so reload this page later to check.",
       });
     }
 

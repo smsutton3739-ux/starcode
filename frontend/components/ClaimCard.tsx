@@ -75,7 +75,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
           </p>
           <p className="mt-2 text-sm text-ink-700 dark:text-ink-300">
             This {style.label.toLowerCase()} was produced by the analysis and is included
-            in your report — the text is held back on the free plan.
+            in your report, but the text is held back on the free plan.
             {references.length > 0 && (
               <>
                 {" "}
@@ -173,7 +173,7 @@ export function ClaimCard({ claim }: { claim: Claim }) {
                         {!reference.verified && (
                           // A model-supplied citation must never look like a checked one.
                           <span className="ml-2 badge border-terra-300 bg-terra-50 text-terra-900 dark:border-terra-700 dark:bg-terra-950 dark:text-terra-200">
-                            unverified — check before citing
+                            unverified: check before citing
                           </span>
                         )}
                       </li>

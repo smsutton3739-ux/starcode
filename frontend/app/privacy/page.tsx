@@ -47,7 +47,7 @@ export default function PrivacyPage() {
           own browser. We store only a hash of it, which means we can check a token you
           present but cannot produce one ourselves. The practical consequence is worth
           stating plainly: <strong>if you clear your browser storage, that analysis is
-          unreachable — by you and by us.</strong> There is no recovery, because there is
+          unreachable, by you and by us.</strong> There is no recovery, because there is
           no account it belongs to.
         </p>
 
@@ -77,14 +77,14 @@ export default function PrivacyPage() {
         <p>
           The texts you submit, the reports produced from them, any files you upload for
           text extraction, your saved collections and tags, and your settings. That is the
-          product working as intended — an account exists so your analyses persist and can
+          product working as intended. An account exists so your analyses persist and can
           be searched.
         </p>
 
         <h2 className="mt-10 font-display text-2xl">If you subscribe</h2>
         <p>
           Payments are processed by <strong>Stripe</strong>. Your card number never reaches
-          this service and is never stored here — you enter it on a page Stripe hosts, and
+          this service and is never stored here. You enter it on a page Stripe hosts, and
           they hold it. What we keep is the minimum needed to know what you have paid for:
           your Stripe customer and subscription identifiers, your plan, and the
           subscription&rsquo;s current status (active, past due, cancelled and so on).
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
         <p>
           Cancelling is self-service through Stripe&rsquo;s billing portal, reachable from
           your billing page. Cancelling ends the subscription; it does not delete your
-          account or your analyses, which is deliberate — losing your saved work because a
+          account or your analyses, which is deliberate. Losing your saved work because a
           card expired would be a poor trade.
         </p>
 
@@ -106,9 +106,9 @@ export default function PrivacyPage() {
         <p>
           We keep an append-only record of actions that change data or read someone
           else&rsquo;s, so an incident can be reconstructed. It stores{" "}
-          <strong>a hash of your IP address rather than the address itself</strong> —
-          enough to notice that many requests came from one source, not enough to identify
-          a person from the record. Your browser&rsquo;s user-agent string is stored
+          <strong>a hash of your IP address rather than the address itself</strong>,
+          which is enough to notice that many requests came from one source and not enough
+          to identify a person from the record. Your browser&rsquo;s user-agent string is stored
           alongside it.
         </p>
 
@@ -116,8 +116,8 @@ export default function PrivacyPage() {
         <p>
           When an interpretive analysis runs, the relevant portion of your text is sent to{" "}
           <strong>Anthropic</strong> for processing. The deterministic half of the
-          platform — language detection, entity extraction, calendar conversion and the
-          whole astronomy engine — runs here and sends your text nowhere.
+          platform (language detection, entity extraction, calendar conversion and the
+          whole astronomy engine) runs here and sends your text nowhere.
         </p>
         <p>
           The <Link href="/tools">chart tools page</Link> embeds a third-party widget from
@@ -133,9 +133,9 @@ export default function PrivacyPage() {
         <h2 className="mt-10 font-display text-2xl">Getting rid of it</h2>
         <p>
           Deleting an analysis deletes its text, its report and its claims. Deleting your
-          account removes everything attached to it — analyses, documents, uploads,
-          collections, settings and linked sign-in identities — by cascade, in the same
-          operation.
+          account removes everything attached to it by cascade, in the same operation:
+          analyses, documents, uploads, collections, settings and linked sign-in
+          identities.
         </p>
         <p>
           The security record above is the deliberate exception: it survives account
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
         <p>
           To delete an account, email the address below. If you signed in with a provider,
           revoking Starcode&rsquo;s access in your Google or GitHub settings stops future
-          sign-ins but does not by itself delete what is stored here — ask us for that.
+          sign-ins but does not by itself delete what is stored here. Ask us for that.
         </p>
 
         <h2 className="mt-10 font-display text-2xl">Cookies</h2>

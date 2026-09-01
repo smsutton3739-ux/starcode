@@ -67,7 +67,7 @@ export function AnalyzeBox() {
     setBusy(true);
     setBusyLabel(
       /\.(png|jpe?g|tiff?|webp)$/i.test(file.name)
-        ? "Reading the image — this can take a moment for a scan…"
+        ? "Reading the image. This can take a moment for a scan…"
         : "Extracting text…",
     );
     try {
@@ -333,7 +333,7 @@ export function AnalyzeBox() {
 
       {looksLikeUrl && !attachment && (
         <p className="mt-3 text-center text-sm text-ink-500 dark:text-ink-400">
-          That looks like a link — the page will be fetched and its text extracted.
+          That looks like a link. The page will be fetched and its text extracted.
         </p>
       )}
 

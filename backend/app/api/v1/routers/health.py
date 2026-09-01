@@ -86,12 +86,12 @@ def health(response: Response, db: DbSession) -> HealthResponse:
     )
 
 
-@router.get("/health/live", summary="Liveness only — no dependencies touched")
+@router.get("/health/live", summary="Liveness only, no dependencies touched")
 def live() -> dict:
     return {"status": "ok", "uptime_seconds": round(time.time() - _STARTED_AT, 1)}
 
 
-@router.get("/health/ready", summary="Readiness — fails if the database is unreachable")
+@router.get("/health/ready", summary="Readiness, fails if the database is unreachable")
 def ready(response: Response, db: DbSession) -> dict:
     try:
         db.execute(text("SELECT 1"))

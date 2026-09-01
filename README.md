@@ -6,7 +6,8 @@ Starcode analyses ancient texts, historical documents, astronomical references a
 traditional prophecies, and returns a structured report that separates  what is
 *established* from what is *interpreted* from what is *conjectured*.
 
-One box. One button. A report you can check.
+Paste into the box, press the button, and read the result. Every finding in it says
+where it came from.
 
 ---
 
@@ -14,7 +15,7 @@ One box. One button. A report you can check.
 
 > **Speculation is never presented as established fact.**
 
-That is not a matter of careful wording. Wording drifts, models improvise, and a
+Careful wording cannot deliver that on its own. Wording drifts, models improvise, and a
 confident sentence reads the same whether or not anything backs it. So the rule is
 enforced structurally: every statement the platform makes is stored with an explicit
 type, and the rules for each type are checked in code before anything reaches a reader.
@@ -22,12 +23,12 @@ type, and the rules for each type are checked in code before anything reaches a 
 | Type | Meaning | Evidence? |
 | --- | --- | --- |
 | `source_text` | Quoted verbatim from your input | ✅ |
-| `verified_history` | Attested in the historical record — **requires a citation to exist** | ✅ |
-| `astronomical_calculation` | Computed by the ephemeris/calendar engines — **must name its engine** | ✅ |
-| `astronomical_dating_candidate` | A date proposed because its computed sky matches the text — **must name its engine and list the criteria it failed**; confidence capped | — |
+| `verified_history` | Attested in the historical record. **Requires a citation to exist** | ✅ |
+| `astronomical_calculation` | Computed by the ephemeris/calendar engines. **Must name its engine** | ✅ |
+| `astronomical_dating_candidate` | A date proposed because its computed sky matches the text. **Must name its engine and list the criteria it failed**; confidence capped | — |
 | `textual_analysis` | An observation about the text itself | — |
 | `traditional_interpretation` | What a tradition has held. Reported, not endorsed | — |
-| `scholarly_interpretation` | A position argued in academia — **requires a citation** | — |
+| `scholarly_interpretation` | A position argued in academia. **Requires a citation** | — |
 | `ai_hypothesis` | Model conjecture. Confidence **capped by policy** | — |
 | `uncertain` | Genuinely undetermined | — |
 
@@ -79,7 +80,7 @@ gathers traditional and scholarly readings · audits its own evidence.
 
 ### The astronomy is real
 
-Not lookups — computation, from published algorithms, offline and deterministic:
+Computation rather than lookups, from published algorithms, offline and deterministic:
 
 - **Eclipses** (Meeus ch. 54): date, type, magnitude, γ, duration
 - **Lunar phases** (ch. 49), **equinoxes and solstices** (ch. 27)
@@ -113,9 +114,9 @@ Conversions run through Rata Die day numbers, so every pair is exact by construc
 Verified against Rosh Hashanah 5784/5785, Passover 5784, Nowruz 1403, 13.0.0.0.0 =
 21 December 2012, and a round trip over ~1.4 million days for every convertible system.
 
-Where a conversion *cannot* be exact — a regnal year with a disputed accession, a bare
-duration with no anchor, a lunar calendar that began months on sighting — the report
-says so and names the specific obstacle instead of inventing precision.
+Some conversions cannot be exact: a regnal year with a disputed accession, a bare
+duration with no anchor, a lunar calendar that began its months on sighting. In those
+cases the report says so and names the specific obstacle instead of inventing precision.
 
 ### Reports
 
@@ -126,7 +127,7 @@ views · alternative interpretations · evidence · confidence ratings · refere
 further reading.
 
 Export to **PDF, DOCX, CSV, Markdown or JSON**. Every format preserves the claim-type
-labelling — in the CSV it is a column — because an export that dropped the distinction
+labelling, which in the CSV is a column, because an export that dropped the distinction
 between a calculation and a conjecture would defeat the product.
 
 ---
@@ -159,7 +160,7 @@ entities → calendar → astronomy → historical context → interpretation �
 The **calendar and astronomy agents consult no language model at all**. Their output is
 arithmetic; routing it through a model would add nothing but a way for it to be wrong.
 
-Agent failure is **partial, never total** — a failed stage marks its section unavailable
+Agent failure is **partial, never total**. A failed stage marks its section unavailable
 and the other eleven still render. Every run is persisted with provider, model, prompt
 version, timing and a reader-facing reasoning summary, so any conclusion traces back to
 what produced it.
@@ -203,12 +204,12 @@ cd frontend && npx playwright test        # 26 e2e + 20 accessibility
 
 The backend suite runs on SQLite with the offline provider, so it needs no database, no
 network and no credentials. The e2e suite runs against a **real** FastAPI process and a
-real pipeline — nothing is mocked, because the bugs worth catching at that level are
+real pipeline. Nothing is mocked, because the bugs worth catching at that level are
 integration bugs, and a mocked API would pass while the product was broken. (It did,
 once: see the commit that fixed `citations` vs `references`.)
 
 Accessibility: **zero WCAG 2.1 A/AA violations** on every page in both themes, plus
-checks axe cannot make — that claim types stay distinguishable with all colour stripped
+checks axe cannot make: that claim types stay distinguishable with all colour stripped
 out, that confidence is exposed to assistive technology and not carried by a bar's width
 alone, and that the whole homepage flow is operable from the keyboard.
 
@@ -222,7 +223,7 @@ Stated plainly, so nothing here is mistaken for an oversight.
   when, and of what type. For ancient dates the uncertainty in Earth's rotation (ΔT) is
   tens of minutes, which moves the ground track by tens of degrees of longitude. Any tool
   showing a precise ancient eclipse path is overselling its precision.
-- **Planetary positions are approximations** — 0.3–0.6° over five millennia.
+- **Planetary positions are approximations**, accurate to 0.3–0.6° over five millennia.
 - **It does not adjudicate religious or interpretive questions.** It reports what
   traditions have held and what scholars argue, attributed and sourced.
 - **It makes no claims about the future.** Prophetic material is described and readings
@@ -236,8 +237,8 @@ Stated plainly, so nothing here is mistaken for an oversight.
 
 ## Running it free
 
-The documented free deployment — Vercel, Render and Supabase, all on free tiers — costs
-nothing beyond a domain. Two of its limits are worth knowing before you meet them, because
+The documented free deployment runs on Vercel, Render and Supabase, all on free tiers,
+and costs nothing beyond a domain. Two of its limits are worth knowing before you meet them, because
 both look like faults and neither is one:
 
 - **The API sleeps after ~15 minutes without traffic.** The next visitor waits 30–60
@@ -253,8 +254,8 @@ Neither is a trial. Paying removes them when you want them removed.
 Without `ANTHROPIC_API_KEY` the platform runs its deterministic engine, and that is a
 supported mode rather than a crippled one. Language and script detection, entity and date
 extraction, calendar conversion, the whole astronomy engine, corpus retrieval, citations
-and every export format work fully. The interpretive sections — translation, historical
-context, symbolism, traditional and scholarly readings — report themselves as unavailable
+and every export format work fully. The interpretive sections (translation, historical
+context, symbolism, traditional and scholarly readings) report themselves as unavailable
 instead of being filled with generated text, which is the same rule applied everywhere
 else here.
 

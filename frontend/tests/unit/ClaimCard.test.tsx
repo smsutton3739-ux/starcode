@@ -91,7 +91,7 @@ describe("ClaimCard", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: /why this/i }));
-    expect(screen.getByText(/unverified — check before citing/i)).toBeInTheDocument();
+    expect(screen.getByText(/unverified: check before citing/i)).toBeInTheDocument();
   });
 
   it("does not flag a corpus-verified citation", async () => {

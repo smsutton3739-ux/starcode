@@ -10,7 +10,7 @@ const CLAIM_TYPES = [
   ["Source text", "Quoted verbatim from what you submitted. No interpretation added.", "#494A50"],
   ["Verified history", "Attested in the historical record and citable. Requires a real citation to exist at all.", "#256149"],
   ["Calculation", "Computed by the ephemeris and calendar engines. Reproducible, and reported with its accuracy.", "#2E5AA8"],
-  ["Text analysis", "An observation about the text itself — its language, structure or vocabulary.", "#216568"],
+  ["Text analysis", "An observation about the text itself: its language, structure or vocabulary.", "#216568"],
   ["Tradition holds", "What a religious or cultural tradition has understood this to mean. Reported, not endorsed.", "#855A1C"],
   ["Scholars argue", "A position argued in academic literature. Where scholars disagree, the disagreement is reported.", "#563E74"],
   ["AI hypothesis", "Model-generated conjecture. Not evidence. Confidence is capped by design.", "#8E4325"],
@@ -25,9 +25,9 @@ export default function AboutPage() {
       <section className="mt-8">
         <h2 className="text-xl font-semibold">The rule everything is built around</h2>
         <p className="prose-report mt-3">
-          Speculation is never presented as established fact. That is not a matter of
-          careful wording — wording drifts, and a confident sentence reads the same
-          whether or not anything backs it. So it is enforced structurally: every
+          Speculation is never presented as established fact. Careful wording cannot deliver
+          that on its own. Wording drifts, and a confident sentence reads the same
+          whether or not anything backs it. So the rule is enforced structurally: every
           statement the platform makes is stored with an explicit type, and the rules for
           each type are checked in code before anything reaches you.
         </p>
@@ -68,9 +68,9 @@ export default function AboutPage() {
         </p>
         <p className="prose-report mt-3">
           The calendar and astronomy steps consult no language model at all. Their output
-          is arithmetic — Meeus&apos; algorithms for eclipses and lunar phases, the JPL
-          Keplerian approximation for planets, Rata Die day-numbering for calendars —
-          and routing that through a model would add nothing but a way for it to be wrong.
+          is arithmetic: Meeus&apos; algorithms for eclipses and lunar phases, the JPL
+          Keplerian approximation for planets, Rata Die day-numbering for calendars.
+          Routing that through a model would add nothing but a way for it to be wrong.
         </p>
         <p className="prose-report mt-3">
           Every report carries a trace: which step produced each finding, on which model,
@@ -94,7 +94,7 @@ export default function AboutPage() {
           <li>
             <strong>Planetary positions are approximations.</strong> Accurate to roughly
             0.3–0.6° over five millennia. For a slow pair like Jupiter and Saturn that
-            translates into about two weeks of uncertainty in the date of a conjunction —
+            translates into about two weeks of uncertainty in the date of a conjunction,
             which each result tells you.
           </li>
           <li>
@@ -123,7 +123,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-semibold">Privacy</h2>
         <p className="prose-report mt-3">
           You can analyse a text without an account. Anonymous analyses are reachable only
-          via a token stored in your browser — if you clear your browser storage, that
+          via a token stored in your browser. If you clear your browser storage, that
           analysis genuinely becomes unreachable, because there is no account to tie it
           to. That is the price of not requiring a signup, and it is worth knowing before
           you rely on it.

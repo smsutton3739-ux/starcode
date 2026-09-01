@@ -21,7 +21,7 @@ const DATING_MODES: { value: AnalysisMode; label: string; help: string }[] = [
   {
     value: "eschatological",
     label: "Eschatological calculation",
-    help: "Applies the search to prophetic material, reporting what each interpretive framework yields — never what will happen.",
+    help: "Applies the search to prophetic material, reporting what each interpretive framework yields, never what will happen.",
   },
   {
     value: "historicizing",
@@ -129,7 +129,7 @@ export function AdvancedSettings({ value, onChange, paidModesAvailable = false }
           />
           <span className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
             Years either side of a date found in the text. A wider window finds more
-            events — and makes any match weaker evidence, because coincidences become
+            events, and makes any match weaker evidence, because coincidences become
             easy.
           </span>
         </label>
@@ -141,8 +141,8 @@ export function AdvancedSettings({ value, onChange, paidModesAvailable = false }
             onChange={(event) => set("maya_correlation", Number(event.target.value))}
             className="input mt-1"
           >
-            <option value={584283}>584283 — GMT (standard)</option>
-            <option value={584285}>584285 — GMT variant</option>
+            <option value={584283}>584283 (GMT standard)</option>
+            <option value={584285}>584285 (GMT variant)</option>
           </select>
           <span className="mt-1 block text-xs text-ink-500 dark:text-ink-400">
             Every Long Count conversion depends on this. The two options differ by two
@@ -186,7 +186,7 @@ function DatingRange({ value, onChange }: Pick<Props, "value" | "onChange">) {
       <legend className="font-medium">Dating search range</legend>
       <p className="text-xs text-ink-500 dark:text-ink-400">
         Only used by the dating searches. Astronomical year numbering, so year 0 is 1 BCE
-        and negative numbers are earlier — enter −586 for 587 BCE. Leave both blank and
+        and negative numbers are earlier, so enter −586 for 587 BCE. Leave both blank and
         the range is taken from dates in the text, or from a default window if the text
         gives none.
       </p>

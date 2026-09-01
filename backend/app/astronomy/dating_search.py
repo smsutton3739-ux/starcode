@@ -363,7 +363,7 @@ def plan_search(criteria: DatingCriteria, start_year: int, end_year: int) -> Sea
         coverage.eclipse_window = window
         if window != (start_year, end_year):
             coverage.notes.append(
-                f"Eclipse search covered {_span_label(*window)} — the middle "
+                f"Eclipse search covered {_span_label(*window)}, the middle "
                 f"{window[1] - window[0] + 1} years of the {end_year - start_year + 1} "
                 "requested. Eclipses recur four to seven times a year, so a wider scan "
                 "adds thousands of candidates without improving the top of the list. "
@@ -378,7 +378,7 @@ def plan_search(criteria: DatingCriteria, start_year: int, end_year: int) -> Sea
         coverage.conjunction_window = window
         if window != (start_year, end_year):
             coverage.notes.append(
-                f"Conjunction search covered {_span_label(*window)} — the middle "
+                f"Conjunction search covered {_span_label(*window)}, the middle "
                 f"{window[1] - window[0] + 1} years of the {end_year - start_year + 1} "
                 f"requested. Scanning {pairs} body pair(s) over the whole span would cost "
                 "minutes of computation for a result that gets less meaningful as it "
@@ -585,7 +585,7 @@ def _score_anchor(
                 detail=(
                     f"The text describes darkness lasting about "
                     f"{criteria.unusual_darkness_days:g} day(s). No astronomical mechanism "
-                    "produces that — a total solar eclipse lasts minutes — so no date can "
+                    "produces that, since a total solar eclipse lasts minutes, so no date can "
                     "match it and none is credited with doing so. Volcanic dust veils and "
                     "dust storms have produced multi-day darkness historically; that is a "
                     "question for the historical record, not for the ephemeris."
@@ -603,7 +603,7 @@ def _score_anchor(
     same_year_repeats = _same_year_repeat_count(anchor, criteria)
     if same_year_repeats >= 3:
         notes.append(
-            f"{same_year_repeats} passes of this conjunction fall in the same year — a "
+            f"{same_year_repeats} passes of this conjunction fall in the same year. That is a "
             "triple conjunction, which an observer would have experienced as one prolonged "
             "event rather than three separate ones."
         )
@@ -921,7 +921,7 @@ def _check_comet(anchor: _Anchor) -> CriterionOutcome:
             detail=(
                 "No catalogued comet appearance within a few years of this date. The "
                 "catalogue is a curated set of well-attested apparitions, not a complete "
-                "record — absence here is weak evidence, not none."
+                "record, so absence here is weak evidence rather than none."
             ),
         )
     best = min(comets, key=lambda c: abs((c.get("year") or anchor.year) - anchor.year))
@@ -1006,8 +1006,8 @@ def _discrimination_caveat(outcomes: list[CriterionOutcome]) -> str:
     return (
         "This candidate rests only on criteria that fit most dates: eclipses occur four "
         "to seven times a year somewhere on Earth, and a season spans a quarter of it. "
-        "Treat the fit score as a measure of consistency, not of evidence — a search over "
-        "any comparable span would find dates that fit as well."
+        "Treat the fit score as a measure of consistency rather than of evidence. A search "
+        "over any comparable span would find dates that fit as well."
     )
 
 

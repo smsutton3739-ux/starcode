@@ -65,7 +65,7 @@ def register(payload: RegisterRequest, request: Request, db: DbSession) -> Token
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
                 "Password accounts are not enabled on this deployment, because there is "
-                "no password-reset flow — an account nobody can recover is worse than no "
+                "no password-reset flow, and an account nobody can recover is worse than no "
                 "account. Use a sign-in provider, or analyse a text without an account."
             ),
         )

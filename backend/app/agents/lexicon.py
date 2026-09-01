@@ -624,7 +624,7 @@ SACRED_NUMBERS: dict[str, dict] = {
     "3": {"significance": "Divine completeness; trinities and triads across many traditions."},
     "4": {"significance": "The four directions, winds, rivers or living creatures."},
     "7": {
-        "significance": "Completion. Seven days, seven seals, seven classical planets — the "
+        "significance": "Completion. Seven days, seven seals, seven classical planets, the "
         "last of which is likely the origin of the number's weight."
     },
     "10": {"significance": "Ordinal completeness; ten commandments, ten sefirot."},
@@ -633,7 +633,7 @@ SACRED_NUMBERS: dict[str, dict] = {
         "Rooted in the roughly twelve lunations per solar year."
     },
     "40": {
-        "significance": "A period of testing or transition — flood, wilderness, fasting. "
+        "significance": "A period of testing or transition: flood, wilderness, fasting. "
         "Often idiomatic for 'a long time' rather than an exact count."
     },
     "50": {"significance": "Jubilee; Pentecost."},

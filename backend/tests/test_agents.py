@@ -6,7 +6,8 @@ import hashlib
 
 import pytest
 
-from app.agents import lexicon, offline_engine
+from app.agents import lexicon, offline_engine, specialists
+from app.agents.base import SHARED_SYSTEM_RULES
 from app.agents.orchestrator import pipeline_description, run_analysis
 from app.agents.provider import OfflineProvider, extract_json, get_provider
 from app.db.models.analysis import Analysis, AnalysisStatus, ClaimType
@@ -346,3 +347,44 @@ class TestOrchestrator:
         run_analysis(db, analysis)
         assert analysis.reports
         assert analysis.reports[0].executive_summary
+
+
+class TestPromptStyle:
+    """The house style rules that keep generated prose from reading as machine output.
+
+    They live in SHARED_SYSTEM_RULES so one edit reaches every model-calling agent. Two
+    things can quietly break that: an agent built without the shared preamble, and an
+    em dash creeping back into a prompt, which teaches the model the habit the rule
+    forbids no matter what the rule says.
+    """
+
+    #: Every agent that consults a model. The calendar and astronomy agents are absent
+    #: on purpose: they have no SYSTEM prompt because they never call one.
+    MODEL_AGENTS = [
+        specialists.LanguageAgent,
+        specialists.SourceIdentificationAgent,
+        specialists.EntityAgent,
+        specialists.HistoricalContextAgent,
+        specialists.InterpretationAgent,
+        specialists.EvidenceAgent,
+    ]
+
+    def test_shared_rules_carry_the_style_section(self):
+        assert "Do not use em dashes" in SHARED_SYSTEM_RULES
+        assert "not just X, but Y" in SHARED_SYSTEM_RULES
+        assert "Vary sentence length" in SHARED_SYSTEM_RULES
+
+    def test_style_never_outranks_the_epistemic_rules(self):
+        """Rule 9 must not be readable as licence to drop an honest disclaimer."""
+        assert "Never bend rules 1 to 7" in SHARED_SYSTEM_RULES
+        assert "this is a proposal, not a finding" in SHARED_SYSTEM_RULES
+
+    @pytest.mark.parametrize("agent", MODEL_AGENTS)
+    def test_every_model_agent_inherits_the_style_rules(self, agent):
+        assert "Do not use em dashes" in agent.SYSTEM
+
+    @pytest.mark.parametrize("agent", MODEL_AGENTS)
+    def test_no_prompt_uses_the_punctuation_it_forbids(self, agent):
+        """A prompt full of em dashes trains the behaviour the prompt asks against."""
+        offenders = [line for line in agent.SYSTEM.splitlines() if "—" in line]
+        assert not offenders, f"{agent.__name__} prompt uses em dashes: {offenders}"

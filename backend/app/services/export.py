@@ -158,7 +158,7 @@ def _build_markdown(analysis: Analysis, viewer: Any = None) -> bytes:
                 out.append(f"*Reasoning:* {claim['reasoning']}\n")
             out.append(
                 f"*Confidence:* {claim['confidence']:.0%}"
-                + (f" — {claim['confidence_basis']}" if claim.get("confidence_basis") else "")
+                + (f" ({claim['confidence_basis']})" if claim.get("confidence_basis") else "")
                 + "\n"
             )
             if claim.get("engine"):
@@ -183,12 +183,12 @@ def _build_markdown(analysis: Analysis, viewer: Any = None) -> bytes:
             out.append("")
         if section["key"] == "references" and data.get("references"):
             for reference in data["references"]:
-                mark = "" if reference.get("verified") else " *(unverified — check before citing)*"
+                mark = "" if reference.get("verified") else " *(unverified, check before citing)*"
                 out.append(f"- {reference['citation_text']}{mark}")
             out.append("")
         if section["key"] == "further_reading" and data.get("items"):
             for item in data["items"]:
-                out.append(f"- **{item['title']}** — {item['citation']}  \n  {item['why']}")
+                out.append(f"- **{item['title']}**. {item['citation']}  \n  {item['why']}")
             out.append("")
 
     out.append("## How this report was produced\n")
@@ -196,7 +196,7 @@ def _build_markdown(analysis: Analysis, viewer: Any = None) -> bytes:
         out.append(
             f"{step['step']}. **{step['agent']}** ({step['status']}"
             + (f", {step['model']}" if step.get("model") else "")
-            + f") — {step.get('reasoning', '')}"
+            + f"): {step.get('reasoning', '')}"
         )
     out.append("")
 
@@ -476,7 +476,7 @@ def _build_pdf(analysis: Analysis, viewer: Any = None) -> bytes:
             story.append(
                 Paragraph(
                     f"Confidence {claim['confidence']:.0%}"
-                    + (f" — {escape(basis)}" if basis else ""),
+                    + (f" ({escape(basis)})" if basis else ""),
                     small,
                 )
             )
@@ -518,7 +518,7 @@ def _build_pdf(analysis: Analysis, viewer: Any = None) -> bytes:
 
         if section["key"] == "references" and data.get("references"):
             for reference in data["references"]:
-                mark = "" if reference.get("verified") else " (unverified — check before citing)"
+                mark = "" if reference.get("verified") else " (unverified, check before citing)"
                 story.append(
                     Paragraph(f"• {escape(reference['citation_text'])}{escape(mark)}", small)
                 )
@@ -528,7 +528,7 @@ def _build_pdf(analysis: Analysis, viewer: Any = None) -> bytes:
             for item in data["items"]:
                 story.append(
                     Paragraph(
-                        f"• <b>{escape(item['title'])}</b> — {escape(item['citation'])}<br/>"
+                        f"• <b>{escape(item['title'])}</b>. {escape(item['citation'])}<br/>"
                         f"{escape(item['why'])}",
                         small,
                     )
@@ -551,7 +551,7 @@ def _build_pdf(analysis: Analysis, viewer: Any = None) -> bytes:
                 f"<b>{step['step']}. {escape(step['agent'])}</b> "
                 f"({escape(step['status'])}"
                 + (f", {escape(str(step.get('model')))}" if step.get("model") else "")
-                + f") — {escape(str(step.get('reasoning', '')))}",
+                + f"): {escape(str(step.get('reasoning', '')))}",
                 small,
             )
         )
@@ -645,7 +645,7 @@ def _build_docx(analysis: Analysis, viewer: Any = None) -> bytes:
             meta = document.add_paragraph()
             run = meta.add_run(
                 f"Confidence {claim['confidence']:.0%}"
-                + (f" — {claim['confidence_basis']}" if claim.get("confidence_basis") else "")
+                + (f" ({claim['confidence_basis']})" if claim.get("confidence_basis") else "")
             )
             run.font.size = Pt(8)
 
@@ -670,13 +670,13 @@ def _build_docx(analysis: Analysis, viewer: Any = None) -> bytes:
 
         if section["key"] == "references" and data.get("references"):
             for reference in data["references"]:
-                mark = "" if reference.get("verified") else " (unverified — check before citing)"
+                mark = "" if reference.get("verified") else " (unverified, check before citing)"
                 document.add_paragraph(f"{reference['citation_text']}{mark}", style="List Bullet")
 
         if section["key"] == "further_reading" and data.get("items"):
             for item in data["items"]:
                 document.add_paragraph(
-                    f"{item['title']} — {item['citation']}. {item['why']}", style="List Bullet"
+                    f"{item['title']}. {item['citation']}. {item['why']}", style="List Bullet"
                 )
 
     document.add_page_break()

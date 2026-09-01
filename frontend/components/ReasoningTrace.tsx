@@ -36,7 +36,7 @@ export function ReasoningTrace({ steps }: { steps: TraceStep[] }) {
 
       <p className="mt-2 text-sm text-ink-600 dark:text-ink-400">
         Each step is a specialist agent. The calendar and astronomy steps consult no
-        language model at all — their output is arithmetic.
+        language model at all. Their output is arithmetic.
       </p>
 
       {open && (

@@ -395,7 +395,7 @@ def claim_types() -> dict:
             for claim_type, presentation in CLAIM_TYPE_PRESENTATION.items()
         ],
         "rule": (
-            "A claim requiring a citation cannot be stored without one — it is downgraded "
+            "A claim requiring a citation cannot be stored without one; it is downgraded "
             "to an AI hypothesis instead. AI-hypothesis confidence is capped by policy."
         ),
     }

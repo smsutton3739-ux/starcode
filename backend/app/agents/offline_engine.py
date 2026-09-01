@@ -295,8 +295,8 @@ def extract_entities(text: str, _prompt: str = "") -> dict[str, Any]:
         "reasoning": (
             f"Matched {len(matches)} lexicon terms, {len(numbers)} numbers with recognised "
             f"traditional significance, and {len(markers)} prophetic formulae. This method "
-            "has high precision but bounded recall: entities outside the curated lexicon — "
-            "unusual place names, minor figures, uncommon transliterations — will be missed."
+            "has high precision but bounded recall. Entities outside the curated lexicon "
+            "(unusual place names, minor figures, uncommon transliterations) are missed."
         ),
     }
 
@@ -465,7 +465,7 @@ def detect_astronomical(text: str, _prompt: str = "") -> dict[str, Any]:
         "reasoning": (
             f"Identified {len(references)} astronomical references by term matching. "
             "Detecting that a text mentions a phenomenon is not the same as establishing "
-            "that it describes a specific historical occurrence of it — that judgement is "
+            "that it describes a specific historical occurrence of it. That judgement is "
             "left to the astronomy agent and reported separately."
         ),
     }
@@ -502,7 +502,7 @@ def identify_source(text: str, prompt: str) -> dict[str, Any]:
             "candidates": [],
             "reasoning": (
                 "No corpus entry matched this text above the retrieval floor. That means "
-                "the text is not in the seed corpus — not that it is unknown or unusual. "
+                "the text is not in the seed corpus, not that it is unknown or unusual. "
                 "The corpus is a demonstration set of a few dozen works."
             ),
         }

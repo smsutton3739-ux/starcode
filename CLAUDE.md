@@ -309,6 +309,15 @@ incidents; do not delete them when touching nearby code.
 **Errors are for the person reading them.** Say what went wrong *and what to do about it*.
 The config validators are the model to follow.
 
+**Prose has a house style, enforced in the prompt.** Rules 8 to 12 of
+`SHARED_SYSTEM_RULES` govern how generated text reads: no em dashes as punctuation, no
+"not X, it is Y" flourishes, none of the stock LLM vocabulary, varied sentence shape.
+They sit *below* the seven epistemic rules and must never be applied at their expense.
+The same style applies to copy you write by hand, in the README, the frontend pages and
+any string a reader sees. `tests/test_agents.py::TestPromptStyle` checks that every
+model-calling agent inherits the rules and that no agent prompt uses the punctuation it
+forbids, because a prompt full of em dashes teaches the habit whatever the rule says.
+
 **Uncertainty is data, not prose.** If something is approximate it carries a field saying
 so: `is_exact`, `uncertainty_note`, `accuracy_note`, `confidence_basis`, `blocker`. These
 exist so the honesty survives serialisation into a PDF.

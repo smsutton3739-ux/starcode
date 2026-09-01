@@ -89,7 +89,7 @@ def requeue_stale_jobs() -> int:
             if job.attempts < job.max_attempts:
                 job.status = JobStatus.RETRYING
                 job.last_error = (
-                    "The worker running this job stopped without finishing it — most "
+                    "The worker running this job stopped without finishing it, most "
                     "likely a restart. Requeued."
                 )
                 logger.warning("worker.requeued_stale", job_id=job.id, attempts=job.attempts)

@@ -24,8 +24,8 @@ export default function HomePage() {
           Read the <em className="italic text-gold-600 dark:text-gold-400">sky</em> behind it.
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-lg text-ink-600 dark:text-ink-300">
-          Any ancient text, manuscript, prophecy, or historical document — analysed and
-          returned as a report you can check, not one you have to take on faith.
+          Paste an ancient text, manuscript, prophecy, or historical document. Every
+          finding in the report is labelled with what it rests on, so you can check it.
         </p>
       </div>
 

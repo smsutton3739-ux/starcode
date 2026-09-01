@@ -76,7 +76,7 @@ export const CLAIM_STYLES: Record<ClaimType, ClaimStyle> = {
     label: "Text analysis",
     short: "Text analysis",
     description:
-      "An observation about the text itself — its language, structure or vocabulary.",
+      "An observation about the text itself: its language, structure or vocabulary.",
     badge:
       "bg-reed-50 text-reed-900 border-reed-300 dark:bg-reed-950 dark:text-reed-200 dark:border-reed-700",
     border: "border-l-reed-700",

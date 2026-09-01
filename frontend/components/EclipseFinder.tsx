@@ -84,7 +84,7 @@ export function EclipseFinder() {
           </div>
         </div>
         <p className="mt-3 text-xs text-ink-500 dark:text-ink-400">
-          Ranges are capped at 200 years — a longer scan would take minutes of CPU without
+          Ranges are capped at 200 years. A longer scan would take minutes of CPU without
           telling you anything a narrower one does not.
         </p>
       </div>

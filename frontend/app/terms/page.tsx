@@ -32,7 +32,7 @@ export default function TermsPage() {
           Every statement in a report is labelled by kind. Calculations are reproducible
           and name the algorithm that produced them. Claims that require a citation cannot
           be stored without one. Model conjecture is capped in confidence and marked as not
-          evidence. Those are properties of the software, not promises about tone — they
+          evidence. Those are properties of the software, not promises about tone. They
           are described in <Link href="/about">how it works</Link>.
         </p>
         <p>
@@ -53,7 +53,7 @@ export default function TermsPage() {
         <h2 className="mt-10 font-display text-2xl">Your text</h2>
         <p>
           You keep whatever rights you have in the text you submit. Submitting it grants us
-          only what running the analysis requires — storing it, processing it, and showing
+          only what running the analysis requires: storing it, processing it, and showing
           you the result. Do not submit material you have no right to, and do not submit
           anything you would be unwilling to have processed by a third-party model
           provider; the <Link href="/privacy">privacy page</Link> says exactly who sees
@@ -72,7 +72,7 @@ export default function TermsPage() {
         <p>
           This service runs on free infrastructure. It sleeps when idle and takes a
           noticeable moment to wake. There is no uptime guarantee, and you should keep your
-          own copy of anything that matters to you — every report can be exported as PDF,
+          own copy of anything that matters to you. Every report can be exported as PDF,
           DOCX, CSV, Markdown or JSON, and every format keeps the claim-type labelling.
         </p>
 
