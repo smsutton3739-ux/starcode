@@ -81,7 +81,7 @@ Redis and no API key are needed for almost any work.**
 
 ```bash
 # backend/
-pytest -q                          # 435 tests, ~50s, no services needed
+pytest -q                          # 449 tests, ~50s, no services needed
 pytest tests/test_astronomy.py -q  # one file
 pytest -k "eclipse" -q             # by name
 ruff check app tests scripts --fix
@@ -159,7 +159,7 @@ backend/
     workers/            runner (background jobs), seed_cli
   alembic/versions/     6 migrations
   scripts/              create_admin.py, import_dataset.py, entrypoint.sh
-  tests/                15 files, 435 tests collected
+  tests/                15 files, 449 tests collected
 frontend/
   app/                  App Router pages (/, /analysis/[id], /dashboard, /explore,
                         /tools, /login, /admin, /shared/[id], /about, /auth/callback)
